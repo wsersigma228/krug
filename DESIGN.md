@@ -160,7 +160,7 @@ The palette uses cool neutral surfaces with a saturated blue action accent; the 
 - **Line:** one-pixel row dividers, card borders and secondary hover fill.
 - **Soft:** secondary controls, selected likes, avatar discs, badges, photo backdrop and mobile active navigation.
 
-The live CSS variables `--canvas`, `--paper`, `--text`, `--muted`, `--line`, `--soft`, `--accent`, `--on-accent` and `--hover` map to the corresponding light values at the root and dark values under `data-theme="dark"`. Frontmatter component variants use the light baseline unless explicitly labelled dark. Sidecar snippets remain bound to the shared variables.
+The live CSS variables `--canvas`, `--paper`, `--text`, `--muted`, `--line`, `--soft`, `--accent`, `--on-accent` and `--hover` map to the corresponding light values at the root and dark values under `data-theme="dark"`. Frontmatter component variants use the light baseline unless explicitly labelled dark.
 
 **The Blue Action Rule.** Use blue for actions and active state; let cool neutrals frame user content and retain photographs in their original colors.
 
