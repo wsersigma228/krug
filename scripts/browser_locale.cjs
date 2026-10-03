@@ -155,6 +155,17 @@ async function main() {
     }
     await page.setViewportSize({ width: 1920, height: 1080 });
     await noOverflow(page);
+    for (const width of [651, 760, 1024, 1399, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      await noOverflow(page);
+      assert(await page.locator('.topbar-inner').evaluate(header => {
+        const children = [...header.children].map(el => el.getBoundingClientRect());
+        const bounds = header.getBoundingClientRect();
+        return children.every(rect => rect.left >= bounds.left && rect.right <= bounds.right + 1) &&
+          children.every((a, i) => children.slice(i + 1).every(b =>
+            a.right <= b.left + 1 || b.right <= a.left + 1 || a.bottom <= b.top + 1 || b.bottom <= a.top + 1));
+      }), `Header controls overlap at ${width}px`);
+    }
     assert((await page.locator('.layout').boundingBox()).width >= 1500, 'Wide screens should use the desktop shell');
     await page.screenshot({ path: path.join(output, 'wide-dark.png'), fullPage: true });
     for (const width of [2560, 3840]) {

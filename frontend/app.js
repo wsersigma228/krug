@@ -192,7 +192,7 @@ function shell(route) {
       <button id="ui-language" class="preference-button" aria-label="${language === "ru" ? "Switch to English" : t("Переключить на русский")}" title="Русский / English">${language.toUpperCase()}</button>
       <details class="theme-picker"><summary id="ui-theme" class="preference-button" aria-label="${t("Тема")}" title="${t("Тема")}">${themeIcon(theme)}</summary>
       <div class="theme-options">${["light", "dark", "system"].map((value, index) => html`<button class="theme-option" data-theme-choice="${value}" aria-pressed="${theme === value}">${themeIcon(value)}${t(["Светлая", "Тёмная", "Системная"][index])}</button>`).join("")}</div></details>
-      </div><div class="header-actions">${me ? html`<a class="account-link" href="/app#profile/${me.id}"><span class="avatar">${esc(me.username[0]?.toUpperCase())}</span><span>@${esc(me.username)}</span></a>` : ""}${session ? html`<a class="button compose" href="/app#new">${icon("plus")} Написать историю</a>` : t('<a class="button compose" href="/app#login">Войти в Круг</a>')}</div>
+      </div><div class="header-actions">${me ? html`<a class="account-link" href="/app#profile/${me.id}" aria-label="${esc(me.username)}"><span class="avatar">${esc(me.username[0]?.toUpperCase())}</span><span>@${esc(me.username)}</span></a>` : ""}${session ? html`<a class="button compose" href="/app#new" aria-label="Написать историю">${icon("plus")}<span>Написать историю</span></a>` : t('<a class="button compose" href="/app#login">Войти в Круг</a>')}</div>
       </div></header><div class="layout ${showRail ? "layout-feed" : ""}">
       <main class="main" id="main" tabindex="-1">
       <div class="loading" role="status">Загрузка…</div>

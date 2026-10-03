@@ -182,6 +182,13 @@ input[type="file"] { font-size: 13px; padding: 12px; }
   .header-compact .topbar-inner { min-height: 112px; }
   .context-rail { top: 148px; }
 }
+@media (min-width: 651px) and (max-width: 1000px) {
+  .account-link > span:last-child { display: none; }
+  .compose:has(svg) { width: 44px; padding: 10px; }
+  .compose:has(svg) span { display: none; }
+  .nav a { font-size: 12px; padding: 8px; gap: 6px; }
+  .nav svg { width: 16px; height: 16px; }
+}
 @media (max-width: 650px) {
   .topbar { height: 120px; }
   .topbar-inner { min-height: 120px; padding: 10px 20px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
