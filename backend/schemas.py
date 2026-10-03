@@ -32,15 +32,25 @@ class ExploreParams(PageParams):
 
 
 class PostCreate(BaseModel):
-    title: str = Field(min_length=1, max_length=200)
+    title: str = Field(default="", max_length=200)
     content: str = Field(min_length=1)
     is_published: bool = False
 
+    @field_validator("title")
+    @classmethod
+    def strip_title(cls, value):
+        return value.strip()
+
 
 class PostUpdate(BaseModel):
-    title: Optional[str] = Field(default=None, min_length=1, max_length=200)
+    title: Optional[str] = Field(default=None, max_length=200)
     content: Optional[str] = Field(default=None, min_length=1)
     is_published: Optional[bool] = None
+
+    @field_validator("title")
+    @classmethod
+    def strip_title(cls, value):
+        return value.strip()
 
     @model_validator(mode="before")
     @classmethod

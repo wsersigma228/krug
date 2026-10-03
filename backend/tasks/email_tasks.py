@@ -117,12 +117,14 @@ async def _deliver_pending(db):
             delivery.status = "cancelled"
         else:
             author = await db.get(User, post.author_id)
+            label = post.title or " ".join(post.content.split())[:80]
+            quoted_label = f'"{label}"\n\n' if label else ""
             if recipient.language == "ru":
-                subject = f"Новая публикация от {author.username}: {post.title}"
-                body = f'Здравствуйте!\n\n{author.username} опубликовал новую запись:\n\n"{post.title}"\n\n-- Команда Круга'
+                subject = f"Новая публикация от {author.username}" + (f": {label}" if label else "")
+                body = f'Здравствуйте!\n\n{author.username} опубликовал новую запись:\n\n{quoted_label}-- Команда Круга'
             else:
-                subject = f"New post from {author.username}: {post.title}"
-                body = f'Hello!\n\n{author.username} just published a new post:\n\n"{post.title}"\n\n-- Blog Team'
+                subject = f"New post from {author.username}" + (f": {label}" if label else "")
+                body = f'Hello!\n\n{author.username} just published a new post:\n\n{quoted_label}-- Blog Team'
             await _attempt_delivery(delivery, subject, body, recipient.email)
         # A later recipient's failure must not roll back an earlier successful send.
         await db.commit()

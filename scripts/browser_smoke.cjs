@@ -71,7 +71,7 @@ async function main() {
     await page.getByLabel('Текст', { exact: true }).fill('A real browser check. <script>window.bad=true</script>');
     const photo = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jDPsAAAAASUVORK5CYII=', 'base64');
     await page.locator('input[type=file]').setInputFiles({ name: 'check.png', mimeType: 'image/png', buffer: photo });
-    await page.getByRole('button', { name: 'Сохранить историю' }).click();
+    await page.getByRole('button', { name: 'Сохранить пост' }).click();
     await page.waitForURL(/#post\/\d+$/);
     const postId = page.url().match(/post\/(\d+)/)[1];
     await page.getByText('Личный черновик', { exact: true }).waitFor();

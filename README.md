@@ -28,7 +28,7 @@ these flows in a responsive Russian/English interface with light and dark themes
 
 | Area | Included |
 | --- | --- |
-| Writing | Private drafts, editing, publication and one photo per post |
+| Writing | Private drafts, optional titles, editing, publication and one photo per post |
 | Reading | Public discovery, full-text search and a feed of followed authors |
 | People | Public profiles, biographies, follows, likes and flat comments |
 | Accounts | Email verification, password recovery and account-wide sign-out |
@@ -77,11 +77,12 @@ Posts, comments, biographies and usernames are never translated. Search language
 is an independent PostgreSQL matching mode, not the interface language.
 
 Light, dark and system themes are available. The default uses cold graphite and a
-restrained blue accent; existing saved choices are respected. A compact social
-feed uses a simple native sans-serif font throughout, with distinct author,
-title and date hierarchy. Wide layouts use a centered shell capped at 1600 CSS px,
-with proportional photos below text and a contextual
-column of authors from loaded stories. The sticky header compacts while scrolling
+restrained blue accent; existing saved choices are respected. A responsive masonry social
+feed uses native sans-serif text, with distinct author, title and date hierarchy.
+Wide layouts use a centered shell capped at 3600 CSS px and fill it with post cards.
+Each card shows its author, optional proportional photo, optional title and text;
+there is no contextual author column. Mobile uses a single column.
+The sticky header compacts while scrolling
 down and expands while scrolling up, keeping navigation and preferences reachable;
 reduced-motion settings disable transitions. System follows the operating system's
 color preference. Theme selection is stored per browser and does not sync through
@@ -159,7 +160,8 @@ Migration `a75e9b024138` adds a nullable, constrained `users.language` column;
 existing accounts remain unset until a choice is saved. Public profiles never
 expose this preference. Account service and publication emails use the recipient's
 current saved language at delivery time, with English fallback for unset accounts.
-Post titles inside notification emails remain unchanged.
+Notification emails use the post title when present; untitled posts use the first
+80 characters of whitespace-normalized content. User text is not translated.
 
 `POST /auth/password-reset/request` accepts `{"email":"user@example.com"}` and
 returns the same 202 response for known and unknown addresses. Confirmation uses
@@ -369,6 +371,13 @@ No extensions are required. For a repeatable temporary-table benchmark in `test_
 `GET /authors/{id}` returns username, biography (up to 500 characters) and counts
 of published posts, followers and follows. It never exposes email. `PATCH /me/profile`
 updates your biography. All profiles are public; private profiles are deferred.
+
+Post content is required. A title is optional (up to 200 characters), with surrounding
+whitespace trimmed. Omit it or send an empty string when creating an untitled post;
+explicit null is rejected. When updating, omission keeps the existing title and
+an empty string clears it. Existing titled posts remain unchanged. This uses the
+existing database column and requires no new migration. Listing pages request
+24 items at a time; Load more fetches the next page, without automatic scroll fetching.
 
 Every post may have one photo. `PUT /posts/{id}/image` accepts the **raw file body**
 (not multipart), at most 8 MiB: JPEG, PNG or still WebP, at most 16 megapixels.

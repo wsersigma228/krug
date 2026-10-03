@@ -1,3 +1,10 @@
+async function noCardOverlap(page) {
+  await page.waitForFunction(() => {
+    const boxes = [...document.querySelectorAll('.post-card-inner')].map(card => card.getBoundingClientRect());
+    return boxes.every((a, i) => boxes.slice(i + 1).every(b => a.right <= b.left + 1 || b.right <= a.left + 1 || a.bottom <= b.top + 1 || b.bottom <= a.top + 1));
+  });
+}
+
 /* Real HTTP/browser checks. Run through an SSH tunnel to the Fedora application. */
 const { chromium } = require('playwright');
 const assert = require('node:assert/strict');
@@ -92,7 +99,7 @@ async function main() {
     await page.waitForFunction(() => document.querySelector('.photo-preview')?.naturalWidth > 0);
     // A failed upload must keep the draft ID across a language switch and retry.
     await page.route('**/posts/*/image', route => route.request().method() === 'PUT' ? route.abort() : route.continue());
-    await page.getByRole('button', { name: 'Save story', exact: true }).click();
+    await page.getByRole('button', { name: 'Save post', exact: true }).click();
     await page.getByRole('alert').waitFor();
     const draftId = new URL(page.url()).hash.match(/^#edit\/(\d+)$/)?.[1];
     assert(draftId, 'Partial save must keep its draft route');
@@ -132,6 +139,15 @@ async function main() {
     assert.equal(await phone.locator('html').getAttribute('lang'), 'en');
     await phone.reload();
     await phone.getByRole('link', { name: title, exact: true }).waitFor();
+    await page.goto(base + '/app#new');
+    assert.equal(await page.locator('[name=title]').evaluate(input => input.required), false);
+    await page.locator('[name=content]').fill('A post without a title, created through the editor.');
+    await page.locator('[name=published]').check();
+    await page.getByRole('button', { name: 'Save post', exact: true }).click();
+    await page.waitForURL(/#post\/\d+$/);
+    const untitledId = new URL(page.url()).hash.split('/')[1];
+    assert.equal((await request('/posts/' + untitledId)).title, '');
+    assert(await page.locator('h1.sr-only').count(), 'Untitled posts have an accessible heading');
     await request('/posts', 'POST', { title: 'Synthetic text-only story', content: 'A text-first feed should work with and without photographs. This temporary post is part of the browser verification and will be removed with the test account.', is_published: true });
     otherUser = await request('/users', 'POST', { username: username + '_writer', password });
     const otherTokens = await request('/login', 'POST', { username: otherUser.username, password });
@@ -143,21 +159,40 @@ async function main() {
       await p.getByRole('link', { name: title, exact: true }).waitFor();
       await p.waitForFunction(() => document.querySelector('.post-photo')?.naturalWidth > 0);
       await p.waitForFunction(() => !document.querySelector('#main[aria-busy=true]') && !document.querySelector('#toast.visible'));
-      assert.equal(await p.locator('.rail-author').count(), 1, 'Authors are distinct and exclude the current account');
-      assert.equal(await p.locator('.rail-author').textContent(), otherUser.username[0].toUpperCase() + otherUser.username);
-      assert.equal(await p.locator('.context-rail').isVisible(), label === 'desktop');
+      assert.equal(await p.locator('.post-card').filter({ hasText: 'A post without a title, created through the editor.' }).locator('.post-title').count(), 0);
       for (const selected of ['light', 'dark']) {
         await preference(p, '#ui-theme', selected);
         await p.waitForFunction(() => !document.getAnimations().some(animation => animation.playState === 'running'));
         await noOverflow(p);
+        await noCardOverlap(p);
         await p.screenshot({ path: path.join(output, `${label}-${selected}.png`), fullPage: true });
       }
     }
+    for (let index = 0; index < 26; index++) {
+      const post = await request('/posts', 'POST', {
+        ...(index % 3 === 0 ? { title: 'Grid check ' + index } : {}),
+        content: 'Temporary synthetic post for the responsive social feed. '.repeat(1 + index % 6),
+      });
+      if (index % 4 === 0) {
+        const response = await fetch(base + '/posts/' + post.id + '/image', { method: 'PUT', headers: { ...headers, 'Content-Type': 'image/png' }, body: photo });
+        assert(response.ok, 'Grid fixture photo upload failed');
+      }
+      await request('/posts/' + post.id, 'PUT', { is_published: true });
+    }
+    await page.goto(base + '/app#explore');
+    await page.reload();
+    await page.waitForFunction(() => document.querySelectorAll('.post-card').length === 24);
+    await page.locator('.load-more').click();
+    await page.waitForFunction(() => document.querySelectorAll('.post-card').length > 24);
+    const ids = await page.locator('[data-like]').evaluateAll(buttons => buttons.map(button => button.dataset.like));
+    assert.equal(new Set(ids).size, ids.length, 'Pagination must not duplicate posts');
+    await page.waitForFunction(() => [...document.querySelectorAll('.post-photo')].every(image => image.naturalWidth > 0));
     await page.setViewportSize({ width: 1920, height: 1080 });
     await noOverflow(page);
     for (const width of [651, 760, 1024, 1399, 1440]) {
       await page.setViewportSize({ width, height: 900 });
       await noOverflow(page);
+      await noCardOverlap(page);
       assert(await page.locator('.topbar-inner').evaluate(header => {
         const children = [...header.children].map(el => el.getBoundingClientRect());
         const bounds = header.getBoundingClientRect();
@@ -172,15 +207,19 @@ async function main() {
     for (const width of [2560, 3840]) {
       await page.setViewportSize({ width, height: 1440 });
       await noOverflow(page);
+      await noCardOverlap(page);
+      const columns = await page.locator('.post-grid').evaluate(grid => getComputedStyle(grid).gridTemplateColumns.split(' ').length);
+      assert(columns >= (width === 2560 ? 6 : 8), `The ${width}px feed needs more visible columns`);
       const photoLayout = await page.locator('.post-photo').first().evaluate(image => {
         const rect = image.getBoundingClientRect();
         const card = image.closest('.post-card').getBoundingClientRect();
         const copy = image.closest('.post-card').querySelector('.post-copy').getBoundingClientRect();
         const style = getComputedStyle(image);
         return { loaded: image.naturalWidth > 0, fits: rect.left >= card.left && rect.right <= card.right + 1 && rect.bottom <= card.bottom + 1,
-          contained: style.objectFit === 'contain', belowCopy: rect.top >= copy.bottom && Math.abs(rect.left - copy.left) < 1 };
+          contained: style.objectFit === 'contain', aboveCopy: rect.bottom <= copy.top + 1 && Math.abs(rect.left - copy.left) < 1 };
       });
-      assert(photoLayout.loaded && photoLayout.fits && photoLayout.contained && photoLayout.belowCopy, 'Wide photos must stay contained below text and aligned with its left edge');
+      assert(photoLayout.loaded && photoLayout.fits && photoLayout.contained && photoLayout.aboveCopy, 'Photos stay contained in their own card above the text');
+      await page.screenshot({ path: path.join(output, `grid-${width}.png`), fullPage: true });
     }
     await page.setViewportSize({ width: 1440, height: 500 });
     const destinations = await page.locator('.topbar .nav a').count();
@@ -191,12 +230,12 @@ async function main() {
     await page.evaluate(() => window.scrollTo(0, 400));
     await page.waitForFunction(() => !document.body.classList.contains('header-compact'));
     await page.setViewportSize({ width: 1199, height: 900 });
-    assert.equal(await page.locator('.context-rail').isVisible(), false);
     await noOverflow(page);
     await phone.setViewportSize({ width: 320, height: 700 });
     await noOverflow(phone);
     await phone.reload();
-    await phone.getByRole('link', { name: title, exact: true }).waitFor();
+    await phone.locator('.post-card').first().waitFor();
+    await noCardOverlap(phone);
     assert.equal(await phone.locator('html').getAttribute('data-theme'), 'dark');
     // Signed-in account preference beats a conflicting browser preference on login.
     await request('/me/language', 'PATCH', { language: 'ru' });

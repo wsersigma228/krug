@@ -56,7 +56,7 @@ Theme is a browser preference and has no API endpoint.
 | `GET /authors/{id}/posts` | Public | Page of this author's published posts |
 | `GET /feed` | Signed in | Page of published posts from followed authors |
 | `GET /posts` | Signed in | Page of your posts; optional publication/search filters |
-| `POST /posts` | Signed in | `{title,content,is_published?}` → 201 post; defaults to draft |
+| `POST /posts` | Signed in | `{title?,content,is_published?}` → 201 post; defaults to draft |
 | `GET /posts/{id}` | Public for published; draft owner | Post |
 | `PUT /posts/{id}` | Post owner | Supplied `{title?,content?,is_published?}` fields update the post |
 | `DELETE /posts/{id}` | Post owner | 204; removes photo and interactions |
@@ -65,12 +65,18 @@ Theme is a browser preference and has no API endpoint.
 | `GET /subscriptions`, `GET /subscribers` | Signed in | Page of public `{id,username}` author records |
 | `GET /subscriptions/{author_id}/check` | Signed in | `{subscribed}` |
 
-Titles are 1–200 characters; post content is nonempty. Omit unchanged fields in
-`PUT`; explicit nulls are rejected. Post responses contain id, title, content,
+Titles are optional strings with a maximum of 200 characters; surrounding whitespace
+is trimmed. `POST` defaults an omitted title to an empty string; an explicit empty
+string also creates an untitled post. In `PUT`, omit the title to retain it, or send
+an empty string to clear it. Explicit nulls are rejected. Post content is required
+and nonempty on creation; omit unchanged fields in `PUT`. Post responses contain id, title, content,
 is_published, author_id, created_at, updated_at and nullable image_url. Feed/explore
 also include author_username. Public profile counts exclude drafts and expose no
 email. Publishing creates email deliveries for verified, opted-in subscribers;
 editing an already published post does not send another publication notification.
+For an untitled post, publication email labels use the first 80 characters of
+whitespace-normalized content. Responses retain `title` as a string, including
+empty strings; existing titled posts are unaffected. No new migration is required.
 
 ## Photos and interactions
 

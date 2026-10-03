@@ -18,7 +18,8 @@ let me = null,
   refreshFlight = null,
   generation = 0,
   toastTimer,
-  objectURLs = [];
+  objectURLs = [],
+  postGridObserver;
 const esc = (value) =>
   String(value ?? "").replace(
     /[&<>"']/g,
@@ -172,7 +173,7 @@ function go(route) {
   else location.hash = route;
 }
 function shell(route) {
-  const showRail = ["explore", "feed"].includes(route);
+  const wideFeed = ["explore", "feed"].includes(route);
   const links = [
     ["feed", t("Лента")],
     ["explore", t("Обзор")],
@@ -192,15 +193,11 @@ function shell(route) {
       <button id="ui-language" class="preference-button" aria-label="${language === "ru" ? "Switch to English" : t("Переключить на русский")}" title="Русский / English">${language.toUpperCase()}</button>
       <details class="theme-picker"><summary id="ui-theme" class="preference-button" aria-label="${t("Тема")}" title="${t("Тема")}">${themeIcon(theme)}</summary>
       <div class="theme-options">${["light", "dark", "system"].map((value, index) => html`<button class="theme-option" data-theme-choice="${value}" aria-pressed="${theme === value}">${themeIcon(value)}${t(["Светлая", "Тёмная", "Системная"][index])}</button>`).join("")}</div></details>
-      </div><div class="header-actions">${me ? html`<a class="account-link" href="/app#profile/${me.id}" aria-label="${esc(me.username)}"><span class="avatar">${esc(me.username[0]?.toUpperCase())}</span><span>@${esc(me.username)}</span></a>` : ""}${session ? html`<a class="button compose" href="/app#new" aria-label="Написать историю">${icon("plus")}<span>Написать историю</span></a>` : t('<a class="button compose" href="/app#login">Войти в Круг</a>')}</div>
-      </div></header><div class="layout ${showRail ? "layout-feed" : ""}">
+      </div><div class="header-actions">${me ? html`<a class="account-link" href="/app#profile/${me.id}" aria-label="${esc(me.username)}"><span class="avatar">${esc(me.username[0]?.toUpperCase())}</span><span>@${esc(me.username)}</span></a>` : ""}${session ? html`<a class="button compose" href="/app#new" aria-label="Создать пост">${icon("plus")}<span>Создать пост</span></a>` : t('<a class="button compose" href="/app#login">Войти в Круг</a>')}</div>
+      </div></header><div class="layout ${wideFeed ? "layout-feed" : ""}">
       <main class="main" id="main" tabindex="-1">
       <div class="loading" role="status">Загрузка…</div>
       </main>
-      ${showRail ? html`<aside class="context-rail" aria-label="Рядом с лентой">
-      <section class="rail-section"><h2>Авторы в этой ленте</h2><div id="feed-authors" class="rail-authors"><span class="rail-empty">Авторы появятся здесь вместе с историями.</span></div></section>
-      <section class="rail-section rail-writing"><span class="rail-mark" aria-hidden="true"></span><h2>Есть мысль?</h2><p>Начните с черновика. Публикуйте, когда будете готовы.</p><a class="text-button" href="/app#${session ? "new" : "register"}">${icon("plus")} Написать историю</a></section>
-      </aside>` : ""}
       </div>`;
   document.querySelector("#ui-language").addEventListener("click", async (event) => {
     const control = event.currentTarget;
@@ -298,7 +295,7 @@ function input(name, label, type = "text", attrs = "") {
 }
 function photoMarkup(post, cls = "") {
   return post.image_url
-    ? html`<img class="post-photo ${cls}" data-photo="${post.id}" alt="Фото к публикации «${esc(post.title)}»" loading="lazy">`
+    ? html`<img class="post-photo ${cls}" data-photo="${post.id}" alt="${post.title ? t("Фото к публикации «") + esc(post.title) + "»" : t("Фото к публикации")}" loading="lazy">`
     : "";
 }
 async function hydratePhotos(root, stamp) {
@@ -326,20 +323,21 @@ async function hydratePhotos(root, stamp) {
 }
 function postCard(post, author) {
   const username = post.author_username || author || me?.username || t("Автор");
-  return html`<article class="post-card ${post.image_url ? "with-photo" : ""}">
+  return html`<article class="post-card ${post.image_url ? "with-photo" : ""}"><div class="post-card-inner">
       <div class="post-meta">
       <a class="avatar" href="/app#profile/${post.author_id}" aria-label="Профиль ${esc(username)}">${esc(username[0]?.toUpperCase())}</a>
       <a class="author" href="/app#profile/${post.author_id}">${esc(username)}</a>
       <span>· ${date(post.created_at)}</span>${!post.is_published ? t('<span class="badge">Черновик</span>') : ""}</div>
-      <div class="post-content"><div class="post-copy"><a class="post-title" href="/app#post/${post.id}">${esc(post.title)}</a>
-      <p class="post-excerpt">${esc(post.content.slice(0, 260))}${post.content.length > 260 ? "…" : ""}</p></div>${photoMarkup(post)}</div><div class="toolbar">
-      <button class="reaction" data-like="${post.id}" disabled>${icon("heart")} ${t("Загрузка…")}</button><a class="discussion-link" href="/app#post/${post.id}?comments=1">${icon("comment")} Комментарии</a><a class="text-button read-story" href="/app#post/${post.id}">${post.content.length > 260 ? t("Читать дальше") : t("Читать историю")}${icon("arrow")}</a>${me?.id === post.author_id ? html`<a class="text-button" href="/app#edit/${post.id}">Редактировать</a>` : ""}</div>
-      </article>`;
+      <div class="post-content">${post.image_url ? html`<a class="post-media" href="/app#post/${post.id}">${photoMarkup(post)}</a>` : ""}<div class="post-copy">${post.title ? html`<a class="post-title" href="/app#post/${post.id}">${esc(post.title)}</a>` : ""}
+      <a class="post-excerpt" href="/app#post/${post.id}">${esc(post.content.slice(0, 260))}${post.content.length > 260 ? "…" : ""}</a></div></div><div class="toolbar">
+      <button class="reaction" data-like="${post.id}" disabled>${icon("heart")} ${t("Загрузка…")}</button><a class="discussion-link" href="/app#post/${post.id}?comments=1">${icon("comment")} Комментарии</a>${post.content.length > 260 ? html`<a class="text-button read-story" href="/app#post/${post.id}">Читать дальше${icon("arrow")}</a>` : ""}${me?.id === post.author_id ? html`<a class="text-button" href="/app#edit/${post.id}">Редактировать</a>` : ""}</div>
+      </div></article>`;
 }
 function bindLike(button, id, likes) {
   function update(result) {
     likes = result;
-    button.innerHTML = html`${icon("heart")} ${likes.count} · ${likes.liked ? t("Нравится") : t("Поддержать")}`;
+    button.innerHTML = html`${icon("heart")} ${likes.count}<span class="reaction-label"> · ${likes.liked ? t("Нравится") : t("Поддержать")}</span>`;
+    button.setAttribute("aria-label", `${likes.count} · ${likes.liked ? t("Нравится") : t("Поддержать")}`);
     button.className = "reaction" + (likes.liked ? " liked" : "");
     button.setAttribute("aria-pressed", String(likes.liked));
   }
@@ -386,14 +384,27 @@ async function paged(root, path, itemHTML, stamp, blank) {
     const page = await api(
       path +
         (path.includes("?") ? "&" : "?") +
-        "limit=12" +
+        "limit=24" +
         (cursor ? "&cursor=" + encodeURIComponent(cursor) : ""),
     );
     if (stamp !== generation) return;
     cursor = page.next_cursor;
     list.insertAdjacentHTML("beforeend", page.items.map(itemHTML).join(""));
     if (!list.childElementCount) list.innerHTML = blank;
-    updateFeedAuthors(list);
+    if (list.querySelector(".post-card")) {
+      list.className = "post-grid";
+      // Observe intrinsic card content, never the grid item whose span we change.
+      postGridObserver ||= new ResizeObserver((entries) => {
+        const styles = getComputedStyle(list);
+        const gap = parseFloat(styles.rowGap);
+        const row = parseFloat(styles.gridAutoRows);
+        for (const { target } of entries) {
+          const height = target.getBoundingClientRect().height;
+          target.parentElement.style.gridRowEnd = `span ${Math.ceil((height + gap) / (row + gap))}`;
+        }
+      });
+      list.querySelectorAll(".post-card-inner").forEach((card) => postGridObserver.observe(card));
+    }
     more.hidden = !page.has_more;
     more.disabled = false;
     hydratePhotos(list, stamp);
@@ -401,24 +412,6 @@ async function paged(root, path, itemHTML, stamp, blank) {
   }
   actionButton(more, load);
   await load();
-}
-function updateFeedAuthors(list) {
-  const panel = document.querySelector("#feed-authors");
-  if (!panel) return;
-  const seen = new Set();
-  panel.replaceChildren();
-  for (const author of list.querySelectorAll(".post-meta a.author")) {
-    const href = author.getAttribute("href");
-    if (seen.has(href) || href === "/app#profile/" + me?.id) continue;
-    seen.add(href);
-    const link = document.createElement("a");
-    link.className = "rail-author";
-    link.href = href;
-    link.innerHTML = `<span class="avatar">${esc(author.textContent[0]?.toUpperCase())}</span><span>${esc(author.textContent)}</span>`;
-    panel.append(link);
-    if (seen.size === 6) break;
-  }
-  if (!panel.childElementCount) panel.innerHTML = html`<span class="rail-empty">Авторы появятся здесь вместе с историями.</span>`;
 }
 async function authScreen(root, route, stamp) {
   const register = route === "register",
@@ -508,7 +501,7 @@ async function listing(root, route, query, stamp) {
       feed
         ? t("Лента")
         : own
-          ? t("Мои истории")
+          ? t("Мои посты")
           : t("Обзор"),
       feed
         ? t("Новые публикации авторов, на которых вы подписаны.")
@@ -538,7 +531,7 @@ async function listing(root, route, query, stamp) {
       <a href="/app#posts" class="${!filter ? "active" : ""}">Все</a>
       <a href="/app#posts?filter=true" class="${filter === "true" ? "active" : ""}">Опубликованные</a>
       <a href="/app#posts?filter=false" class="${filter === "false" ? "active" : ""}">Черновики</a>
-      <a href="/app#new">${icon("plus")} Новая история</a>
+      <a href="/app#new">${icon("plus")} Новый пост</a>
       </div>`
       : "");
   if (!feed)
@@ -575,7 +568,7 @@ async function listing(root, route, query, stamp) {
         : feed
           ? t("Откройте обзор и подпишитесь на интересных авторов.")
           : t("Новые истории появятся здесь."),
-      html`<a class="button" href="/app#${feed ? "explore" : session ? "new" : "register"}">${feed ? t("Найти авторов") : t("Написать историю")}</a>`,
+      html`<a class="button" href="/app#${feed ? "explore" : session ? "new" : "register"}">${feed ? t("Найти авторов") : t("Создать пост")}</a>`,
     ),
   );
 }
@@ -662,8 +655,8 @@ async function editorScreen(root, id, stamp) {
   if (stamp !== generation) return;
   if (post && post.author_id !== me.id)
     throw new Error(t("Редактировать публикацию может только её автор."));
-  root.innerHTML = html`<a class="back" href="/app#${post ? "post/" + id : "posts"}">← Назад</a>${heading(t("Творческая пауза"), post ? t("Продолжить историю") : t("О чём ваша история?"), t("Пишите просто. Иногда одной мысли достаточно."))}<div class="card">
-      <form class="form">${input("title", t("Заголовок"), "text", t('required maxlength="200" placeholder="Дайте истории название"'))}<label class="field">Текст<textarea class="editor" name="content" required placeholder="Начните здесь…">
+  root.innerHTML = html`<a class="back" href="/app#${post ? "post/" + id : "posts"}">← Назад</a>${heading(t("Творческая пауза"), post ? t("Редактировать пост") : t("Новый пост"), t("Пишите просто. Иногда одной мысли достаточно."))}<div class="card">
+      <form class="form">${input("title", t("Заголовок · необязательно"), "text", t('maxlength="200" placeholder="Заголовок — по желанию"'))}<label class="field">Текст<textarea class="editor" name="content" required placeholder="Начните здесь…">
       </textarea>
       </label>
       <label class="field">Одно фото · необязательно<input name="image" type="file" accept="image/jpeg,image/png,image/webp">
@@ -672,7 +665,7 @@ async function editorScreen(root, id, stamp) {
       <div id="preview">${post ? photoMarkup(post) : ""}</div>${post?.image_url ? t('<label class="checkbox"><input type="checkbox" name="remove_image">Удалить текущее фото</label>') : ""}<label class="checkbox">
       <input type="checkbox" name="published" ${post?.is_published ? "checked" : ""}>Опубликовать для всех</label>
       <span class="hint">Если не отмечено, запись остаётся личным черновиком.</span>
-      <button>${post ? t("Сохранить изменения") : t("Сохранить историю")}</button>
+      <button>${post ? t("Сохранить изменения") : t("Сохранить пост")}</button>
       <span class="hint" id="save-status" role="status">
       </span>
       </form>
@@ -742,7 +735,7 @@ async function editorScreen(root, id, stamp) {
         method: "PUT",
         body: { is_published: true },
       });
-    toast(t("История сохранена."));
+    toast(t("Пост сохранён."));
     go("post/" + post.id);
   });
 }
@@ -760,7 +753,7 @@ async function postScreen(root, id, stamp) {
       <a class="avatar" href="/app#profile/${author.id}">${esc(author.username[0].toUpperCase())}</a>
       <a class="author" href="/app#profile/${author.id}">${esc(author.username)}</a>
       <span>· ${date(post.created_at)}</span>${!post.is_published ? t('<span class="badge">Личный черновик</span>') : ""}</div>
-      <h1 class="article-title">${esc(post.title)}</h1>${photoMarkup(post, "article-photo")}<div class="article-body">${esc(post.content)}</div>
+      <h1 class="${post.title ? "article-title" : "sr-only"}">${post.title ? esc(post.title) : t("Публикация")}</h1>${photoMarkup(post, "article-photo")}<div class="article-body">${esc(post.content)}</div>
       <div class="toolbar">
       <button id="like" class="${likes.liked ? "liked" : "secondary"}" aria-pressed="${likes.liked}">${icon("heart")} ${likes.count} · ${likes.liked ? t("Нравится") : t("Поддержать")}</button>
       <span class="spacer">
@@ -771,7 +764,7 @@ async function postScreen(root, id, stamp) {
           : ""
       }</div>
       <section class="comments" id="discussion">
-      <h2>Разговор под историей</h2>${me ? t('<form class="form"><label class="field">Ваш комментарий<textarea name="content" required maxlength="2000" placeholder="Поделитесь мыслью…"></textarea></label><button>Отправить</button></form>') : t('<p class="intro"><a class="text-button" href="/app#login">Войдите</a>, чтобы присоединиться к разговору.</p>')}<div id="comments">
+      <h2>Комментарии</h2>${me ? t('<form class="form"><label class="field">Ваш комментарий<textarea name="content" required maxlength="2000" placeholder="Поделитесь мыслью…"></textarea></label><button>Отправить</button></form>') : t('<p class="intro"><a class="text-button" href="/app#login">Войдите</a>, чтобы присоединиться к разговору.</p>')}<div id="comments">
       </div>
       </section></article>`;
   const photosReady = hydratePhotos(root, stamp);
@@ -916,6 +909,8 @@ async function render(options = {}) {
   const scroll = window.scrollY;
   const fields = options.preserve ? [...app.querySelectorAll("#main input, #main textarea, #main select")].map((el) => ({ name: el.name, value: el.value, checked: el.checked, files: el.files, form: [...app.querySelectorAll("#main form")].indexOf(el.form) })) : [];
   const stamp = ++generation;
+  postGridObserver?.disconnect();
+  postGridObserver = null;
   objectURLs.forEach(URL.revokeObjectURL);
   objectURLs = [];
   const special = ["/verify-email", "/reset-password"].includes(

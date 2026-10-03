@@ -143,23 +143,34 @@ starts in the cold graphite dark theme with a blue accent. The native frontend
 uses the system sans-serif font for headings, reading and controls. The sticky header
 compacts on downward scrolling and expands upward; controls stay in the same DOM
 and reduced-motion disables transitions. The feed shell uses
-`min(calc(100% - 80px), 1600px)` with a 288px context rail and a 48–80px gap;
-below 1200px the rail is hidden. Mobile uses 20px side padding and bottom-navigation
-clearance. Images retain their proportions below text at every width. Header
+`min(calc(100% - 64px), 3600px)` without a context rail. Listings use a responsive
+CSS grid with 350px minimum columns, 8px automatic rows and 24px gaps (16px on
+mobile). ResizeObserver measures intrinsic `.post-card-inner` height to update
+outer card spans, including after image loads and reaction changes; it disconnects
+before each screen render. Default grid row flow uses the response sequence;
+keyboard and source order retain it, while varied card heights do not create uniform
+visual rows. Mobile uses one column,
+20px side padding and bottom-navigation clearance. Listing cards place proportional
+photos before optional titles and text; full posts retain heading/photo/text order.
+Header
 expanded/compact heights are 92/72px on desktop, 128/112px from 651–1399px,
 and 120/104px on mobile. From 651–1000px, account/compose icons retain accessible
 names and navigation labels use 12px type. Search labels remain accessible while
 visually hidden. [DESIGN.md](../DESIGN.md) records the current shared visual system.
 Likes in listing
-cards load through the existing per-post API (up to 12 requests per page); failed
+cards load through the existing per-post API (up to 24 requests per page); failed
 loads offer retry without showing an invented count. The shared like control
 also serves the full post. Comments links open discussion inside the post via
 `?comments=1`. RU/EN switches language; the theme icon opens labelled Light, Dark
 and System buttons.
-Desktop discovery and feed layouts show up to
-six distinct other authors from loaded stories, without extra API requests; this
-context column is hidden below 1200px. Apply migration `a75e9b024138`
+Apply migration `a75e9b024138`
 before running code that reads `users.language`; existing rows remain null.
+Optional post titles need no new migration: the existing non-null string column
+accepts an empty string. Create defaults an omitted title to empty; update omission
+preserves it and an empty string clears it. Explicit nulls are rejected, and content
+remains required and nonempty. Publication emails fall back to 80 characters of
+whitespace-normalized content when a title is empty. The native frontend requests
+24 items per page and appends the next page only through Load more.
 
 Run `tests/test_locale.py` alongside account/email/migration tests, and use the
 browser smoke for language and theme controls on desktop/mobile. These commands
