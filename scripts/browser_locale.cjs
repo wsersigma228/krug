@@ -147,7 +147,7 @@ async function main() {
     await page.waitForURL(/#post\/\d+$/);
     const untitledId = new URL(page.url()).hash.split('/')[1];
     assert.equal((await request('/posts/' + untitledId)).title, '');
-    assert(await page.locator('h1.sr-only').count(), 'Untitled posts have an accessible heading');
+    await page.locator('h1.sr-only').waitFor({ state: 'attached' });
     await request('/posts', 'POST', { title: 'Synthetic text-only story', content: 'A text-first feed should work with and without photographs. This temporary post is part of the browser verification and will be removed with the test account.', is_published: true });
     otherUser = await request('/users', 'POST', { username: username + '_writer', password });
     const otherTokens = await request('/login', 'POST', { username: otherUser.username, password });
@@ -157,7 +157,9 @@ async function main() {
       await p.goto(base + '/app#explore');
       await p.reload();
       await p.getByRole('link', { name: title, exact: true }).waitFor();
-      await p.waitForFunction(() => document.querySelector('.post-photo')?.naturalWidth > 0);
+      for (const image of await p.locator('.post-photo').all()) await image.scrollIntoViewIfNeeded();
+      await p.waitForFunction(() => [...document.querySelectorAll('.post-photo')].every(image => image.naturalWidth > 0));
+      await p.evaluate(() => window.scrollTo(0, 0));
       await p.waitForFunction(() => !document.querySelector('#main[aria-busy=true]') && !document.querySelector('#toast.visible'));
       assert.equal(await p.locator('.post-card').filter({ hasText: 'A post without a title, created through the editor.' }).locator('.post-title').count(), 0);
       for (const selected of ['light', 'dark']) {
@@ -186,7 +188,9 @@ async function main() {
     await page.waitForFunction(() => document.querySelectorAll('.post-card').length > 24);
     const ids = await page.locator('[data-like]').evaluateAll(buttons => buttons.map(button => button.dataset.like));
     assert.equal(new Set(ids).size, ids.length, 'Pagination must not duplicate posts');
+    for (const image of await page.locator('.post-photo').all()) await image.scrollIntoViewIfNeeded();
     await page.waitForFunction(() => [...document.querySelectorAll('.post-photo')].every(image => image.naturalWidth > 0));
+    await page.evaluate(() => window.scrollTo(0, 0));
     await page.setViewportSize({ width: 1920, height: 1080 });
     await noOverflow(page);
     for (const width of [651, 760, 1024, 1399, 1440]) {
