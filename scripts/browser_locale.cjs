@@ -1,3 +1,13 @@
+async function loadPhotos(page) {
+  for (const image of await page.locator('.post-photo').all()) {
+    const id = await image.getAttribute('data-photo');
+    await page.waitForFunction(id => document.querySelector('[data-photo="' + id + '"]')?.hasAttribute('src'), id);
+    await image.scrollIntoViewIfNeeded();
+    await page.waitForFunction(id => document.querySelector('[data-photo="' + id + '"]')?.naturalWidth > 0, id);
+  }
+  await page.evaluate(() => window.scrollTo(0, 0));
+}
+
 async function photoViewer(page, outputFile) {
   const opener = page.locator('.post-media:not(:disabled)').first();
   await opener.waitFor();
@@ -17,7 +27,11 @@ async function photoViewer(page, outputFile) {
       close.left >= 0 && close.right <= innerWidth && close.top >= 0 && close.bottom <= innerHeight;
   }), 'Viewer image and close control fit, background is locked, focus is inside');
   await page.keyboard.press('Tab');
-  assert(await page.evaluate(() => document.querySelector('.media-viewer').contains(document.activeElement)), 'Modal traps keyboard focus');
+  // Native dialogs allow focus into browser chrome, never the inert app behind them.
+  assert(await page.evaluate(() => document.querySelector('.media-viewer').matches(':modal') &&
+    (document.activeElement === document.body || document.querySelector('.media-viewer').contains(document.activeElement))), 'Tab cannot reach background controls');
+  await page.keyboard.press('Shift+Tab');
+  assert(await page.evaluate(() => document.querySelector('.media-viewer').contains(document.activeElement)), 'Keyboard focus returns into the modal');
   if (outputFile) await page.screenshot({ path: outputFile });
   await page.keyboard.press('Escape');
   await page.locator('.media-viewer').waitFor({ state: 'detached' });
@@ -192,9 +206,7 @@ async function main() {
       await p.goto(base + '/app#explore');
       await p.reload();
       await p.getByRole('link', { name: title, exact: true }).waitFor();
-      for (const image of await p.locator('.post-photo').all()) await image.scrollIntoViewIfNeeded();
-      await p.waitForFunction(() => [...document.querySelectorAll('.post-photo')].every(image => image.naturalWidth > 0));
-      await p.evaluate(() => window.scrollTo(0, 0));
+      await loadPhotos(p);
       await p.waitForFunction(() => !document.querySelector('#main[aria-busy=true]') && !document.querySelector('#toast.visible'));
       assert.equal(await p.locator('.post-card').filter({ hasText: 'A post without a title, created through the editor.' }).locator('.post-title').count(), 0);
       for (const selected of ['light', 'dark']) {
@@ -206,6 +218,13 @@ async function main() {
       }
     }
     await photoViewer(phone, path.join(output, 'viewer-mobile.png'));
+    await phone.emulateMedia({ reducedMotion: 'reduce' });
+    for (const viewport of [{ width: 320, height: 480 }, { width: 844, height: 390 }]) {
+      await phone.setViewportSize(viewport);
+      await photoViewer(phone);
+    }
+    await phone.setViewportSize({ width: 390, height: 844 });
+    await phone.emulateMedia({ reducedMotion: 'no-preference' });
     for (const status of [404, 200]) {
       await page.route('**/posts/' + draftId + '/image', route => route.fulfill({ status, contentType: 'image/jpeg', body: 'invalid photo bytes' }));
       await page.reload();
@@ -239,9 +258,7 @@ async function main() {
     await page.waitForFunction(() => document.querySelectorAll('.post-card').length > 24);
     const ids = await page.locator('[data-like]').evaluateAll(buttons => buttons.map(button => button.dataset.like));
     assert.equal(new Set(ids).size, ids.length, 'Pagination must not duplicate posts');
-    for (const image of await page.locator('.post-photo').all()) await image.scrollIntoViewIfNeeded();
-    await page.waitForFunction(() => [...document.querySelectorAll('.post-photo')].every(image => image.naturalWidth > 0));
-    await page.evaluate(() => window.scrollTo(0, 0));
+    await loadPhotos(page);
     await page.setViewportSize({ width: 1920, height: 1080 });
     await noOverflow(page);
     for (const width of [651, 760, 1024, 1399, 1440]) {
@@ -320,7 +337,7 @@ async function main() {
     await phone.getByRole('alert').waitFor();
     assert.equal(postedToken, 'replacement', 'A new link in the same tab must replace the previous token');
     assert.deepEqual(errors, []);
-    console.log('RU/EN defaults, account sync, refresh, drafts/photos, partial-save retry, comments/bio, link tokens, themes and 320/390/1440px layouts: OK');
+    console.log('Photo viewer keyboard/backdrop/focus/scroll/route/errors, reduced-motion, portrait/landscape; RU/EN, drafts/photos, themes, masonry/pagination and 320-3840px layouts: OK');
     console.log('Screenshots: ' + output);
   } finally {
     if (otherUser && otherHeaders) await request('/users/' + otherUser.id, 'DELETE', undefined, otherHeaders);
