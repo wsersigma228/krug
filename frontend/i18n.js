@@ -207,7 +207,7 @@ const english = {
   "Авторы в этой ленте": "Authors in this feed",
   "Авторы появятся здесь вместе с историями.": "Authors will appear here alongside their stories.",
   "Есть мысль?": "Something on your mind?",
-  "Начните с черновика. Добавьте фотографию или оставьте только слова — публикуйте, когда будете готовы.": "Start with a draft. Add a photo or keep it to words — publish when you are ready.",
+  "Начните с черновика. Публикуйте, когда будете готовы.": "Start with a draft. Publish when you are ready.",
 };
 const validLanguage = (value) => ["ru", "en"].includes(value);
 function storedPreference(key) {

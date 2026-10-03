@@ -43,6 +43,7 @@ const iconPaths = {
   settings:
     '<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',
+  arrow: '<path d="M5 12h14m-5-5 5 5-5 5"/>',
   heart: '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/>',
   comment: '<path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5H4l-2 2V11.5a9.5 9.5 0 0 1 19 0Z"/>',
 };
@@ -198,7 +199,7 @@ function shell(route) {
       </main>
       ${showRail ? html`<aside class="context-rail" aria-label="Рядом с лентой">
       <section class="rail-section"><h2>Авторы в этой ленте</h2><div id="feed-authors" class="rail-authors"><span class="rail-empty">Авторы появятся здесь вместе с историями.</span></div></section>
-      <section class="rail-section"><h2>Есть мысль?</h2><p>Начните с черновика. Добавьте фотографию или оставьте только слова — публикуйте, когда будете готовы.</p><a class="text-button" href="/app#${session ? "new" : "register"}">${icon("plus")} Написать историю</a></section>
+      <section class="rail-section rail-writing"><span class="rail-mark" aria-hidden="true"></span><h2>Есть мысль?</h2><p>Начните с черновика. Публикуйте, когда будете готовы.</p><a class="text-button" href="/app#${session ? "new" : "register"}">${icon("plus")} Написать историю</a></section>
       </aside>` : ""}
       </div>`;
   document.querySelector("#ui-language").addEventListener("click", async (event) => {
@@ -332,7 +333,7 @@ function postCard(post, author) {
       <span>· ${date(post.created_at)}</span>${!post.is_published ? t('<span class="badge">Черновик</span>') : ""}</div>
       <div class="post-content"><div class="post-copy"><a class="post-title" href="/app#post/${post.id}">${esc(post.title)}</a>
       <p class="post-excerpt">${esc(post.content.slice(0, 260))}${post.content.length > 260 ? "…" : ""}</p></div>${photoMarkup(post)}</div><div class="toolbar">
-      <button class="reaction" data-like="${post.id}" disabled>${icon("heart")} ${t("Загрузка…")}</button><a class="discussion-link" href="/app#post/${post.id}?comments=1">${icon("comment")} Комментарии</a><a class="text-button" href="/app#post/${post.id}">${post.content.length > 260 ? t("Читать дальше") : t("Читать историю")}</a>${me?.id === post.author_id ? html`<a class="text-button" href="/app#edit/${post.id}">Редактировать</a>` : ""}</div>
+      <button class="reaction" data-like="${post.id}" disabled>${icon("heart")} ${t("Загрузка…")}</button><a class="discussion-link" href="/app#post/${post.id}?comments=1">${icon("comment")} Комментарии</a><a class="text-button read-story" href="/app#post/${post.id}">${post.content.length > 260 ? t("Читать дальше") : t("Читать историю")}${icon("arrow")}</a>${me?.id === post.author_id ? html`<a class="text-button" href="/app#edit/${post.id}">Редактировать</a>` : ""}</div>
       </article>`;
 }
 function bindLike(button, id, likes) {
