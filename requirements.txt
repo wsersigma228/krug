@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+sqlalchemy[asyncio]
+alembic
+psycopg[binary]
+pydantic
+python-dotenv
+pwdlib[argon2,bcrypt]
+python-jose[cryptography]
+cryptography
+redis
+celery[redis]
+Pillow

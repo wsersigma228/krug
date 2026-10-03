@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+project_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$project_dir"
+if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
+    exec docker compose "$@"
+fi
+export PODMAN_COMPOSE_PROVIDER="$project_dir/.venv/bin/podman-compose"
+exec podman compose "$@"

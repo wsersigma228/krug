@@ -1,0 +1,83 @@
+x-app: &app
+  build: .
+  image: localhost/${COMPOSE_PROJECT_NAME:-krug}-blog:dev
+  restart: unless-stopped
+  env_file:
+    - .env
+  environment:
+    DATABASE_URL: postgresql+psycopg_async://${DB_USER:-myuser}:${DB_PASSWORD:-1234}@db:5432/${DB_NAME:-mydb}
+    REDIS_URL: redis://redis:6379/0
+  depends_on:
+    db:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+
+services:
+  db:
+    image: docker.io/library/postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-myuser}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-1234}
+      POSTGRES_DB: ${DB_NAME:-mydb}
+    ports:
+      - "127.0.0.1:${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-test-db.sql:/docker-entrypoint-initdb.d/init-test-db.sql:ro,Z
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: docker.io/library/redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  web:
+    <<: *app
+    environment:
+      DATABASE_URL: postgresql+psycopg_async://${DB_USER:-myuser}:${DB_PASSWORD:-1234}@db:5432/${DB_NAME:-mydb}
+      REDIS_URL: redis://redis:6379/0
+      MEDIA_ROOT: /app/media
+    volumes:
+      - post_media:/app/media
+    ports:
+      - "127.0.0.1:${APP_PORT:-8000}:8000"
+    command: sh -c "alembic upgrade head && exec uvicorn backend.main:api --host 0.0.0.0 --port 8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/')"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  worker:
+    <<: *app
+    depends_on:
+      web:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: celery -A backend.tasks.celery_app worker --loglevel=info --concurrency=2
+
+  beat:
+    <<: *app
+    depends_on:
+      web:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: celery -A backend.tasks.celery_app beat --loglevel=info --schedule=/tmp/celerybeat-schedule
+
+volumes:
+  postgres_data:
+  post_media:

@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# Run on the execution host; preserves database and photo volumes.
+set -euo pipefail
+# Compose exec/run must not consume a caller's piped deployment script.
+exec </dev/null
+cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.."
+compose=(-f docker-compose.yml)
+dependencies=(db redis)
+if [[ "${1:-}" == "--dev-mail" && "$#" == 1 ]]; then
+    compose+=(-f docker-compose.mailpit.yml)
+    dependencies+=(mailpit)
+elif [[ "$#" != 0 ]]; then
+    echo "Usage: ./scripts/start [--dev-mail]" >&2
+    exit 2
+fi
+if [[ ! -f .env ]]; then
+    echo "Copy .env.example to .env and set SECRET_KEY first." >&2
+    exit 1
+fi
+./scripts/compose "${compose[@]}" build web
+./scripts/compose "${compose[@]}" stop web worker beat
+./scripts/compose "${compose[@]}" up -d --no-deps "${dependencies[@]}"
+ready=false
+for attempt in {1..30}; do
+    if ./scripts/compose "${compose[@]}" exec -T db sh -c \
+        'pg_isready -h 127.0.0.1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"' >/dev/null 2>&1 && \
+       ./scripts/compose "${compose[@]}" exec -T redis redis-cli ping >/dev/null 2>&1; then
+        ready=true
+        break
+    fi
+    sleep 2
+done
+if [[ "$ready" != true ]]; then
+    echo "Database or Redis did not become ready; app services remain stopped." >&2
+    exit 1
+fi
+./scripts/compose "${compose[@]}" run -T --rm --no-deps web alembic upgrade head </dev/null
+./scripts/compose "${compose[@]}" up -d --no-deps --force-recreate web worker beat
+for attempt in {1..30}; do
+    if ./scripts/compose "${compose[@]}" exec -T web python -c \
+        "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=3)" >/dev/null 2>&1; then
+        ./scripts/compose "${compose[@]}" ps
+        echo "Application dependencies healthy; UI at /app, API at /docs."
+        exit 0
+    fi
+    sleep 2
+done
+./scripts/compose "${compose[@]}" logs --tail=40 web worker beat
+echo "Startup health check failed; volumes were preserved." >&2
+exit 1
