@@ -166,6 +166,7 @@ async function main() {
             a.right <= b.left + 1 || b.right <= a.left + 1 || a.bottom <= b.top + 1 || b.bottom <= a.top + 1));
       }), `Header controls overlap at ${width}px`);
     }
+    await page.setViewportSize({ width: 1920, height: 1080 });
     assert((await page.locator('.layout').boundingBox()).width >= 1500, 'Wide screens should use the desktop shell');
     await page.screenshot({ path: path.join(output, 'wide-dark.png'), fullPage: true });
     for (const width of [2560, 3840]) {

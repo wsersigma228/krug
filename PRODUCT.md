@@ -27,7 +27,9 @@ browser language and a cold graphite dark theme, with persistent manual override
 ## Brand Commitments
 
 The name is Круг / Krug. The approved direction combines a compact social feed
-closer to Twitter with simple sans-serif typography and care for photographs.
+with the quieter pace of an author journal, simple sans-serif typography and care
+for photographs. Simplicity and careful detail serve reading and writing;
+the interface remains a working application rather than a marketing page.
 The user rejected generic monochrome cards, pastel accents and narrow desktop
 feeds. Dark is the initial theme: cold graphite with a restrained saturated blue
 accent. Light and system themes remain available. Native sans-serif headings,
@@ -35,11 +37,14 @@ controls and reading text use the same system font.
 
 Labelled navigation and language/theme preferences stay reachable in the sticky
 header. Scrolling down compacts it; scrolling up expands it with restrained motion
-and a reduced-motion alternative. Wide feeds adapt through 2560/3840 CSS px, with
-a contextual rail of authors from loaded stories and photos below text at every
+and a reduced-motion alternative. Wide feeds use a centered shell capped at
+1600 CSS px, with a contextual rail of authors from loaded stories and photos below text at every
 width. Likes are available in listing cards; labelled comments links open discussion
 inside the full post. Text-only posts, forms and articles retain readable line lengths.
 Photos keep their proportions; mobile keeps one column and bottom navigation.
+At tablet widths, avatar and compose icons retain accessible names while reducing
+header crowding. The reading hierarchy distinguishes authors, story titles and
+dates without enclosing each story in a card.
 
 ## Evidence on Hand
 

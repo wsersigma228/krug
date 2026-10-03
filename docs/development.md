@@ -142,8 +142,15 @@ allow preferences to work for the current visit. Without a saved choice, the UI
 starts in the cold graphite dark theme with a blue accent. The native frontend
 uses the system sans-serif font for headings, reading and controls. The sticky header
 compacts on downward scrolling and expands upward; controls stay in the same DOM
-and reduced-motion disables transitions. Wide feed layouts use up to 2800 CSS px,
-with contained proportional images below text at every width. Likes in listing
+and reduced-motion disables transitions. The feed shell uses
+`min(calc(100% - 80px), 1600px)` with a 288px context rail and a 48–80px gap;
+below 1200px the rail is hidden. Mobile uses 20px side padding and bottom-navigation
+clearance. Images retain their proportions below text at every width. Header
+expanded/compact heights are 92/72px on desktop, 128/112px from 651–1399px,
+and 120/104px on mobile. From 651–1000px, account/compose icons retain accessible
+names and navigation labels use 12px type. Search labels remain accessible while
+visually hidden. [DESIGN.md](../DESIGN.md) records the current shared visual system.
+Likes in listing
 cards load through the existing per-post API (up to 12 requests per page); failed
 loads offer retry without showing an invented count. The shared like control
 also serves the full post. Comments links open discussion inside the post via

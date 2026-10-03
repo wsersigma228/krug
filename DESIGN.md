@@ -1,37 +1,37 @@
 ---
 name: Krug
-description: Compact social reading with cold graphite, blue actions and simple sans-serif typography.
+description: Quiet social reading with graphite surfaces, blue actions and native sans-serif typography.
 colors:
-  canvas-light: "#edf1f4"
+  canvas-light: "#f5f6f8"
   paper-light: "#ffffff"
-  text-light: "#172d3b"
-  muted-light: "#476071"
-  line-light: "#b9cbd7"
-  soft-light: "#dce7ee"
-  accent-light: "#17649b"
+  text-light: "#242932"
+  muted-light: "#596572"
+  line-light: "#dfe3e9"
+  soft-light: "#e9edf2"
+  accent-light: "#2368a4"
   on-accent-light: "#ffffff"
-  hover-light: "#105381"
-  canvas-dark: "#151c21"
-  paper-dark: "#1c252c"
-  text-dark: "#e6edf2"
-  muted-dark: "#a4b5c1"
-  line-dark: "#354651"
-  soft-dark: "#26343e"
-  accent-dark: "#246f9f"
+  hover-light: "#19578c"
+  canvas-dark: "#181c22"
+  paper-dark: "#22272f"
+  text-dark: "#eff2f6"
+  muted-dark: "#a4afbc"
+  line-dark: "#343c47"
+  soft-dark: "#2c3541"
+  accent-dark: "#2876bc"
   on-accent-dark: "#ffffff"
-  hover-dark: "#1e608b"
+  hover-dark: "#2266a5"
 typography:
   headline:
     fontFamily: 'ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif'
-    fontSize: "clamp(28px, 2vw, 36px)"
+    fontSize: "clamp(32px, 3vw, 46px)"
     fontWeight: 650
-    lineHeight: 1.25
+    lineHeight: 1.15
     letterSpacing: "-0.02em"
   title:
     fontFamily: 'ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif'
-    fontSize: "clamp(22px, 1.3vw, 28px)"
-    fontWeight: 650
-    lineHeight: 1.35
+    fontSize: "26px"
+    fontWeight: 600
+    lineHeight: 1.3
     letterSpacing: "-0.02em"
   section:
     fontFamily: 'ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif'
@@ -41,12 +41,12 @@ typography:
     letterSpacing: "-0.02em"
   body:
     fontFamily: 'ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif'
-    fontSize: "16px"
+    fontSize: "18px"
     fontWeight: 400
-    lineHeight: 1.8
+    lineHeight: 1.75
   excerpt:
     fontFamily: 'ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif'
-    fontSize: "clamp(15px, .85vw, 19px)"
+    fontSize: "17px"
     fontWeight: 400
     lineHeight: 1.65
   label:
@@ -55,13 +55,18 @@ typography:
     fontWeight: 600
   metadata:
     fontFamily: 'ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif'
-    fontSize: "12px"
+    fontSize: "13px"
+  author:
+    fontFamily: 'ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif'
+    fontSize: "14px"
+    fontWeight: 600
 rounded:
   text-control: "4px"
   badge: "5px"
   field: "8px"
   control: "9px"
-  photo: "10px"
+  feedback: "10px"
+  photo: "14px"
   card-mobile: "12px"
   card: "14px"
   circle: "50%"
@@ -123,7 +128,7 @@ components:
     padding: "24px"
   story-row:
     textColor: "{colors.text-light}"
-    padding: "24px 0"
+    padding: "32px 0"
 ---
 
 # Design System: Krug
@@ -132,7 +137,7 @@ components:
 
 **Creative North Star: "Compact social reading"**
 
-Krug combines a compact social feed with the quieter pace of an author journal. Cold graphite and a restrained saturated blue frame real stories; Native sans-serif titles keep the interface simple and familiar. Flat chronological rows, readable copy and proportional photographs replace the former monochrome card feed.
+Krug combines a compact social feed with the quieter pace of an author journal. Graphite surfaces and restrained blue actions frame stories; native sans-serif titles keep the interface familiar. Broad chronological rows, a clear type hierarchy and proportional photographs give user content room without turning the application into a marketing page.
 
 Dark is the initial theme; saved Light, Dark and System choices remain effective. Both themes share their geometry. The sticky header keeps the top-left wordmark, labelled navigation, language/theme preferences and account/write actions available while it compacts on downward scrolling and expands upward. Russian and English interface copy changes independently of user stories, names and biographies.
 
@@ -166,17 +171,17 @@ The live CSS variables `--canvas`, `--paper`, `--text`, `--muted`, `--line`, `--
 
 ## Typography
 
-**Font throughout:** the native sans-serif stack in the frontmatter. Headings use weight 650; font synthesis is disabled. No font download is required.
+**Font throughout:** the native sans-serif stack in the frontmatter. Page and section headings use weight 650; story titles and authors use 600. Font synthesis is disabled. No font download is required.
 
 ### Hierarchy
 
-- **Headline:** native sans-serif page heading, balanced wrapping and negative tracking; mobile overrides size to (27px). Route headings identify Feed or Discover instead of repeating the wordmark.
+- **Headline:** native sans-serif page heading, balanced wrapping and negative tracking; mobile overrides size to (34px). Route headings identify Feed or Discover instead of repeating the wordmark.
 - **Title:** native sans-serif story links; maximum line length (45ch), with mobile size (23px).
 - **Section:** native sans-serif section headings; mobile size (20px). Rail headings use (17px).
-- **Body:** full story copy preserves newlines, wraps long strings and stays within (70ch).
-- **Excerpt:** responsive feed previews use Text rather than Muted, preserve newlines and cap at (75ch).
-- **Label:** compact action controls; field labels use weight (550). Introductions use (14px), line-height (1.65) and maximum width (65ch).
-- **Metadata:** author/date rows wrap and use tabular numerals; mobile size (11px). Hints use (13px) and line-height (1.55).
+- **Body:** full story copy preserves newlines, wraps long strings and stays within (70ch); mobile size is (17px).
+- **Excerpt:** feed previews use Text rather than Muted, preserve newlines and cap at (75ch); mobile size is (16px).
+- **Label:** compact action controls; field labels use weight (550). Introductions use (16px), line-height (1.6) and maximum width (65ch), reducing to (15px) on mobile.
+- **Metadata:** date rows wrap and use tabular numerals; mobile size is (12px). Author names retain (14px) and weight (600), separating identity from the quieter date. Hints use (13px) and line-height (1.55).
 
 The native sans-serif wordmark uses (26px), weight (750) and tracking (-0.03em), reducing to (22px) on mobile and (20px) at the narrowest breakpoint. It is an identity treatment, not the page heading.
 
@@ -184,25 +189,25 @@ The native sans-serif wordmark uses (26px), weight (750) and tracking (-0.03em),
 
 ## Layout
 
-The desktop shell uses a centered width `min(92vw, 2800px)`. Feed and Discover pair a flexible story column with a contextual rail sized `clamp(260px, 19vw, 360px)` and gap `clamp(36px, 4vw, 120px)`. Other routes cap their width at (1040px). Page vertical padding is (28px) above and (80px) below; line-length limits remain independent of the broad container.
+The desktop shell uses a centered width `min(calc(100% - 80px), 1600px)`: (40px) on each side until the width cap takes over. Feed and Discover pair a flexible story column with a contextual rail sized (288px) and gap `clamp(48px, 5vw, 80px)`. Other routes cap their width at (1000px). Page vertical padding is (44px) above and (96px) below; line-length limits remain independent of the broad container.
 
 At (1199px) and below, the rail disappears and Feed/Discover become one column capped at (1100px). Photos remain below story copy at every width, aligned with its left edge, capped at (960px) wide and (540px) high without cropping. Text-only stories retain the same reading order and constrained line lengths.
 
-The sticky header reserves its expanded height in the layout while its inner surface compacts; controls and focused elements remain in the same DOM. Desktop expanded/compact minimum heights are (108px / 72px). From (651px) through (1499px), navigation occupies a second header row and heights become (152px / 124px). Through (1000px), account/write actions occupy a third row and heights become (202px / 174px). Header padding and minimum height transition with (280ms) using `cubic-bezier(.16, 1, .3, 1)`; tagline max-height uses the same motion and opacity uses (180ms ease-out). Below scroll position (80px) the header expands; direction changes of at least (12px) determine compact state beyond that point.
+The sticky header reserves its expanded height in the layout while its inner surface compacts; controls and focused elements remain in the same DOM. Desktop expanded/compact minimum heights are (92px / 72px). From (651px) through (1399px), navigation occupies a second header row and heights become (128px / 112px). Between (651px) and (1000px), the account becomes an avatar and the signed-in compose action becomes a (44px) icon control; accessible names remain present, and navigation uses (12px) labels. Header padding and minimum height transition with (280ms) using `cubic-bezier(.16, 1, .3, 1)`; tagline max-height uses the same motion and opacity uses (180ms ease-out). Below scroll position (80px) the header expands; direction changes of at least (12px) determine compact state beyond that point.
 
-At (650px) and below, the header uses two rows with expanded/compact heights (132px / 108px), and the tagline is hidden. Navigation becomes a fixed labelled bottom bar. Main content uses full width, side padding (16px) and bottom clearance `calc(100px + env(safe-area-inset-bottom))`. Search moves the language field to a second full-width row; ordinary fields use (16px) text while the compact language button uses (13px). Toasts clear the bottom navigation and safe area. At (360px) and below, header side padding becomes (10px).
+At (650px) and below, the header uses two rows with expanded/compact heights (120px / 104px), and the tagline is hidden. Navigation becomes a fixed labelled bottom bar. Main content uses full width, top padding (28px), side padding (20px) and bottom clearance `calc(100px + env(safe-area-inset-bottom))`. Search moves the language select to a second full-width row; ordinary fields use (16px) text while this select uses (13px). Search labels remain accessible while visually hidden. Toasts clear the bottom navigation and safe area. At (360px) and below, header side padding becomes (10px).
 
-Authentication forms cap at (490px). Metadata, tabs, statistics and action controls wrap. The context rail is sticky at (124px) on desktop, or (168px) within the intermediate header range.
+Authentication forms cap at (490px). Metadata, tabs, statistics and action controls wrap. The context rail is sticky at (124px) on desktop, or (148px) within the intermediate header range, with a one-pixel left divider and (28px) internal side spacing.
 
 ## Elevation & Depth
 
-The feed is flat: transparent story rows use bottom Line dividers, while forms/settings/authentication containers use Paper and one-pixel borders. The header and bottom navigation remain solid. The only box shadows belong to transient toasts: `0 8px 28px #172d3b1a` in light mode and `0 8px 28px #00000033` in dark mode.
+The feed is flat: transparent story rows use bottom Line dividers, while forms/settings/authentication containers use Paper and one-pixel borders. The header and bottom navigation remain solid. The only box shadows belong to transient toasts: `0 8px 28px #2429321a` in light mode and `0 8px 28px #00000033` in dark mode.
 
 **The Flat Surface Rule.** Separate resting content with cool surfaces and dividers; reserve the shipped shadow for transient toast feedback.
 
 ## Shapes
 
-Fields, tabs and mobile navigation use the field radius; primary controls use the control radius. Form/settings cards use the card radius, reduced on mobile. Story rows have no enclosing card silhouette. Photos and toasts share the photo radius. Status badges have the badge radius. Avatars are circular (32px), with a profile variant (72px). The top-left brand mark is a circular Accent outline (26px with 7px border; mobile 22px with 6px border). Interface SVG icons use (20px) dimensions, with a filled heart for liked state.
+Fields, tabs and mobile navigation use the field radius; primary controls use the control radius. Form/settings cards use the card radius, reduced on mobile. Story rows have no enclosing card silhouette. Photos use the photo radius; toasts and editor previews use the feedback radius. Status badges have the badge radius. Avatars are circular (32px), with a profile variant (72px). The top-left brand mark is a circular Accent outline (26px with 5px border; mobile 22px with 6px border). Interface SVG icons use (20px) dimensions, with a filled heart for liked state.
 
 ## Components
 
@@ -214,11 +219,13 @@ Transform/background transitions use (150ms ease-out). Fine-pointer hover avoids
 
 ### Cards / Containers
 
-Story rows carry a wrapping author/date row, title, excerpt, optional photo and a separate wrapping action toolbar. They use bottom dividers and padding (24px 0), reduced to (20px 0) on mobile. Form/settings cards use Paper, Line borders and padding (24px; 18px mobile). Authentication card padding is (28px desktop; 20px mobile). Empty states use a dashed Line border with centered copy and an action when available.
+Story rows carry a wrapping author/date row, title, excerpt, optional photo and a separate wrapping action toolbar. They use bottom dividers and padding (32px 0), reduced to (28px 0) on mobile. Form/settings cards use Paper, Line borders and padding (24px; 18px mobile). Authentication card padding is (28px desktop; 20px mobile). Empty states use a solid Line border, Paper background and card-radius corners with centered copy and an action when available.
 
 ### Inputs / Fields
 
 Native inputs, selects and resizable textareas use Paper/Text, a Line border and minimum height (44px). Placeholders use Muted at full opacity. Focus shifts the border to Accent while retaining the keyboard outline. Textareas have minimum height (110px), or (310px) in the story editor. Native checkboxes use Accent and (18px) dimensions; their labelled row remains at least (44px) tall.
+
+Search uses a quiet Paper field with an initially transparent border and an Accent focus border. Its visible hierarchy comes from the query, language select and submit action; labels and explanatory text remain available to assistive technology without adding a second visible label row.
 
 ### Navigation and tabs
 
@@ -240,6 +247,10 @@ Photos use automatic width and height, maximum width (100%), `object-fit: contai
 
 A RU/EN button shows the current language and names the target language for assistive technology. The theme icon opens a native details disclosure with labelled Light, Dark and System buttons, pressed state, Escape handling and focus return. Both controls remain reachable in every header state. Theme changes apply without replacing the screen; language changes preserve active form content and selected photos. Reduced-motion preference disables transitions and animations, including header motion, while retaining readable loading status.
 
+### Post interactions
+
+Listing cards place Like and labelled Comments together below the photo or text, before reading/edit actions. Likes use the existing API and show confirmed count/state; unavailable counts offer retry. The full post uses the same like control. Discussion lives inside the article below its action toolbar; comment metadata stays grouped and only delete moves to the far edge. Comments links scroll to discussion with clearance for the sticky header.
+
 ## Do's and Don'ts
 
 ### Do:
@@ -259,7 +270,3 @@ A RU/EN button shows the current language and names the target language for assi
 - **Don't** extend the toast shadow into resting story rows or add cinematic motion.
 
 Documentation is derived from the current frontend source. Temporary synthetic review content is verification evidence, not shipping imagery or product copy.
-
-## Post interactions
-
-Listing cards place Like and labelled Comments together below the photo or text, before reading/edit actions. Likes use the existing API and show confirmed count/state; unavailable counts offer retry. The full post uses the same like control. Discussion lives inside the article below its action toolbar; comment metadata stays grouped and only delete moves to the far edge. Comments links scroll to discussion with clearance for the sticky header.

@@ -33,7 +33,7 @@ async function main() {
     await p.getByRole('button', { name: 'Создать аккаунт' }).click();
     await p.waitForURL('**/app#explore');
     users.push(user);
-    await p.getByRole('heading', { name: 'Есть что рассказать' }).waitFor();
+    await p.getByRole('heading', { name: 'Обзор', exact: true }).waitFor();
     return user;
   }
   async function mailToken(user, subject) {

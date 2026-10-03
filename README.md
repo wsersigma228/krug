@@ -55,9 +55,10 @@ Project references: [product scope](PRODUCT.md) · [design system](DESIGN.md) ·
 This is a working project in development, with no production uptime or scale claim.
 
 <details>
-<summary>Preview: desktop and mobile</summary>
+<summary>Earlier preview: desktop and mobile</summary>
 
-Screenshots use fictional demo content.
+Screenshots use fictional demo content and predate the current visual refinement.
+The current layout and tokens are documented in [DESIGN.md](DESIGN.md).
 
 ![Krug desktop interface in dark mode](docs/images/desktop-dark.png)
 
@@ -77,8 +78,9 @@ is an independent PostgreSQL matching mode, not the interface language.
 
 Light, dark and system themes are available. The default uses cold graphite and a
 restrained blue accent; existing saved choices are respected. A compact social
-feed uses a simple native sans-serif font throughout. Wide layouts support
-2560/3840 CSS-pixel viewports, with proportional photos below text and a contextual
+feed uses a simple native sans-serif font throughout, with distinct author,
+title and date hierarchy. Wide layouts use a centered shell capped at 1600 CSS px,
+with proportional photos below text and a contextual
 column of authors from loaded stories. The sticky header compacts while scrolling
 down and expands while scrolling up, keeping navigation and preferences reachable;
 reduced-motion settings disable transitions. System follows the operating system's
@@ -87,6 +89,8 @@ the account. Preferences use localStorage; authentication uses per-tab sessionSt
 Like and unlike directly in the feed; the labelled Comments action opens the
 discussion inside the full post. RU/EN switches language; the theme icon opens
 Light, Dark and System choices. The frontend has no build step or third-party runtime.
+Tablet account and compose actions use compact icons with accessible names.
+Search keeps its labels available to assistive technology while visually hiding them.
 
 ## Quick start on a Linux execution host
 
