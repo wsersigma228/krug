@@ -379,6 +379,10 @@ an empty string clears it. Existing titled posts remain unchanged. This uses the
 existing database column and requires no new migration. Listing pages request
 24 items at a time; Load more fetches the next page, without automatic scroll fetching.
 
+Loaded photos open a proportional modal viewer. Close it with the close button,
+Escape or the backdrop; focus returns to the photo button. Unavailable photos show
+status text instead of an active opener. Video remains deferred.
+
 Every post may have one photo. `PUT /posts/{id}/image` accepts the **raw file body**
 (not multipart), at most 8 MiB: JPEG, PNG or still WebP, at most 16 megapixels.
 The file is decoded, oriented, stripped of metadata, resized to fit 2560 × 2560,

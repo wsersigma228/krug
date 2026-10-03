@@ -90,3 +90,87 @@ async def test_missing_photo_returns_404(client, accounts, temporary_media):
     for path in temporary_media.iterdir():
         path.unlink()
     assert (await client.get(url)).status_code == 404
+
+
+async def test_photo_orientation_applied_and_private_metadata_removed(client, accounts):
+    author, _ = accounts
+    post = (await client.post("/posts", headers=author["headers"], json={"content": "Photo"})).json()
+    url = f"/posts/{post['id']}/image"
+    source = Image.new("RGB", (40, 20), "red")
+    source.paste("blue", (20, 0, 40, 20))
+    exif = Image.Exif()
+    exif[274] = 6  # Camera orientation: rotate 90 degrees clockwise.
+    exif[315] = "private-camera-owner"
+    data = BytesIO()
+    source.save(data, format="JPEG", exif=exif)
+    payload = b"appended-private-payload"
+    uploaded = await client.put(url, headers=author["headers"], content=data.getvalue() + payload)
+    assert uploaded.status_code == 200, uploaded.text
+    response = await client.get(url, headers=author["headers"])
+    assert response.status_code == 200, response.text
+    assert payload not in response.content
+    assert b"private-camera-owner" not in response.content
+    assert response.content.endswith(b"\xff\xd9")
+    with Image.open(BytesIO(response.content)) as decoded:
+        assert decoded.size == (20, 40)
+        assert not decoded.getexif()
+        top, bottom = decoded.getpixel((10, 5)), decoded.getpixel((10, 35))
+        assert top[0] > top[2] and bottom[2] > bottom[0]
+
+
+async def test_large_allowed_photo_keeps_aspect_ratio_when_downsampled(client, accounts):
+    author, _ = accounts
+    post = (await client.post("/posts", headers=author["headers"], json={"content": "Large photo"})).json()
+    url = f"/posts/{post['id']}/image"
+    response = await client.put(url, headers=author["headers"], content=photo(size=(3200, 1600)))
+    assert response.status_code == 200, response.text
+    response = await client.get(url, headers=author["headers"])
+    assert response.status_code == 200, response.text
+    with Image.open(BytesIO(response.content)) as decoded:
+        assert decoded.size == (2560, 1280)
+
+
+async def test_rejected_replacements_keep_existing_photo(client, accounts, temporary_media, monkeypatch):
+    author, _ = accounts
+    headers = author["headers"]
+    post = (await client.post("/posts", headers=headers, json={"content": "Photo"})).json()
+    url = f"/posts/{post['id']}/image"
+    uploaded = await client.put(url, headers=headers, content=photo())
+    assert uploaded.status_code == 200, uploaded.text
+    original_url = uploaded.json()["image_url"]
+    original_file, = temporary_media.iterdir()
+    original_bytes = original_file.read_bytes()
+    for data, status in ((b"invalid-image", 422), (photo()[:24], 422), (photo(), 413)):
+        if status == 413:
+            monkeypatch.setattr("backend.routes.media.MAX_UPLOAD_BYTES", 30)
+        response = await client.put(url, headers=headers, content=data)
+        assert response.status_code == status, response.text
+        assert (await client.get(f"/posts/{post['id']}", headers=headers)).json()["image_url"] == original_url
+        assert list(temporary_media.iterdir()) == [original_file]
+        assert original_file.read_bytes() == original_bytes
+        assert (await client.get(url, headers=headers)).content == original_bytes
+
+
+async def test_failed_photo_commit_removes_only_new_file(client, accounts, db, temporary_media, monkeypatch):
+    author, _ = accounts
+    headers = author["headers"]
+    post = (await client.post("/posts", headers=headers, json={"content": "Photo"})).json()
+    url = f"/posts/{post['id']}/image"
+    uploaded = await client.put(url, headers=headers, content=photo())
+    assert uploaded.status_code == 200, uploaded.text
+    original_url = uploaded.json()["image_url"]
+    original_file, = temporary_media.iterdir()
+    original_bytes = original_file.read_bytes()
+
+    async def fail_commit():
+        raise RuntimeError("injected database commit failure")
+
+    with monkeypatch.context() as patch:
+        patch.setattr(db, "commit", fail_commit)
+        with pytest.raises(RuntimeError, match="injected database commit failure"):
+            await client.put(url, headers=headers, content=photo(size=(64, 48)))
+    await db.rollback()
+    assert list(temporary_media.iterdir()) == [original_file]
+    assert original_file.read_bytes() == original_bytes
+    assert (await client.get(f"/posts/{post['id']}", headers=headers)).json()["image_url"] == original_url
+    assert (await client.get(url, headers=headers)).content == original_bytes

@@ -1,3 +1,36 @@
+async function photoViewer(page, outputFile) {
+  const opener = page.locator('.post-media:not(:disabled)').first();
+  await opener.waitFor();
+  const expected = await opener.locator('img').getAttribute('src');
+  await opener.focus();
+  await opener.press('Enter');
+  await page.locator('.media-viewer[open]').waitFor();
+  await page.waitForFunction(() => document.querySelector('.media-viewer img')?.naturalWidth > 0);
+  assert.equal(await page.locator('.media-viewer img').getAttribute('src'), expected);
+  assert(await page.evaluate(() => {
+    const dialog = document.querySelector('.media-viewer');
+    const image = dialog.querySelector('img').getBoundingClientRect();
+    const close = dialog.querySelector('button').getBoundingClientRect();
+    return getComputedStyle(document.body).overflow === 'hidden' &&
+      dialog.contains(document.activeElement) && image.width > 0 && image.height > 0 &&
+      image.left >= 0 && image.right <= innerWidth && image.top >= 0 && image.bottom <= innerHeight &&
+      close.left >= 0 && close.right <= innerWidth && close.top >= 0 && close.bottom <= innerHeight;
+  }), 'Viewer image and close control fit, background is locked, focus is inside');
+  await page.keyboard.press('Tab');
+  assert(await page.evaluate(() => document.querySelector('.media-viewer').contains(document.activeElement)), 'Modal traps keyboard focus');
+  if (outputFile) await page.screenshot({ path: outputFile });
+  await page.keyboard.press('Escape');
+  await page.locator('.media-viewer').waitFor({ state: 'detached' });
+  assert(await opener.evaluate(button => document.activeElement === button), 'Closing returns focus to the photo');
+  assert(await page.evaluate(() => getComputedStyle(document.body).overflow !== 'hidden'), 'Closing restores scrolling');
+  await opener.click();
+  await page.locator('.media-close').click();
+  await page.locator('.media-viewer').waitFor({ state: 'detached' });
+  await opener.click();
+  await page.mouse.click(2, 2);
+  await page.locator('.media-viewer').waitFor({ state: 'detached' });
+}
+
 async function noCardOverlap(page) {
   await page.waitForFunction(() => {
     const boxes = [...document.querySelectorAll('.post-card-inner')].map(card => card.getBoundingClientRect());
@@ -119,6 +152,8 @@ async function main() {
     await page.waitForURL('**/app#post/' + draftId);
     await page.locator('.article-body').waitFor();
     await page.waitForFunction(() => !document.querySelector('#main[aria-busy=true]'));
+    await page.waitForFunction(() => document.querySelector('.article-photo')?.naturalWidth > 0);
+    await photoViewer(page, path.join(output, 'viewer-desktop.png'));
     await page.locator('textarea[name=content]').fill('Несохранённый комментарий');
     await preference(page, '#ui-language', 'ru');
     assert.equal(await page.locator('textarea[name=content]').inputValue(), 'Несохранённый комментарий');
@@ -170,6 +205,22 @@ async function main() {
         await p.screenshot({ path: path.join(output, `${label}-${selected}.png`), fullPage: true });
       }
     }
+    await photoViewer(phone, path.join(output, 'viewer-mobile.png'));
+    for (const status of [404, 200]) {
+      await page.route('**/posts/' + draftId + '/image', route => route.fulfill({ status, contentType: 'image/jpeg', body: 'invalid photo bytes' }));
+      await page.reload();
+      const failed = page.locator('.post-card').filter({ hasText: title });
+      await failed.getByText('Photo currently unavailable.', { exact: true }).waitFor();
+      assert.equal(await failed.locator('.post-media').count(), 0, 'Unavailable photos do not leave an empty viewer button');
+      await page.unroute('**/posts/' + draftId + '/image');
+    }
+    await page.reload();
+    await page.waitForFunction(() => document.querySelector('.post-photo')?.naturalWidth > 0);
+    await page.locator('.post-media:not(:disabled)').first().click();
+    await page.locator('.media-viewer[open]').waitFor();
+    await page.goto(base + '/app#settings');
+    await page.locator('.media-viewer').waitFor({ state: 'detached' });
+    assert(await page.evaluate(() => !document.body.classList.contains('media-open')), 'Route changes release the viewer and scroll lock');
     for (let index = 0; index < 26; index++) {
       const post = await request('/posts', 'POST', {
         ...(index % 3 === 0 ? { title: 'Grid check ' + index } : {}),
@@ -198,7 +249,7 @@ async function main() {
       await noOverflow(page);
       await noCardOverlap(page);
       assert(await page.locator('.topbar-inner').evaluate(header => {
-        const children = [...header.children].map(el => el.getBoundingClientRect());
+        const children = [...header.querySelectorAll('.brand-block, .nav, .preferences, .header-actions')].map(el => el.getBoundingClientRect());
         const bounds = header.getBoundingClientRect();
         return children.every(rect => rect.left >= bounds.left && rect.right <= bounds.right + 1) &&
           children.every((a, i) => children.slice(i + 1).every(b =>
@@ -212,6 +263,8 @@ async function main() {
       await page.setViewportSize({ width, height: 1440 });
       await noOverflow(page);
       await noCardOverlap(page);
+      assert(await page.locator('.search').evaluate(search => Math.abs(search.getBoundingClientRect().width - search.closest('.main').getBoundingClientRect().width) < 2), 'Search spans the feed width');
+      assert(await page.locator('.topbar .nav').evaluate(nav => Math.abs((nav.getBoundingClientRect().left + nav.getBoundingClientRect().right) / 2 - innerWidth / 2) < 2), 'Desktop navigation is centered');
       const columns = await page.locator('.post-grid').evaluate(grid => getComputedStyle(grid).gridTemplateColumns.split(' ').length);
       assert(columns >= (width === 2560 ? 6 : 8), `The ${width}px feed needs more visible columns`);
       const photoLayout = await page.locator('.post-photo').first().evaluate(image => {

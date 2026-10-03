@@ -20,6 +20,7 @@ colors:
   accent-dark: "#2876bc"
   on-accent-dark: "#ffffff"
   hover-dark: "#2266a5"
+  viewer-backdrop: "#080c12e6"
 typography:
   headline:
     fontFamily: 'ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif'
@@ -127,6 +128,13 @@ components:
     textColor: "{colors.text-light}"
     rounded: "{rounded.card}"
     padding: "24px"
+  viewer-close:
+    backgroundColor: "{colors.paper-light}"
+    textColor: "{colors.text-light}"
+    rounded: "{rounded.control}"
+    padding: "10px"
+    width: "44px"
+    height: "44px"
   post-card:
     backgroundColor: "{colors.paper-light}"
     textColor: "{colors.text-light}"
@@ -167,6 +175,7 @@ The palette uses cool neutral surfaces with a saturated blue action accent; the 
 - **Muted:** metadata, introductions, hints and inactive navigation.
 - **Line:** one-pixel card borders, discussion dividers and secondary hover fill.
 - **Soft:** secondary controls, selected likes, avatar discs, badges, photo backdrop and mobile active navigation.
+- **Viewer backdrop:** a dark translucent overlay behind the modal photo in both themes.
 
 The live CSS variables `--canvas`, `--paper`, `--text`, `--muted`, `--line`, `--soft`, `--accent`, `--on-accent` and `--hover` map to the corresponding light values at the root and dark values under `data-theme="dark"`. Frontmatter component variants use the light baseline unless explicitly labelled dark.
 
@@ -198,6 +207,8 @@ Post listings use CSS Grid with `repeat(auto-fill, minmax(min(100%, 350px), 1fr)
 
 Listing photos appear after the author and before the optional title and text. Full posts retain heading, optional photo and full text order; an untitled full post has a visually hidden Post heading rather than an invented visible title. Text-only cards retain the same controls and reading path.
 
+At (1700px) and above, the header uses three columns with equal flexible sides: the brand stays left, navigation occupies the center and grouped preferences/account actions stay right. Tablet and mobile retain their existing row layouts. Search spans the available feed container instead of a separate narrow cap.
+
 The sticky header reserves its expanded height in the layout while its inner surface compacts; controls and focused elements remain in the same DOM. Desktop expanded/compact minimum heights are (92px / 72px). From (651px) through (1399px), navigation occupies a second header row and heights become (128px / 112px). Between (651px) and (1000px), the account becomes an avatar and the signed-in compose action becomes a (44px) icon control; accessible names remain present, and navigation uses (12px) labels. Header padding and minimum height transition with (280ms) using `cubic-bezier(.16, 1, .3, 1)`; tagline max-height uses the same motion and opacity uses (180ms ease-out). Below scroll position (80px) the header expands; direction changes of at least (12px) determine compact state beyond that point.
 
 At (650px) and below, the header uses two rows with expanded/compact heights (120px / 104px), and the tagline is hidden. Navigation becomes a fixed labelled bottom bar. Main content uses full width, top padding (28px), side padding (20px) and bottom clearance `calc(100px + env(safe-area-inset-bottom))`. Search moves the language select to a second full-width row; ordinary fields use (16px) text while this select uses (13px). Search labels remain accessible while visually hidden. Toasts clear the bottom navigation and safe area. At (360px) and below, header side padding becomes (10px).
@@ -224,7 +235,7 @@ Transform/background transitions use (150ms ease-out). Fine-pointer hover avoids
 
 ### Cards / Containers
 
-Post cards carry a (32px) circular avatar spanning two metadata rows, an author name, date, optional photo, optional title, linked excerpt and wrapping interaction toolbar. Inner padding is (20px), reduced to (18px) on mobile. Excerpts show up to (260) characters with an ellipsis and Read more when needed. Titles are omitted when empty; content and media still link to the full post. Form/settings cards use Paper, Line borders and padding (24px; 18px mobile). Authentication card padding is (28px desktop; 20px mobile). Empty states use a solid Line border, Paper background and card-radius corners with centered copy and an action when available.
+Post cards carry a (32px) circular avatar spanning two metadata rows, an author name, date, optional photo, optional title, linked excerpt and wrapping interaction toolbar. Inner padding is (20px), reduced to (18px) on mobile. Excerpts show up to (260) characters with an ellipsis and Read more when needed. Titles are omitted when empty; text links to the full post and the photo opens its viewer. Form/settings cards use Paper, Line borders and padding (24px; 18px mobile). Authentication card padding is (28px desktop; 20px mobile). Empty states use a solid Line border, Paper background and card-radius corners with centered copy and an action when available.
 
 ### Inputs / Fields
 
@@ -243,6 +254,14 @@ Draft/status badges are non-interactive Soft/Muted annotations at (11px). Errors
 ### Photographs
 
 Photos use automatic width and height, maximum width (100%), `object-fit: contain`, and top/start alignment. They retain intrinsic proportions rather than filling a prescribed frame or grid-row height. Feed maximum height is (560px desktop; 450px mobile); article maximum is (680px desktop), with the mobile feed limit overriding it. Editor previews cap at (280px). Optional photos do not determine whether text-only stories remain useful.
+
+Loaded post photographs use a native button with a zoom-in cursor and no fill, scaling or padding. The button stays disabled until the image load event succeeds; an unavailable image replaces the entire button with readable status text. This pattern is shared by listing cards, full posts and existing editor photos.
+
+### Photo viewer
+
+A native modal dialog displays the already loaded photograph without another photo fetch. Its transparent, borderless frame caps at (96vw / 96dvh); the image preserves its proportions within (92vw / 84dvh), uses `object-fit: contain` and field-radius corners. The dark translucent backdrop isolates the photo. A fixed Paper/Text close button is (44px) square, positioned at least (16px) from the top and right while respecting safe-area insets.
+
+Close button, Escape and backdrop click dismiss the viewer. Native modal behavior contains keyboard focus; dismissal restores focus to the opening photo button when it remains connected and releases page scroll lock. Screen rendering closes the dialog before revoking its photo object URL. Viewer image failure closes the dialog and announces unavailable-photo feedback. Video playback remains deferred.
 
 ### Preferences and motion
 

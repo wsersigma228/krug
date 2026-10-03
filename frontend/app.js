@@ -44,6 +44,7 @@ const iconPaths = {
   settings:
     '<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',
+  close: '<path d="m6 6 12 12M18 6 6 18"/>',
   arrow: '<path d="M5 12h14m-5-5 5 5-5 5"/>',
   heart: '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/>',
   comment: '<path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5H4l-2 2V11.5a9.5 9.5 0 0 1 19 0Z"/>',
@@ -189,12 +190,12 @@ function shell(route) {
       <div class="brand-block"><a class="brand" href="/app#explore" aria-label="Круг, обзор"><span class="brand-mark"></span>круг</a>
       <span class="topbar-tagline">Истории, которые сближают.</span></div>
       <nav class="nav" aria-label="Основная навигация">${links.map(([id, title]) => html`<a href="/app#${id}" class="${route === id ? "active" : ""}" ${route === id ? 'aria-current="page"' : ""}>${icon(id)}<span>${title}</span></a>`).join("")}</nav>
-      <div class="preferences">
+      <div class="header-controls"><div class="preferences">
       <button id="ui-language" class="preference-button" aria-label="${language === "ru" ? "Switch to English" : t("Переключить на русский")}" title="Русский / English">${language.toUpperCase()}</button>
       <details class="theme-picker"><summary id="ui-theme" class="preference-button" aria-label="${t("Тема")}" title="${t("Тема")}">${themeIcon(theme)}</summary>
       <div class="theme-options">${["light", "dark", "system"].map((value, index) => html`<button class="theme-option" data-theme-choice="${value}" aria-pressed="${theme === value}">${themeIcon(value)}${t(["Светлая", "Тёмная", "Системная"][index])}</button>`).join("")}</div></details>
       </div><div class="header-actions">${me ? html`<a class="account-link" href="/app#profile/${me.id}" aria-label="${esc(me.username)}"><span class="avatar">${esc(me.username[0]?.toUpperCase())}</span><span>@${esc(me.username)}</span></a>` : ""}${session ? html`<a class="button compose" href="/app#new" aria-label="Создать пост">${icon("plus")}<span>Создать пост</span></a>` : t('<a class="button compose" href="/app#login">Войти в Круг</a>')}</div>
-      </div></header><div class="layout ${wideFeed ? "layout-feed" : ""}">
+      </div></div></header><div class="layout ${wideFeed ? "layout-feed" : ""}">
       <main class="main" id="main" tabindex="-1">
       <div class="loading" role="status">Загрузка…</div>
       </main>
@@ -295,14 +296,52 @@ function input(name, label, type = "text", attrs = "") {
 }
 function photoMarkup(post, cls = "") {
   return post.image_url
-    ? html`<img class="post-photo ${cls}" data-photo="${post.id}" alt="${post.title ? t("Фото к публикации «") + esc(post.title) + "»" : t("Фото к публикации")}" loading="lazy">`
+    ? html`<button class="post-media" type="button" aria-label="Открыть фото" disabled><img class="post-photo ${cls}" data-photo="${post.id}" alt="${post.title ? t("Фото к публикации «") + esc(post.title) + "»" : t("Фото к публикации")}" loading="lazy"></button>`
     : "";
 }
+function closePhotoViewer() {
+  document.querySelector(".media-viewer")?.close();
+}
+app.addEventListener("click", (event) => {
+  const opener = event.target.closest(".post-media");
+  const photo = opener?.querySelector("img");
+  if (!photo?.naturalWidth || document.querySelector(".media-viewer")) return;
+  const dialog = document.createElement("dialog");
+  dialog.className = "media-viewer";
+  dialog.setAttribute("aria-label", t("Просмотр фото"));
+  dialog.innerHTML = html`<button class="media-close" type="button" aria-label="Закрыть фото" autofocus>${icon("close")}</button>`;
+  const image = document.createElement("img");
+  image.src = photo.src;
+  image.alt = photo.alt;
+  dialog.append(image);
+  dialog.querySelector("button").addEventListener("click", () => dialog.close());
+  dialog.addEventListener("click", (event) => {
+    if (event.target === dialog) dialog.close();
+  });
+  image.addEventListener("error", () => { dialog.close(); toast(t("Фото сейчас недоступно.")); }, { once: true });
+  dialog.addEventListener("close", () => {
+    dialog.remove();
+    document.body.classList.remove("media-open");
+    if (opener.isConnected) opener.focus({ preventScroll: true });
+  }, { once: true });
+  document.body.append(dialog);
+  document.body.classList.add("media-open");
+  dialog.showModal();
+});
 async function hydratePhotos(root, stamp) {
   for (const img of root.querySelectorAll(
     "[data-photo]:not([src]):not([data-loading])",
   )) {
     img.dataset.loading = "true";
+    const unavailable = () => {
+      if (!img.isConnected) return;
+      const el = document.createElement("p");
+      el.className = "hint";
+      el.textContent = t("Фото сейчас недоступно.");
+      (img.closest(".post-media") || img).replaceWith(el);
+    };
+    img.addEventListener("load", () => { img.closest(".post-media").disabled = false; }, { once: true });
+    img.addEventListener("error", unavailable, { once: true });
     try {
       const blob = await api(html`/posts/${img.dataset.photo}/image`, {
         blob: true,
@@ -312,12 +351,7 @@ async function hydratePhotos(root, stamp) {
       objectURLs.push(url);
       img.src = url;
     } catch {
-      if (img.isConnected) {
-        const el = document.createElement("p");
-        el.className = "hint";
-        el.textContent = t("Фото сейчас недоступно.");
-        img.replaceWith(el);
-      }
+      unavailable();
     }
   }
 }
@@ -328,7 +362,7 @@ function postCard(post, author) {
       <a class="avatar" href="/app#profile/${post.author_id}" aria-label="Профиль ${esc(username)}">${esc(username[0]?.toUpperCase())}</a>
       <a class="author" href="/app#profile/${post.author_id}">${esc(username)}</a>
       <span>· ${date(post.created_at)}</span>${!post.is_published ? t('<span class="badge">Черновик</span>') : ""}</div>
-      <div class="post-content">${post.image_url ? html`<a class="post-media" href="/app#post/${post.id}">${photoMarkup(post)}</a>` : ""}<div class="post-copy">${post.title ? html`<a class="post-title" href="/app#post/${post.id}">${esc(post.title)}</a>` : ""}
+      <div class="post-content">${photoMarkup(post)}<div class="post-copy">${post.title ? html`<a class="post-title" href="/app#post/${post.id}">${esc(post.title)}</a>` : ""}
       <a class="post-excerpt" href="/app#post/${post.id}">${esc(post.content.slice(0, 260))}${post.content.length > 260 ? "…" : ""}</a></div></div><div class="toolbar">
       <button class="reaction" data-like="${post.id}" disabled>${icon("heart")} ${t("Загрузка…")}</button><a class="discussion-link" href="/app#post/${post.id}?comments=1">${icon("comment")} Комментарии</a>${post.content.length > 260 ? html`<a class="text-button read-story" href="/app#post/${post.id}">Читать дальше${icon("arrow")}</a>` : ""}${me?.id === post.author_id ? html`<a class="text-button" href="/app#edit/${post.id}">Редактировать</a>` : ""}</div>
       </div></article>`;
@@ -909,6 +943,7 @@ async function render(options = {}) {
   const scroll = window.scrollY;
   const fields = options.preserve ? [...app.querySelectorAll("#main input, #main textarea, #main select")].map((el) => ({ name: el.name, value: el.value, checked: el.checked, files: el.files, form: [...app.querySelectorAll("#main form")].indexOf(el.form) })) : [];
   const stamp = ++generation;
+  closePhotoViewer();
   postGridObserver?.disconnect();
   postGridObserver = null;
   objectURLs.forEach(URL.revokeObjectURL);

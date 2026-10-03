@@ -152,6 +152,16 @@ keyboard and source order retain it, while varied card heights do not create uni
 visual rows. Mobile uses one column,
 20px side padding and bottom-navigation clearance. Listing cards place proportional
 photos before optional titles and text; full posts retain heading/photo/text order.
+Photo buttons enable only after successful image loading; failures replace the
+whole button with a hint. Clicking a loaded photo opens a native modal `dialog`
+that reuses its blob URL. Close button, Escape and backdrop click dismiss it; native
+modal behavior contains focus, and close cleanup restores the opener when connected
+and removes page scroll lock. Viewer image errors close it and show feedback.
+Screen rendering closes the viewer before revoking object URLs. There are no new
+viewer dependencies or migrations; video remains deferred. At 1700px and wider,
+the header uses three columns to center navigation between brand and grouped
+controls. Tablet/mobile retain their prior row layouts. Search spans the feed
+container rather than a separate 1000px cap.
 Header
 expanded/compact heights are 92/72px on desktop, 128/112px from 651–1399px,
 and 120/104px on mobile. From 651–1000px, account/compose icons retain accessible
