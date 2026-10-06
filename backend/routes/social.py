@@ -8,6 +8,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.database import get_db
+from backend.project_access import public_post
 from backend.models import Comment, Like, Post, Subscription, User
 from backend.pagination import cursor_scope, decode_cursor, make_page, seek_page
 from backend.schemas import Page, PageParams
@@ -18,13 +19,22 @@ router = APIRouter()
 
 class ProfileUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    bio: str = Field(max_length=500)
+    bio: str | None = Field(default=None, max_length=500)
+    display_name: str | None = Field(default=None, max_length=100)
+
+    @field_validator("bio", "display_name")
+    @classmethod
+    def reject_null(cls, value):
+        if value is None:
+            raise ValueError("Fields cannot be null")
+        return value
 
 
 class ProfileResponse(BaseModel):
     id: int
     username: str
     bio: str
+    display_name: str
     posts_count: int
     subscribers_count: int
     subscriptions_count: int
@@ -58,7 +68,7 @@ class CommentResponse(BaseModel):
 
 
 async def visible_post(db, post_id, user, *, lock=False):
-    query = select(Post).where(Post.id == post_id).execution_options(populate_existing=True)
+    query = select(Post).where(Post.id == post_id, (public_post() | (Post.author_id == user.id)) if user else public_post()).execution_options(populate_existing=True)
     if lock:
         # Match account deletion's User -> Post order; FK writes also need this user.
         actor = await db.scalar(select(User.id).where(User.id == user.id)
@@ -78,9 +88,9 @@ async def profile(db, author_id):
     if author is None:
         raise HTTPException(status_code=404, detail="Author not found")
     return {
-        "id": author.id, "username": author.username, "bio": author.bio,
+        "id": author.id, "username": author.username, "bio": author.bio, "display_name": author.display_name,
         "posts_count": await db.scalar(select(func.count()).select_from(Post).where(
-            Post.author_id == author.id, Post.is_published.is_(True))),
+            Post.author_id == author.id, public_post())),
         "subscribers_count": await db.scalar(select(func.count()).select_from(Subscription).where(
             Subscription.author_id == author.id)),
         "subscriptions_count": await db.scalar(select(func.count()).select_from(Subscription).where(
@@ -97,7 +107,9 @@ async def get_profile(author_id: int, db: AsyncSession = Depends(get_db)):
 @router.patch("/me/profile", response_model=ProfileResponse)
 async def update_profile(body: ProfileUpdate, db: AsyncSession = Depends(get_db),
                          user: User = Depends(get_current_user)):
-    await db.execute(update(User).where(User.id == user.id).values(bio=body.bio))
+    values = body.model_dump(exclude_unset=True)
+    if values:
+        await db.execute(update(User).where(User.id == user.id).values(**values))
     await db.commit()
     return await profile(db, user.id)
 

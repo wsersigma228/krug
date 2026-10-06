@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
 from backend.models import Post
+from backend.project_access import public_post
 from backend.pagination import Cursor, encode_cursor
 
 
@@ -24,7 +25,7 @@ def search_statement(
         vector.bool_op("@@")(terms),
     )
     if user_id is None:
-        query = query.where(Post.is_published.is_(True)).options(joinedload(Post.author))
+        query = query.where(public_post()).options(joinedload(Post.author))
     else:
         query = query.where(Post.author_id == user_id)
     if is_published is not None:

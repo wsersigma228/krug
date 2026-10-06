@@ -32,6 +32,7 @@ class ExploreParams(PageParams):
 
 
 class PostCreate(BaseModel):
+    project_id: int | None = Field(default=None, gt=0)
     title: str = Field(default="", max_length=200)
     content: str = Field(min_length=1)
     is_published: bool = False
@@ -64,6 +65,7 @@ class PostUpdate(BaseModel):
 
 
 class PostResponse(BaseModel):
+    project_id: int | None = None
     id: int
     title: str
     content: str
@@ -115,6 +117,7 @@ class UserCreate(BaseModel):
 
 
 class UserResponse(BaseModel):
+    display_name: str = ""
     language: Literal["ru", "en"] | None = None
     id: int
     username: str

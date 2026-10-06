@@ -82,6 +82,7 @@ if your credentials/ports differ from test defaults.
 ```bash
 .venv/bin/python -m pytest -q
 node --check frontend/app.js
+node --check frontend/projects.js
 node --check frontend/i18n.js
 node scripts/check_i18n.cjs
 .venv/bin/python -m scripts.smoke
@@ -101,6 +102,10 @@ entities and remove only those entities. Migration round-trip checks run only on
 neither confirms SMTP delivery. Check worker/beat logs and use captured mail for
 end-to-end development checks. CI runs the test suite and JavaScript syntax check;
 browser layout and real container recreation still require separate verification.
+
+Project discovery, the bounded GitHub collector, engagement privacy and the
+explicit operator-only database reset are described in [discovery.md](discovery.md).
+The regular launcher never resets application data.
 
 Optional browser checks use Playwright installed in a separate tools directory:
 set `NODE_PATH` to its `node_modules`, then run `node scripts/browser_smoke.cjs`.

@@ -1,6 +1,6 @@
 ---
 name: Krug
-description: A responsive masonry social feed with graphite surfaces, blue actions and optional post titles.
+description: Developer project discovery with graphite surfaces, a filter sidebar, blue actions and public project updates.
 colors:
   canvas-light: "#f5f6f8"
   paper-light: "#ffffff"
@@ -291,3 +291,33 @@ Listing cards place Like and labelled Comments together below the photo and text
 - **Don't** extend the toast shadow into resting post cards or add cinematic motion.
 
 Documentation is derived from the current frontend source. Temporary synthetic review content is verification evidence, not shipping imagery or product copy.
+
+
+## Project discovery and sharing
+
+The approved v0.1 primary surface is project discovery, preserving cold graphite,
+blue actions and native sans-serif typography. The main header links Projects,
+Stories, Saved, My projects and Settings; signed-in Stories exposes the preserved
+author feed, own posts, connections and post editor.
+
+Discovery uses a 1480px maximum shell with a 240px desktop filter sidebar and
+compact project cards in an adaptive grid. At 850px and below the sidebar becomes
+search plus native collapsible filters. Cards show actual title, summary, source,
+status, tags/skills and stage; no fabricated audience, team or growth figures.
+Tag and skill links use their respective structured search filters.
+
+Project details separate the description from the account action panel. Save,
+Follow and Interested can be selected together. Interest visibility requires a
+separate per-project checkbox, initially off and disabled until Interested is
+selected. Public profile lists include only explicit opt-ins. Public share links
+are available only for published projects; drafts stay inside the authenticated
+app. Updates reuse the existing post editor, photos and discussion UI.
+
+The project grid has one brief 220ms opacity/6px entrance; links use a 180ms
+arrow translation and buttons retain 150ms press feedback. Header and toast
+transitions preserve the existing stable DOM. Reduced-motion disables animation
+and transition; no motion library or scroll choreography.
+
+Public HTML pages use share.css with readable 800px measure, native typography,
+proportional media, keyboard focus and system light/dark preference. They link to
+the interactive project screen for saved/followed/interest choices.

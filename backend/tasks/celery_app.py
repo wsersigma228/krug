@@ -5,7 +5,7 @@ celery_app = Celery(
     "blog_tasks",
     broker=REDIS_URL,
     backend=REDIS_URL,
-    include=["backend.tasks.email_tasks"],
+    include=["backend.tasks.email_tasks", "backend.tasks.github_tasks"],
 )
 
 celery_app.conf.update(
@@ -15,6 +15,11 @@ celery_app.conf.update(
     timezone="UTC",
     enable_utc=True,
     beat_schedule={
+        "refresh-github-projects": {
+            "task": "backend.tasks.github_tasks.import_github",
+            "schedule": 6 * 60 * 60,
+            "options": {"expires": 60 * 60},
+        },
         "deliver-pending-emails": {
             "task": "backend.tasks.email_tasks.deliver_pending_emails",
             "schedule": 30.0,

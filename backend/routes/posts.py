@@ -20,6 +20,7 @@ from backend.schemas import (
 )
 from backend.pagination import cursor_scope, decode_cursor, make_page
 from backend.search import search_posts
+from backend.project_access import public_post
 from backend.security import get_current_user, get_optional_user
 from backend.crud import posts as crud_posts
 from backend.crud import subscriptions as crud_subs
@@ -42,7 +43,7 @@ async def explore(params: Annotated[ExploreParams, Query()], db: AsyncSession = 
                                   params.limit, cursor, scope)
     else:
         rows = (await db.scalars(seek_page(
-            select(Post).where(Post.is_published.is_(True)).options(joinedload(Post.author)),
+            select(Post).where(public_post()).options(joinedload(Post.author)),
             Post, cursor, params.limit))).all()
         page = make_page(rows, params.limit, scope)
     page["items"] = [
@@ -164,6 +165,7 @@ async def get_feed(
     page["items"] = [
         FeedPostResponse(
             id=p.id,
+            project_id=p.project_id,
             title=p.title,
             content=p.content,
             is_published=p.is_published,
@@ -188,7 +190,7 @@ async def get_author_posts(
     scope = cursor_scope("author_posts", author_id=author_id)
     cursor = decode_cursor(params.cursor, scope)
     posts = await crud_posts.get_user_posts(
-        db=db, user_id=author_id, is_published=True, limit=params.limit, cursor=cursor
+        db=db, user_id=author_id, is_published=True, limit=params.limit, cursor=cursor, public_only=True
     )
     return make_page(posts, params.limit, scope)
 

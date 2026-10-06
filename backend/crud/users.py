@@ -1,6 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from backend.models import User, Post
+from backend.models import User, Post, Project
+from fastapi import HTTPException
 from backend.media import delete_photo
 from backend.schemas import UserCreate
 from backend.security import get_password_hash
@@ -43,6 +44,8 @@ async def delete_user(db: AsyncSession, user_id: int):
                               .execution_options(populate_existing=True).with_for_update())
     db_user = result.scalars().first()
     if db_user:
+        if await db.scalar(select(Project.id).where(Project.owner_id == user_id).limit(1)):
+            raise HTTPException(409, "Account owns projects and cannot be deleted")
         keys = list(await db.scalars(select(Post.image_key).where(Post.author_id == user_id)
                                     .order_by(Post.id).with_for_update()))
         await db.delete(db_user)

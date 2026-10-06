@@ -6,6 +6,7 @@ from starlette.concurrency import run_in_threadpool
 
 from backend.config import MEDIA_ROOT
 from backend.database import get_db
+from backend.project_access import public_post
 from backend.media import MAX_UPLOAD_BYTES, delete_photo, save_photo
 from backend.models import Post, User
 from backend.schemas import PostResponse
@@ -61,7 +62,7 @@ async def remove_image(post_id: int, db: AsyncSession = Depends(get_db), user: U
 @router.get("/posts/{post_id}/image")
 async def read_image(post_id: int, db: AsyncSession = Depends(get_db), user: User | None = Depends(get_optional_user)):
     post = await db.scalar(select(Post).where(
-        Post.id == post_id, or_(Post.is_published.is_(True), Post.author_id == (user.id if user else -1))))
+        Post.id == post_id, or_(public_post(), Post.author_id == (user.id if user else -1))))
     if not post or not post.image_key:
         raise HTTPException(404, "Image not found")
     try:

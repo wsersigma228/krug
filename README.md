@@ -2,9 +2,10 @@
 
 # Krug
 
-**Stories, people, conversations.**
+**People, projects, possibilities.**
 
-A small social blog with private drafts, public stories and a feed of authors you follow.
+A web-first discovery network for native projects and public GitHub projects,
+with private saves, follows, optional public interest and project updates.
 
 ![Python 3.14](https://img.shields.io/badge/Python-3.14-3776AB?logo=python&logoColor=white)
 [![License: MIT](https://img.shields.io/badge/License-MIT-181818)](LICENSE)
@@ -22,12 +23,16 @@ A small social blog with private drafts, public stories and a feed of authors yo
 
 ## Overview
 
-Write a story, keep it as a draft, publish it with a photo, and discuss it with
-readers. Discover public posts or build a feed by following authors. Krug keeps
-these flows in a responsive Russian/English interface with light and dark themes.
+Discover projects without an account, save a shortlist and follow progress.
+Create a native project and share public text/photo updates. GitHub metadata
+refreshes automatically through the existing worker. Russian/English and
+light/dark/system themes remain available. Standalone stories and author feeds
+are preserved under Stories. See [v0.1 scope and import policy](docs/discovery.md).
 
 | Area | Included |
 | --- | --- |
+| Projects | Native/public GitHub projects, PostgreSQL discovery, public HTML pages and OpenGraph |
+| Intent | Private saves/follows; Interested becomes public only through explicit per-project consent |
 | Writing | Private drafts, optional titles, editing, publication and one photo per post |
 | Reading | Public discovery, full-text search and a feed of followed authors |
 | People | Public profiles, biographies, follows, likes and flat comments |

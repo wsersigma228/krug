@@ -1,39 +1,59 @@
-# Круг
+# Krug
 
 <!-- impeccable:product-schema 1 -->
 
 ## Platform
 
-web — responsive desktop and mobile browser UI.
+Web first, responsive desktop and mobile browsers. Native HTML/CSS/JavaScript,
+no frontend build or third-party browser runtime.
 
 ## Product Purpose
 
-A small social blog for publishing text and an optional photo, following authors,
-reading their stories and discussing them. The project is WIP.
+Help developers discover projects and people with a shared interest in building.
+External projects bootstrap useful discovery while native projects and public
+updates let people share their own work. Krug adds saved projects, project follows
+and voluntary interest beyond an outbound source link.
 
 ## Users
 
-Readers and authors using Russian or English. A narrower audience is undecided.
+Developers across disciplines, including open-source and game development, using
+English or Russian. Search, project pages, updates and source links are available
+without registration. An account is required to create, save, follow or mark interest.
 
 ## Capabilities and Constraints
 
-Native HTML/CSS/JavaScript with no frontend build or external runtime. FastAPI,
-PostgreSQL, Redis and Celery run on Fedora. Preserve the existing account,
-draft/publication, profile, follow, search, like, comment and notification flows.
-Translate interface and service emails, never user content. Account language
-syncs across devices; theme stays in each browser. Anonymous defaults follow
-browser language and a cold graphite dark theme, with persistent manual overrides.
+The first version centers on native and externally imported projects. It includes
+structured discovery, project drafts/publication, owner updates using existing
+posts, save/follow/interested, saved and followed lists, and profiles visible in a
+project's interested list only after explicit consent for that project. Interest
+defaults private. Following stores a selection; project alert emails are deferred.
+Import activity must not invent recruitment status, team size or commitment.
+
+Public project and update URLs carry escaped HTML and object-specific OpenGraph
+metadata. The interactive app supplies account actions; public share pages remain
+useful without JavaScript or authentication. Existing accounts, author follows,
+post publication, photos, stories, comments, reactions and email flows remain.
+
+No teams/applications, chat, task management, billing, AI matching, reputation scores,
+mobile app or federation in this version. FastAPI and PostgreSQL remain the backend;
+the existing Redis/Celery mail pipeline stays. Fedora remains the deployment host.
+User content is never translated. RU/EN account language and per-browser
+light/dark/system themes remain available.
 
 ## Brand Commitments
 
-The name is Krug / Круг. The approved feed direction is a Pinterest-like responsive masonry grid with simple native sans-serif typography and proportional photographs. Simplicity and careful detail serve reading and writing; the interface remains a working application rather than a marketing page. Dark is the initial theme: cold graphite with a restrained saturated blue accent. Light and system themes remain available.
+Cold graphite and restrained blue, clear native sans-serif typography. Discovery
+is an operating surface: prominent search, a desktop filter sidebar and compact
+project cards; mobile filters collapse beneath search. Real titles, summaries,
+skills, status and source take precedence over decorative imagery or fake metrics.
+Stories retain their proportional-photo masonry layout outside primary discovery.
 
-Post listings show the author, optional photo, optional title and text in that order. Titles can be omitted or cleared; post content remains required. Existing titled posts keep their titles. Untitled full posts expose an accessible heading without fabricating a visible title. The editor uses Create post, Save post and Title optional language.
-
-Labelled navigation and language/theme preferences stay reachable in the sticky header. Scrolling down compacts it; scrolling up expands it with restrained motion and a reduced-motion alternative. The broad feed shell caps at 3600 CSS px and has no contextual author rail. Masonry cards adapt to their contents; mobile keeps one column and bottom navigation. Pages load 24 items at a time and offer Load more rather than automatic fetching while scrolling. Likes are available in listing cards; labelled comments links open discussion inside the full post. Loaded photos open an accessible native modal viewer; close button, Escape and backdrop click dismiss it and restore focus. The viewer reuses the loaded photo, preserves its proportions and releases page scroll lock on dismissal. Video support remains deferred. On wide desktop screens navigation is centered between the brand and account controls; search uses the available feed width. Tablet avatar and compose icons retain accessible names while reducing header crowding.
+Motion communicates navigation and feedback: short ease-out opacity/transform
+transitions, stable focused controls and reduced-motion support. No cinematic
+scroll scenes, motion dependencies or mandatory animations.
 
 ## Evidence on Hand
 
-README.md, docs/api.md, docs/development.md and the current frontend/backend code.
-The implementation is tested against real PostgreSQL and captured SMTP on Fedora.
-Public production hosting and external SMTP are separate work.
+Current backend/frontend code, Alembic migrations, tests, README and API guidance.
+Verification results belong in the task report; this brief does not claim a live
+deployment or complete runtime coverage by itself.

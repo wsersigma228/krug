@@ -3,7 +3,7 @@ from backend.database import Base
 from datetime import datetime, timezone
 from sqlalchemy.orm import relationship
 from sqlalchemy import UniqueConstraint, CheckConstraint, Index, text, Computed
-from sqlalchemy.dialects.postgresql import TSVECTOR
+from sqlalchemy.dialects.postgresql import TSVECTOR, ARRAY
 from sqlalchemy.orm import deferred
 
 
@@ -42,6 +42,7 @@ class Post(Base):
     is_published = Column(Boolean, default=False, nullable=False)
     image_key = Column(String(40), nullable=True)
     author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    project_id = Column(Integer, ForeignKey("projects.id", ondelete="RESTRICT"), nullable=True, index=True)
     created_at = Column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
@@ -120,6 +121,7 @@ class User(Base):
     email_verified = Column(Boolean, default=False, nullable=False)
     email_publications = Column(Boolean, default=False, nullable=False)
     token_version = Column(Integer, default=0, nullable=False)
+    display_name = Column(String(100), default="", nullable=False)
     bio = Column(String(500), default="", nullable=False)
     language = Column(String(2), nullable=True)
 
@@ -171,3 +173,64 @@ class Comment(Base):
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     content = Column(Text, nullable=False)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+
+
+class Project(Base):
+    __tablename__ = "projects"
+    __table_args__ = (
+        CheckConstraint("origin IN ('native', 'external')", name="ck_projects_origin"),
+        CheckConstraint("origin <> 'native' OR owner_id IS NOT NULL", name="ck_projects_native_owner"),
+        CheckConstraint("status IN ('active', 'paused', 'completed', 'archived', 'stale')", name="ck_projects_status"),
+        CheckConstraint("stage IN ('unknown', 'idea', 'prototype', 'building', 'shipped')", name="ck_projects_stage"),
+        CheckConstraint("recruitment_status IN ('unknown', 'open', 'closed')", name="ck_projects_recruitment"),
+        CheckConstraint("visibility IN ('draft', 'public')", name="ck_projects_visibility"),
+        UniqueConstraint("source_name", "source_external_id", name="uq_projects_source_id"),
+        Index("ix_projects_public_created_id", "created_at", "id", postgresql_where=text("visibility = 'public'")),
+        Index("ix_projects_search", "search_vector", postgresql_using="gin"),
+        Index("ix_projects_tags", "tags", postgresql_using="gin"),
+        Index("ix_projects_skills", "skills", postgresql_using="gin"),
+    )
+    id = Column(Integer, primary_key=True)
+    slug = Column(String(100), nullable=False, unique=True)
+    title = Column(String(200), nullable=False)
+    summary = Column(String(500), nullable=False)
+    description = Column(Text, nullable=False, default="")
+    origin = Column(String(10), nullable=False, default="native")
+    status = Column(String(12), nullable=False, default="active")
+    stage = Column(String(12), nullable=False, default="idea")
+    visibility = Column(String(10), nullable=False, default="draft")
+    owner_id = Column(Integer, ForeignKey("users.id", ondelete="RESTRICT"), nullable=True, index=True)
+    tags = Column(ARRAY(String(50)), nullable=False, default=list)
+    skills = Column(ARRAY(String(50)), nullable=False, default=list)
+    recruitment_status = Column(String(10), nullable=False, default="unknown")
+    commitment = Column(String(100), nullable=True)
+    experience_level = Column(String(50), nullable=True)
+    source_name = Column(String(40), nullable=True)
+    source_url = Column(String(2048), nullable=True)
+    source_external_id = Column(String(200), nullable=True)
+    canonical_url = Column(String(2048), nullable=True, unique=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    last_activity_at = Column(DateTime(timezone=True), nullable=True)
+    last_verified_at = Column(DateTime(timezone=True), nullable=True)
+    search_vector = deferred(Column(TSVECTOR, Computed(
+        "setweight(to_tsvector('pg_catalog.simple'::regconfig, coalesce(title, '')), 'A') || "
+        "setweight(to_tsvector('pg_catalog.simple'::regconfig, coalesce(summary, '') || ' ' || coalesce(description, '')), 'B')",
+        persisted=True)))
+
+
+class ProjectEngagement(Base):
+    __tablename__ = "project_engagements"
+    __table_args__ = (
+        CheckConstraint("NOT interested_visible OR interested", name="ck_engagement_visible_interest"),
+        Index("ix_project_engagements_user_created_id", "user_id", "created_at", "id"),
+        UniqueConstraint("project_id", "user_id", name="uq_project_engagement_user"),
+    )
+    id = Column(Integer, primary_key=True)
+    project_id = Column(Integer, ForeignKey("projects.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    saved = Column(Boolean, nullable=False, default=False)
+    following = Column(Boolean, nullable=False, default=False)
+    interested = Column(Boolean, nullable=False, default=False)
+    interested_visible = Column(Boolean, nullable=False, default=False)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))

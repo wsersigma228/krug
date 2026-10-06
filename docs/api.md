@@ -148,7 +148,8 @@ unset token
 
 Errors normally return JSON `{detail: ...}`; validation detail is a list. Common
 statuses: 401 missing/invalid/revoked token, 403 prohibited operation or unverified
-notification opt-in, 404 missing/inaccessible content, 409 duplicate account,
+notification opt-in, 404 missing/inaccessible content, 409 duplicate account/project
+or account removal while owning a project,
 413 oversized photo, 422 invalid input/cursor/image and 429 account request limit.
 429 includes `Retry-After`. Authentication limits count failed attempts and use
 socket IP plus account identifier where available. A duplicate/self follow is 400.
@@ -156,3 +157,26 @@ socket IP plus account identifier where available. A duplicate/self follow is 40
 `GET /` returns `{ok:true}` for process health. `GET /health` checks PostgreSQL and
 Redis availability; it is not a test of SMTP, background processing or UI behavior.
 Use actual worker logs and smoke checks for those paths.
+
+# Project discovery v0.1
+
+Public endpoints: `GET /discovery`, `GET /projects/{slug}`,
+`GET /projects/{slug}/updates`, `GET /projects/{slug}/interested`.
+Discovery accepts `search`, `tag`, `skill`, `source`, `status`, `active`,
+`recruitment_status`, `limit`, `cursor`. It defaults to excluding stale/archived
+projects; explicit status filters can include them. Exact game-dev aliases match
+`gamedev`/`game-development` tags or skills. Other text uses PostgreSQL simple FTS.
+
+Authenticated: `POST /projects`, `PATCH /projects/{slug}` (owner only),
+`GET /me/projects`, `/me/saved-projects`, `/me/followed-projects`, and
+`GET|PATCH /projects/{slug}/engagement`. Engagement flags are `saved`, `following`,
+`interested`, `interested_visible`, all default false. Public visibility requires
+interest and explicit consent; the interested list exposes no email/private intent.
+
+`POST /posts` accepts optional `project_id` for a native owner's update;
+Post responses include nullable `project_id`. Draft project visibility applies
+to all old reading/media/social paths. `PATCH /me/profile` accepts optional
+`display_name` and `bio`; public profile responses include display_name.
+
+HTML sharing: `/project/{slug}`, `/project/{slug}/updates/{id}`.
+See [discovery contracts and operational limits](discovery.md).
