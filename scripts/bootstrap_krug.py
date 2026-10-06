@@ -26,7 +26,8 @@ async def bootstrap(expected_database: str, reset_data: bool, account: dict):
     async with SessionLocal() as db:
         # Only this application's known tables; never remove schema or Alembic history.
         table_names = ", ".join(f'"{table.name}"' for table in Base.metadata.sorted_tables)
-        await db.execute(text(f"TRUNCATE {table_names} RESTART IDENTITY"))
+        # Keep deleted account IDs unavailable to still-valid, version-zero JWTs.
+        await db.execute(text(f"TRUNCATE {table_names}"))
         owner = User(username=account["username"], display_name=account["display_name"],
                      hashed_password=get_password_hash(password), language="ru", bio="")
         db.add(owner)
