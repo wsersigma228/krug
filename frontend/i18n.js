@@ -13,7 +13,7 @@ const english = {
   "На паузе": "Paused",
   "Завершён": "Completed",
   "В архиве": "Archived",
-  "Давно не проверен": "Not recently verified",
+  "Возможно устарел": "Possibly stale",
   "Идея": "Idea",
   "Прототип": "Prototype",
   "В разработке": "Building",

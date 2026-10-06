@@ -1,7 +1,7 @@
 "use strict";
 // Discovery and project screens share the existing account, pagination and post UI.
 function projectLabel(value) {
-  return t({ native: "В Круге", external: "Внешний проект", active: "Активен", paused: "На паузе", completed: "Завершён", archived: "В архиве", stale: "Давно не проверен", idea: "Идея", prototype: "Прототип", building: "В разработке", shipped: "Выпущен", unknown: "Не указано", open: "Набор открыт", closed: "Набор закрыт" }[value] || value);
+  return t({ native: "В Круге", external: "Внешний проект", active: "Активен", paused: "На паузе", completed: "Завершён", archived: "В архиве", stale: "Возможно устарел", idea: "Идея", prototype: "Прототип", building: "В разработке", shipped: "Выпущен", unknown: "Не указано", open: "Набор открыт", closed: "Набор закрыт" }[value] || value);
 }
 function projectPath(project) {
   return "/project/" + encodeURIComponent(project.slug);
