@@ -1,6 +1,6 @@
 ---
 name: Krug
-description: Developer project discovery with graphite surfaces, a filter sidebar, blue actions and public project updates.
+description: Collaboration discovery with graphite surfaces, people and project cards, open roles, blue actions and public project updates.
 colors:
   canvas-light: "#f5f6f8"
   paper-light: "#ffffff"
@@ -24,7 +24,7 @@ colors:
 typography:
   headline:
     fontFamily: 'ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif'
-    fontSize: "clamp(32px, 3vw, 46px)"
+    fontSize: "clamp(34px, 4vw, 54px)"
     fontWeight: 650
     lineHeight: 1.15
     letterSpacing: "-0.02em"
@@ -146,9 +146,9 @@ components:
 
 ## Overview
 
-**Creative North Star: "A masonry social feed"**
+**Creative North Star: "A practical place to find collaborators"**
 
-Krug presents posts in a Pinterest-like responsive masonry grid. Graphite surfaces, restrained blue actions and native sans-serif text keep the interface familiar. Each card starts with its author, followed by a proportional photo when supplied, an optional title and readable text. The interface supports browsing and conversation without becoming a marketing page.
+Krug makes people, native projects and open roles easy to discover while keeping imported work clearly attributed. Graphite surfaces, restrained blue actions and native sans-serif text keep the interface familiar. Stories retain their responsive masonry grid, proportional photos, optional titles and readable text.
 
 Dark is the initial theme; saved Light, Dark and System choices remain effective. Both themes share their geometry. The sticky header keeps the top-left wordmark, labelled navigation, language/theme preferences and account/write actions available while it compacts on downward scrolling and expands upward. Russian and English interface copy changes independently of user stories, names and biographies.
 
@@ -156,7 +156,8 @@ Dark is the initial theme; saved Light, Dark and System choices remain effective
 
 - Cold graphite surfaces and restrained blue actions.
 - Native sans-serif titles, reading text and controls.
-- Responsive masonry cards with proportional photographs and optional titles.
+- Distinct, actionable cards for people, projects and roles; factual counts only.
+- Responsive masonry cards with proportional photographs for Stories.
 - Persistent preferences and a smoothly compacting sticky header.
 
 ## Colors
@@ -201,7 +202,7 @@ The native sans-serif wordmark uses (26px), weight (750) and tracking (-0.03em),
 
 ## Layout
 
-The desktop shell uses a centered width `min(calc(100% - 64px), 3600px)`: (32px) on each side until the width cap takes over. Feed and Discover occupy this broad shell without a context rail. Other routes cap their width at (1000px). Page vertical padding is (44px) above and (96px) below.
+The desktop shell uses a centered width `min(calc(100% - 64px), 3600px)`. Discovery caps at (2500px), expanding to (2900px) above 3600px viewports; project detail and updates cap at (1800px). Story/feed pages retain the broad shell. Page vertical padding is (44px) above and (96px) below.
 
 Post listings use CSS Grid with `repeat(auto-fill, minmax(min(100%, 350px), 1fr))`, (8px) automatic rows, default row flow and (24px) gaps. Card heights follow their intrinsic contents, including photo loading, wrapping text and changing reaction controls. Native ResizeObserver measures each inner card and updates its outer grid span; the observer is disconnected before each screen render. Cards keep DOM and keyboard order from the paginated response. Default row flow places cards in that sequence, while differing card heights prevent a uniform visual row rhythm. The first request loads up to (24) items; Load more appends the next page. Scrolling alone does not fetch another page.
 
@@ -213,7 +214,7 @@ The sticky header reserves its expanded height in the layout while its inner sur
 
 At (650px) and below, the header uses two rows with expanded/compact heights (120px / 104px), and the tagline is hidden. Navigation becomes a fixed labelled bottom bar. Main content uses full width, top padding (28px), side padding (20px) and bottom clearance `calc(100px + env(safe-area-inset-bottom))`. Search moves the language select to a second full-width row; ordinary fields use (16px) text while this select uses (13px). Search labels remain accessible while visually hidden. Toasts clear the bottom navigation and safe area. At (360px) and below, header side padding becomes (10px).
 
-At mobile widths, the masonry grid becomes one column with (16px) gaps. Authentication forms cap at (490px). Tabs, statistics and action controls wrap.
+At mobile widths, project, person and role cards become one column with (16px) gaps; the Stories masonry grid also becomes one column. Authentication forms cap at (490px). Tabs, statistics and action controls wrap.
 
 ## Elevation & Depth
 
@@ -295,29 +296,32 @@ Documentation is derived from the current frontend source. Temporary synthetic r
 
 ## Project discovery and sharing
 
-The approved v0.1 primary surface is project discovery, preserving cold graphite,
-blue actions and native sans-serif typography. The main header links Projects,
-Stories, Saved, My projects and Settings; signed-in Stories exposes the preserved
-author feed, own posts, connections and post editor.
+Collaboration discovery keeps the existing graphite, blue and sans-serif system.
+Its result tabs are All, Projects, People and Open roles. All shows native projects
+first, followed by external projects, opt-in people and real openings. Search sits
+above compact filters; project, person and role cards have distinct hierarchy.
+At 850px and below filters start collapsed. Discovery uses a 2500px shell and
+expands to 2900px on very wide displays; project details and updates stay within
+1800px. The mobile bottom navigation keeps four primary destinations reachable.
 
-Discovery uses a 1480px maximum shell with a 240px desktop filter sidebar and
-compact project cards in an adaptive grid. At 850px and below the sidebar becomes
-search plus native collapsible filters. Cards show actual title, summary, source,
-status, tags/skills and stage; no fabricated audience, team or growth figures.
-Tag and skill links use their respective structured search filters.
+Native project counts reflect real opt-in interest, membership, open openings and
+published updates. An external source card explains that its source does not
+indicate recruitment. People control profile discoverability and can pause it;
+private account email is not exposed as contact information. Project detail pages
+pair the description with the next relevant action, actual members, openings and
+updates. Owners manage roles and applications; applicants can withdraw. Contact
+URLs are shown only to owners and accepted applicants. Owners and accepted members
+can post project updates using the existing editor. External submissions and
+ownership claims enter administrator review and keep their original attribution.
+Public share pages remain useful without authentication; drafts stay private.
 
-Project details separate the description from the account action panel. Save,
-Follow and Interested can be selected together. Interest visibility requires a
-separate per-project checkbox, initially off and disabled until Interested is
-selected. Public profile lists include only explicit opt-ins. Public share links
-are available only for published projects; drafts stay inside the authenticated
-app. Updates reuse the existing post editor, photos and discussion UI.
+Result changes use short opacity/transform transitions; links and buttons retain
+the existing restrained hover and press feedback. Header and toast transitions
+preserve the stable DOM. Reduced-motion disables animation and transition; no
+motion library or scroll choreography.
 
-The project grid has one brief 220ms opacity/6px entrance; links use a 180ms
-arrow translation and buttons retain 150ms press feedback. Header and toast
-transitions preserve the existing stable DOM. Reduced-motion disables animation
-and transition; no motion library or scroll choreography.
-
-Public HTML pages use share.css with readable 800px measure, native typography,
-proportional media, keyboard focus and system light/dark preference. They link to
-the interactive project screen for saved/followed/interest choices.
+Public story and update pages use share.css with readable 880px measure, native typography,
+proportional media, keyboard focus and system light/dark preference. Project share
+pages expand to 1900px with description and collaboration details side by side; below
+1000px they return to an 880px single column. They link to the interactive project
+screen for collaboration, roles, applications, updates and interest choices.

@@ -139,6 +139,30 @@ class User(Base):
         back_populates="author",
         cascade="all, delete-orphan"
     )
+    collaboration_profile = relationship("CollaborationProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")
+
+
+class CollaborationProfile(Base):
+    __tablename__ = "collaboration_profiles"
+    __table_args__ = (
+        CheckConstraint("intent_kind IS NULL OR intent_kind IN ('looking_for_teammates', 'looking_for_project', 'open_to_collaboration', 'interested_in_event')", name="ck_collab_intent"),
+        CheckConstraint("status IN ('active', 'paused')", name="ck_collab_status"),
+        Index("ix_collab_discoverable", "status", "updated_at", postgresql_where=text("discoverable IS TRUE")),
+    )
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    skills = Column(ARRAY(String(50)), nullable=False, default=list)
+    interests = Column(ARRAY(String(50)), nullable=False, default=list)
+    wanted_skills = Column(ARRAY(String(50)), nullable=False, default=list)
+    intent_kind = Column(String(30), nullable=True)
+    intent_text = Column(String(500), nullable=True)
+    timezone = Column(String(100), nullable=True)
+    commitment = Column(String(100), nullable=True)
+    discoverable = Column(Boolean, nullable=False, default=False)
+    status = Column(String(10), nullable=False, default="active")
+    languages = Column(ARRAY(String(20)), nullable=False, default=list)
+    external_links = Column(ARRAY(String(2048)), nullable=False, default=list)
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    user = relationship("User", back_populates="collaboration_profile")
 
 
 class AccountToken(Base):
@@ -200,6 +224,10 @@ class Project(Base):
     stage = Column(String(12), nullable=False, default="idea")
     visibility = Column(String(10), nullable=False, default="draft")
     owner_id = Column(Integer, ForeignKey("users.id", ondelete="RESTRICT"), nullable=True, index=True)
+    submitted_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    derived_from_project_id = Column(Integer, ForeignKey("projects.id", ondelete="SET NULL"), nullable=True, index=True)
+    owner_contact_url = Column(String(2048), nullable=True)
+    claimed_at = Column(DateTime(timezone=True), nullable=True)
     tags = Column(ARRAY(String(50)), nullable=False, default=list)
     skills = Column(ARRAY(String(50)), nullable=False, default=list)
     recruitment_status = Column(String(10), nullable=False, default="unknown")
@@ -217,6 +245,81 @@ class Project(Base):
         "setweight(to_tsvector('pg_catalog.simple'::regconfig, coalesce(title, '')), 'A') || "
         "setweight(to_tsvector('pg_catalog.simple'::regconfig, coalesce(summary, '') || ' ' || coalesce(description, '')), 'B')",
         persisted=True)))
+
+
+class ProjectMember(Base):
+    __tablename__ = "project_members"
+    __table_args__ = (UniqueConstraint("project_id", "user_id", name="uq_project_member"),)
+    id = Column(Integer, primary_key=True)
+    project_id = Column(Integer, ForeignKey("projects.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    role = Column(String(100), nullable=False)
+    joined_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+
+
+class ProjectOpening(Base):
+    __tablename__ = "project_openings"
+    __table_args__ = (CheckConstraint("status IN ('open', 'closed')", name="ck_opening_status"),
+                      Index("ix_openings_project_status", "project_id", "status", "id"))
+    id = Column(Integer, primary_key=True)
+    project_id = Column(Integer, ForeignKey("projects.id", ondelete="CASCADE"), nullable=False)
+    title = Column(String(100), nullable=False)
+    role = Column(String(100), nullable=False)
+    skills = Column(ARRAY(String(50)), nullable=False, default=list)
+    commitment = Column(String(100), nullable=True)
+    timezone = Column(String(100), nullable=True)
+    experience_level = Column(String(50), nullable=True)
+    description = Column(Text, nullable=False, default="")
+    status = Column(String(10), nullable=False, default="open")
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    project = relationship("Project")
+
+
+class ProjectApplication(Base):
+    __tablename__ = "project_applications"
+    __table_args__ = (UniqueConstraint("opening_id", "applicant_id", name="uq_opening_applicant"),
+                      CheckConstraint("status IN ('pending', 'accepted', 'rejected', 'withdrawn')", name="ck_application_status"))
+    id = Column(Integer, primary_key=True)
+    opening_id = Column(Integer, ForeignKey("project_openings.id", ondelete="CASCADE"), nullable=False)
+    applicant_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    message = Column(Text, nullable=False)
+    applicant_contact_url = Column(String(2048), nullable=True)
+    status = Column(String(12), nullable=False, default="pending")
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+
+class ProjectClaim(Base):
+    __tablename__ = "project_claims"
+    __table_args__ = (CheckConstraint("status IN ('pending', 'approved', 'rejected')", name="ck_project_claim_status"),)
+    id = Column(Integer, primary_key=True)
+    project_id = Column(Integer, ForeignKey("projects.id", ondelete="CASCADE"), nullable=False)
+    requester_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    evidence_url = Column(String(2048), nullable=True)
+    evidence_text = Column(String(2000), nullable=True)
+    status = Column(String(10), nullable=False, default="pending")
+    reviewed_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+    reviewed_at = Column(DateTime(timezone=True), nullable=True)
+
+
+class ExternalSubmission(Base):
+    __tablename__ = "external_submissions"
+    __table_args__ = (CheckConstraint("status IN ('pending', 'approved', 'rejected')", name="ck_external_submission_status"),)
+    id = Column(Integer, primary_key=True)
+    submitted_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    title = Column(String(200), nullable=False)
+    summary = Column(String(500), nullable=False)
+    description = Column(Text, nullable=False, default="")
+    tags = Column(ARRAY(String(50)), nullable=False, default=list)
+    skills = Column(ARRAY(String(50)), nullable=False, default=list)
+    source_url = Column(String(2048), nullable=False)
+    status = Column(String(10), nullable=False, default="pending")
+    reviewed_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    project_id = Column(Integer, ForeignKey("projects.id", ondelete="SET NULL"), nullable=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+    reviewed_at = Column(DateTime(timezone=True), nullable=True)
 
 
 class ProjectEngagement(Base):

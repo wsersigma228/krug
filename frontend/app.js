@@ -176,15 +176,11 @@ function go(route) {
 function shell(route) {
   const wideFeed = ["stories", "feed"].includes(route);
   const discovery = ["explore", "saved", "projects"].includes(route);
-  const links = [
-    ["explore", t("Проекты")],
-    ["stories", t("Истории")],
-    ...(session ? [["saved", t("Сохранённое")], ["projects", t("Мои проекты")], ["settings", t("Настройки")]] : []),
-  ];
+  const links = [["explore", t("Обзор")], ["explore?kind=people", t("Люди")], ["stories", t("Истории")], [session ? "settings" : "login", session ? t("Аккаунт") : t("Войти")]];
   app.innerHTML = html`<header class="topbar"><div class="topbar-inner">
       <div class="brand-block"><a class="brand" href="/app#explore" aria-label="Круг, обзор"><span class="brand-mark"></span>круг</a>
       <span class="topbar-tagline">Люди. Проекты. Возможности.</span></div>
-      <nav class="nav" aria-label="Основная навигация">${links.map(([id, title]) => html`<a href="/app#${id}" class="${route === id ? "active" : ""}" ${route === id ? 'aria-current="page"' : ""}>${icon({stories:"feed",saved:"heart",projects:"posts"}[id] || id)}<span>${title}</span></a>`).join("")}</nav>
+      <nav class="nav" aria-label="Основная навигация">${links.map(([id, title]) => { const peopleTab = new URLSearchParams(location.hash.split("?")[1] || "").get("kind") === "people"; const current = id === "explore?kind=people" ? route === "explore" && peopleTab : route === id && !(id === "explore" && peopleTab); return html`<a href="/app#${id}" class="${current ? "active" : ""}" ${current ? 'aria-current="page"' : ""}>${icon({stories:"feed",settings:"settings",login:"settings"}[id] || id.split("?")[0])}<span>${title}</span></a>`; }).join("")}</nav>
       <div class="header-controls"><div class="preferences">
       <button id="ui-language" class="preference-button" aria-label="${language === "ru" ? "Switch to English" : t("Переключить на русский")}" title="Русский / English">${language.toUpperCase()}</button>
       <details class="theme-picker"><summary id="ui-theme" class="preference-button" aria-label="${t("Тема")}" title="${t("Тема")}">${themeIcon(theme)}</summary>
@@ -444,8 +440,10 @@ async function paged(root, path, itemHTML, stamp, blank) {
   await load();
 }
 async function authScreen(root, route, stamp) {
-  const requestedNext = new URLSearchParams(location.hash.split("?")[1] || "").get("next") || location.hash.slice(1).split("?")[0];
-  const next = /^(project\/[a-z0-9-]+|project-new|saved|projects)$/.test(requestedNext) ? requestedNext : "explore";
+  const [currentRoute, currentQuery = ""] = location.hash.slice(1).split("?");
+  const currentParams = new URLSearchParams(currentQuery);
+  const requestedNext = currentParams.get("next") || currentRoute + (currentRoute === "project-new" && /^[a-z0-9-]+$/.test(currentParams.get("inspired") || "") ? "?inspired=" + currentParams.get("inspired") : "");
+  const next = /^(project\/[a-z0-9-]+|project-new(?:\?inspired=[a-z0-9-]+)?|saved|projects|applications|collaboration-profile|external-submit|project-claim\/[a-z0-9-]+)$/.test(requestedNext) ? requestedNext : "explore";
   const register = route === "register",
     reset = route === "recover";
   root.innerHTML = html`<div class="auth">${heading(t("Добро пожаловать"), reset ? t("Вернуться в Круг") : register ? t("Начните свою историю") : t("С возвращением"), reset ? t("Отправим ссылку для нового пароля, если email связан с аккаунтом.") : register ? t("Немного о себе — и вы среди своих.") : t("Войдите, чтобы читать своих людей и делиться мыслями."))}<div class="card">
@@ -615,7 +613,6 @@ async function profileScreen(root, id, stamp) {
     me && !own ? await api("/subscriptions/" + id + "/check") : null;
   if (stamp !== generation) return;
   root.innerHTML =
-    heading(t("Люди Круга"), t("Профиль")) +
     html`<section class="card">
       <div class="profile-top">
       <span class="avatar large">${esc(profile.username[0].toUpperCase())}</span>
@@ -625,17 +622,9 @@ async function profileScreen(root, id, stamp) {
       </div>
       </div>
       <p class="bio">${esc(profile.bio) || t("Пока без описания. Истории расскажут больше.")}</p>
-      <div class="stats">
-      <span>
-      <strong>${profile.posts_count}</strong>публикаций</span>
-      <span>
-      <strong>${profile.subscribers_count}</strong>подписчиков</span>
-      <span>
-      <strong>${profile.subscriptions_count}</strong>подписок</span>
-      </div>
-      <div class="toolbar">${own ? t('<a class="button secondary" href="/app#settings">Редактировать профиль</a><a class="text-button" href="/app#posts">Мои черновики</a>') : me ? html`<button id="follow" class="${follow.subscribed ? "secondary" : ""}">${follow.subscribed ? t("Вы подписаны · отписаться") : t("Подписаться")}</button>` : t('<a class="button" href="/app#login">Войти и подписаться</a>')}</div>
-      </section>
-      <h2>Опубликованные истории</h2>`;
+      <div class="toolbar">${own ? t('<a class="button secondary" href="/app#settings">Редактировать профиль</a><a class="text-button" href="/app#posts">Мои истории</a>') : me ? html`<button id="follow" class="${follow.subscribed ? "secondary" : ""}">${follow.subscribed ? t("Вы подписаны · отписаться") : t("Подписаться")}</button>` : t('<a class="button" href="/app#login">Войти и подписаться</a>')}</div>
+      </section><section id="collaboration-profile" class="collaboration-profile"></section>${own && me?.role === "admin" ? t('<a class="text-button" href="/app#admin-review">Очередь проверки</a>') : ""}<h2>${t("Истории")}</h2><div class="stats"><span><strong>${profile.posts_count}</strong>${t("публикаций")}</span><span><strong>${profile.subscribers_count}</strong>${t("подписчиков")}</span><span><strong>${profile.subscriptions_count}</strong>${t("подписок")}</span></div>`;
+  await collaborationProfileBlock(root, id, own, stamp);
   if (follow)
     actionButton(root.querySelector("#follow"), async () => {
       await api("/subscriptions" + (follow.subscribed ? "/" + id : ""), {
@@ -709,6 +698,10 @@ async function editorScreen(root, id, stamp, query = new URLSearchParams()) {
   const form = root.querySelector("form");
   const projectId = post?.project_id || (/^\d+$/.test(query.get("project") || "") ? Number(query.get("project")) : null);
   if (projectId) {
+    const title = root.querySelector("h1");
+    if (title) title.textContent = t(post ? "Редактировать обновление" : "Новое обновление проекта");
+    form.querySelector("button").textContent = t("Сохранить обновление");
+
     const context = document.createElement("p");
     context.className = "project-editor-context";
     context.textContent = t("Обновление проекта");
@@ -876,7 +869,7 @@ async function settingsScreen(root, stamp) {
       t("Настройки"),
       t("Немного о себе и о том, как оставаться на связи."),
     ) +
-    html`<div class="settings-grid">
+    html`<nav class="account-links" aria-label="${t("Мои разделы")}"><a href="/app#projects">${t("Мои проекты")}</a><a href="/app#saved">${t("Сохранённые проекты")}</a><a href="/app#applications">${t("Мои заявки")}</a><a href="/app#collaboration-profile">${t("Профиль для сотрудничества")}</a>${me.role === "admin" ? t('<a href="/app#admin-review">Проверка внешних проектов</a>') : ""}<a href="/app#external-submit">${t("Предложить внешний проект")}</a></nav><div class="settings-grid">
       <section class="card">
       <h2>Профиль</h2>
       <p class="small">@${esc(me.username)} · открытый профиль</p>
@@ -994,7 +987,7 @@ async function render(options = {}) {
   try {
     if (special) await tokenScreen(root, stamp);
     else if (
-      ["feed", "posts", "people", "settings", "new", "edit", "saved", "projects", "project-new", "project-edit"].includes(route) &&
+    ["feed", "posts", "people", "settings", "new", "edit", "saved", "projects", "project-new", "project-edit", "collaboration-profile", "external-submit", "admin-review", "applications", "project-claim"].includes(route) &&
       !session
     )
       await authScreen(root, "login", stamp);
@@ -1008,7 +1001,13 @@ async function render(options = {}) {
       await editorScreen(root, id, stamp, query);
     else if (route === "project" && /^[a-z0-9-]+$/.test(id)) await projectScreen(root, id, stamp);
     else if (route === "project-interested" && /^[a-z0-9-]+$/.test(id)) await projectInterestedScreen(root, id, stamp);
-    else if (route === "project-new" || (route === "project-edit" && /^[a-z0-9-]+$/.test(id))) await projectEditorScreen(root, id, stamp);
+    else if (route === "project-new" || (route === "project-edit" && /^[a-z0-9-]+$/.test(id))) await projectEditorScreen(root, route === "project-new" ? null : id, stamp, query);
+    else if (route === "collaboration-profile") await collaborationProfileScreen(root, stamp);
+    else if (route === "external-submit") await externalSubmissionScreen(root, stamp);
+    else if (route === "project-claim" && /^[a-z0-9-]+$/.test(id)) await projectClaimScreen(root, id, stamp);
+    else if (route === "admin-review" && me?.role === "admin") await adminReviewScreen(root, stamp);
+    else if (route === "admin-review") root.innerHTML = heading("", t("Доступ закрыт"));
+    else if (route === "applications") await applicationsScreen(root, stamp);
     else if (route === "saved" || route === "projects") await projectListScreen(root, route === "saved", stamp, query);
     else if (!route || route === "explore") await discoveryScreen(root, query, stamp);
     else if (route === "people") await peopleScreen(root, query, stamp);

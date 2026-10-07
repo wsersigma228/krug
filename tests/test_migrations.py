@@ -1,14 +1,15 @@
 from uuid import uuid4
+from datetime import datetime, timezone
 
 from alembic import command
 from alembic.autogenerate import compare_metadata
 from alembic.config import Config
 from alembic.runtime.migration import MigrationContext
-from sqlalchemy import create_engine, delete, inspect, insert, select, text
+from sqlalchemy import create_engine, delete, func, inspect, insert, select, text
 
 from backend.config import DATABASE_URL
 from backend.database import Base
-from backend.models import Post, User
+from backend.models import Post, Project, ProjectMember, User
 
 
 def test_cursor_index_migration_round_trip():
@@ -42,5 +43,35 @@ def test_cursor_index_migration_round_trip():
         command.upgrade(config, "head")
         with engine.begin() as connection:
             connection.execute(delete(Post).where(Post.id == post_id))
+            connection.execute(delete(User).where(User.id == user_id))
+        engine.dispose()
+
+
+def test_collaboration_migration_backfills_existing_project_owners():
+    engine = create_engine(DATABASE_URL.replace("psycopg_async", "psycopg"))
+    config = Config("alembic.ini")
+    username = f"migration_owner_{uuid4().hex}"
+    now = datetime.now(timezone.utc)
+    with engine.begin() as connection:
+        user_id = connection.scalar(insert(User).values(username=username, hashed_password="unused").returning(User.id))
+        project_id = connection.scalar(insert(Project).values(
+            slug=f"migration-{uuid4().hex[:20]}", title="Old project", summary="Still here",
+            description="Before collaboration tables", origin="native", status="active", stage="idea",
+            visibility="public", owner_id=user_id, tags=[], skills=[], recruitment_status="unknown",
+            created_at=now, updated_at=now,
+        ).returning(Project.id))
+    try:
+        command.downgrade(config, "b86f0c135249")
+        command.upgrade(config, "head")
+        with engine.connect() as connection:
+            memberships = connection.scalar(select(func.count()).select_from(ProjectMember).where(
+                ProjectMember.project_id == project_id, ProjectMember.user_id == user_id,
+                ProjectMember.role == "Owner"))
+            assert memberships == 1
+    finally:
+        command.upgrade(config, "head")
+        with engine.begin() as connection:
+            connection.execute(delete(ProjectMember).where(ProjectMember.project_id == project_id))
+            connection.execute(delete(Project).where(Project.id == project_id))
             connection.execute(delete(User).where(User.id == user_id))
         engine.dispose()

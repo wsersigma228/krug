@@ -180,3 +180,43 @@ to all old reading/media/social paths. `PATCH /me/profile` accepts optional
 
 HTML sharing: `/project/{slug}`, `/project/{slug}/updates/{id}`.
 See [discovery contracts and operational limits](discovery.md).
+
+## Collaboration and moderation
+
+| Method and path | Access | Body / result |
+| --- | --- | --- |
+| `GET|PUT /me/collaboration-profile` | Signed in | Skills, interests, wanted skills, intent kind/text, timezone, commitment, languages, external links, discoverable and active/paused status |
+| `GET /people`, `GET /people/{id}` | Public | Paginated active profiles that opted into discovery and were updated within 30 days; email and private contact URLs are never returned |
+| `GET /people/{id}/projects` | Public | Public project ownership and accepted memberships, independent of intent visibility |
+| `GET /profile/{username}` | Public HTML | Share page with public identity, public projects and only currently discoverable intent |
+| `GET /openings` | Public | Paginated open roles on public projects; optional search/skill filters |
+| `GET /projects/{slug}/openings` | Public; owner sees closed roles | Project roles with a compact public project card |
+| `POST /projects/{slug}/openings` | Project owner | Create a role on an owned public project |
+| `PATCH|DELETE /projects/{slug}/openings/{id}` | Project owner | Edit or remove a role; removal is rejected once applications exist, so close it instead |
+| `POST /projects/{slug}/openings/{id}/applications` | Signed in | `{message,applicant_contact_url?}`; one application per person and role |
+| `GET /me/applications` | Applicant | Own applications; accepted applications include the owner's contact URL |
+| `GET /projects/{slug}/applications` | Project owner | Applicants; contact links appear only after acceptance |
+| `PATCH /projects/{slug}/applications/{id}` | Project owner | `{status:"accepted"|"rejected"}`; acceptance adds one project membership |
+| `POST /me/applications/{id}/withdraw` | Applicant | Withdraw a pending application |
+| `GET /projects/{slug}/members` | Public | Project owner and accepted members, with factual roles and join times |
+| `GET|PUT /projects/{slug}/contact-settings` | Project owner | Private `{owner_contact_url}`; returned to applicants only after acceptance |
+| `POST /external-submissions` | Signed in | Submit metadata for review; nothing becomes public before admin approval |
+| `GET /admin/external-submissions`, `GET /admin/project-claims` | Admin | Pending moderation queues |
+| `PATCH /admin/external-submissions/{id}`, `PATCH /admin/project-claims/{id}` | Admin | `{status:"approved"|"rejected"}` |
+| `POST /projects/{slug}/claims` | Signed in | Provide evidence URL or text to request ownership of an imported project |
+
+Intent discovery is opt-in. Paused, opted-out, or older-than-30-days profiles do
+not appear in `/people`; public account pages and factual public project history
+remain available. Public project responses include consented interest, actual
+members (including the owner), open roles, and published updates. Private saves
+and hidden interest do not affect public counts. Project search matches open
+roles as well as project fields and uses activity time and project ID for ties.
+
+External submissions publish as unowned external records only after review.
+Claims require admin evidence review and retain the external source and identity;
+the GitHub collector skips updates to claimed records. A native project inspired
+by an external project stores `derived_from_project_id` and does not claim or
+modify the source. Accepted members can publish updates. Owners and members see
+their own drafts; other viewers see published updates only. The public HTML project
+page includes counts, open roles, public member names and discovery links, without
+showing private contact URLs.

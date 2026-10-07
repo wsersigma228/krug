@@ -116,6 +116,26 @@ The check covers 1440px desktop and 390px mobile viewports, temporary accounts,
 photo drafts/publication, social interactions, search, errors and empty states.
 It removes only its temporary accounts and captured messages.
 
+`scripts/browser_discovery_viewports.cjs` checks 320px–3840px layouts, four mobile
+destinations, collapsed mobile filters and RU/EN discovery labels, then captures
+screenshots. It creates no fixtures and refuses any `APP_URL` except
+`http://127.0.0.1:18103`; run it only against the isolated preview.
+
+For collaboration UI checks, use only the isolated preview at
+`http://127.0.0.1:18103`. Set `NODE_PATH` to the external Playwright install and
+`BROWSER_CHANNEL=msedge`, then run `node scripts/browser_discovery_viewports.cjs`
+for 320px–3840px viewport, keyboard, theme, reduced-motion and error-state checks.
+`node scripts/browser_collaboration.cjs` creates synthetic preview accounts, projects,
+roles and applications and captures populated screens; these fixtures remain in that
+preview database. Set `BROWSER_ADMIN_USERNAME` to an admin already promoted in the
+same preview database to include submission, ownership-review and claimed-project
+edit checks. The script refuses any `APP_URL` other than the isolated preview.
+For a focused pass over an existing pending item, use
+`scripts/browser_admin_tail.cjs` with `BROWSER_EXTERNAL_TITLE` set to that item's
+exact title; it approves the item, exercises a synthetic claim, then verifies edit
+preserves the external source and existing status/stage. It uses the same preview-only
+URL guard and synthetic admin setting.
+
 `node scripts/browser_locale.cjs` checks the running application's RU/EN behavior,
 account language persistence, untranslated user content and theme controls. It
 uses the same external Playwright setup and `APP_URL`; run it against the Fedora
@@ -147,10 +167,12 @@ allow preferences to work for the current visit. Without a saved choice, the UI
 starts in the cold graphite dark theme with a blue accent. The native frontend
 uses the system sans-serif font for headings, reading and controls. The sticky header
 compacts on downward scrolling and expands upward; controls stay in the same DOM
-and reduced-motion disables transitions. The feed shell uses
-`min(calc(100% - 64px), 3600px)` without a context rail. Listings use a responsive
-CSS grid with 350px minimum columns, 8px automatic rows and 24px gaps (16px on
-mobile). ResizeObserver measures intrinsic `.post-card-inner` height to update
+and reduced-motion disables transitions. Story/feed pages use
+`min(calc(100% - 64px), 3600px)`. Collaboration discovery uses a 2500px shell,
+expanding to 2900px above 3600px viewports; project detail and updates cap at
+1800px. Discovery presents native and external projects, opt-in people and actual
+openings. Listings use a responsive CSS grid with 350px minimum columns, 8px
+automatic rows and 24px gaps (16px on mobile). ResizeObserver measures intrinsic `.post-card-inner` height to update
 outer card spans, including after image loads and reaction changes; it disconnects
 before each screen render. Default grid row flow uses the response sequence;
 keyboard and source order retain it, while varied card heights do not create uniform

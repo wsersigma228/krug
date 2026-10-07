@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import joinedload
-from backend.models import Post, Subscription, User, EmailDelivery, Project
+from backend.models import Post, Subscription, User, EmailDelivery, Project, ProjectMember
 from backend.project_access import public_post
 from fastapi import HTTPException
 from datetime import datetime, timezone
@@ -99,9 +99,16 @@ async def create_post(
     author_id: int,
 ):
     if post_data.project_id is not None:
-        project = await db.scalar(select(Project).where(Project.id == post_data.project_id,
-            Project.owner_id == author_id, Project.origin == "native").with_for_update())
+        author_exists = await db.scalar(select(User.id).where(User.id == author_id)
+                                        .with_for_update(read=True, key_share=True))
+        if author_exists is None:
+            raise HTTPException(401, "Account no longer exists")
+        project = await db.scalar(select(Project).where(Project.id == post_data.project_id).with_for_update())
         if project is None:
+            raise HTTPException(404, "Project not found")
+        is_member = await db.scalar(select(ProjectMember.id).where(
+            ProjectMember.project_id == project.id, ProjectMember.user_id == author_id))
+        if project.owner_id != author_id and not is_member:
             raise HTTPException(404, "Project not found")
         if post_data.is_published and project.visibility == "public":
             project.last_activity_at = datetime.now(timezone.utc)

@@ -4,8 +4,8 @@
 
 **People, projects, possibilities.**
 
-A web-first discovery network for native projects and public GitHub projects,
-with private saves, follows, optional public interest and project updates.
+A web-first collaboration network to discover opted-in people, native projects,
+externally sourced projects and open roles, with project updates and applications.
 
 ![Python 3.14](https://img.shields.io/badge/Python-3.14-3776AB?logo=python&logoColor=white)
 [![License: MIT](https://img.shields.io/badge/License-MIT-181818)](LICENSE)
@@ -23,16 +23,18 @@ with private saves, follows, optional public interest and project updates.
 
 ## Overview
 
-Discover projects without an account, save a shortlist and follow progress.
-Create a native project and share public text/photo updates. GitHub metadata
-refreshes automatically through the existing worker. Russian/English and
-light/dark/system themes remain available. Standalone stories and author feeds
-are preserved under Stories. See [v0.1 scope and import policy](docs/discovery.md).
+Discover people, native and external projects, and open roles without an account.
+Create projects, apply to roles and share public text/photo updates. GitHub metadata
+refreshes automatically through the existing worker. Profiles are discoverable only
+by consent; private contact links are shared with a project owner and accepted
+applicants. Russian/English and light/dark/system themes remain available. Standalone
+stories and author feeds are preserved under Stories. See [import policy](docs/discovery.md).
 
 | Area | Included |
 | --- | --- |
-| Projects | Native/public GitHub projects, PostgreSQL discovery, public HTML pages and OpenGraph |
-| Intent | Private saves/follows; Interested becomes public only through explicit per-project consent |
+| Projects | Native/external project discovery, public pages, OpenGraph and project updates |
+| Collaboration | Opt-in people profiles, openings, applications, owner decisions and accepted-member updates |
+| Privacy | Saves/follows stay private; interest is visible only through explicit per-project consent; contacts are shared only after acceptance |
 | Writing | Private drafts, optional titles, editing, publication and one photo per post |
 | Reading | Public discovery, full-text search and a feed of followed authors |
 | People | Public profiles, biographies, follows, likes and flat comments |
@@ -82,11 +84,12 @@ Posts, comments, biographies and usernames are never translated. Search language
 is an independent PostgreSQL matching mode, not the interface language.
 
 Light, dark and system themes are available. The default uses cold graphite and a
-restrained blue accent; existing saved choices are respected. A responsive masonry social
-feed uses native sans-serif text, with distinct author, title and date hierarchy.
-Wide layouts use a centered shell capped at 3600 CSS px and fill it with post cards.
-Each card shows its author, optional proportional photo, optional title and text;
-there is no contextual author column. Mobile uses a single column.
+restrained blue accent; existing saved choices are respected. Collaboration
+discovery uses distinct person, project and role cards in a fluid wide shell. Stories
+retain a responsive masonry feed with native sans-serif text and distinct author,
+title and date hierarchy. Story layouts use a centered shell capped at 3600 CSS px.
+Each story card shows its author, optional proportional photo, optional title and
+text; there is no contextual author column. Mobile uses a single column.
 The sticky header compacts while scrolling
 down and expands while scrolling up, keeping navigation and preferences reachable;
 reduced-motion settings disable transitions. System follows the operating system's
@@ -425,14 +428,16 @@ credentials. The check removes its accounts, photos and state file afterwards.
 
 ## Scope and license
 
-This first public version is **WIP**, intended as a small social network and an
-understandable foundation to clone and adapt. It has no production uptime or scale
-claim. Profiles and published posts are public; private profiles, video, Stories,
-direct messages, recommendation engines, WebSockets and typo search are deferred.
-The UI is native JavaScript/CSS, with no package manager or frontend build step.
+This collaboration and social product is **WIP** and makes no production uptime or
+scale claim. Public discovery profiles require explicit opt-in; public projects,
+openings and published stories remain viewable without authentication. Applicants
+share contact URLs only with the owner and accepted applicants. Administrators
+review external project suggestions and ownership claims. Chat, task management,
+video, recommendation engines, WebSockets and typo search are deferred. The UI is
+native JavaScript/CSS, with no package manager or frontend build step.
 It stores tokens in per-tab sessionStorage, which does not protect against XSS;
 use HTTPS, keep dependencies updated and review your deployment before exposing it.
-There is no individual-session management, moderation dashboard, automated backup,
+There is no individual-session management, broad moderation dashboard, automated backup,
 or orphan-file collector. Search uses PostgreSQL full-text rules, not fuzzy matching.
 Email delivery can retry transient failures and can duplicate a message after an
 SMTP acceptance followed by a process crash. SMTP credentials must be supplied by

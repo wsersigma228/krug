@@ -9,43 +9,52 @@ no frontend build or third-party browser runtime.
 
 ## Product Purpose
 
-Help developers discover projects and people with a shared interest in building.
-External projects bootstrap useful discovery while native projects and public
-updates let people share their own work. Krug adds saved projects, project follows
-and voluntary interest beyond an outbound source link.
+Help people find collaborators and projects around shared interests. Public
+discovery includes people who opt in, native projects, externally sourced projects,
+open roles and real project updates. Project activity and collaboration are native
+to Krug; imported source material remains clearly attributed and never implies
+that an external maintainer is recruiting.
 
 ## Users
 
 Developers across disciplines, including open-source and game development, using
-English or Russian. Search, project pages, updates and source links are available
-without registration. An account is required to create, save, follow or mark interest.
+English or Russian. Search, project pages, profiles and source links are available
+without registration. An account is required to publish an intent profile, create
+projects, apply to roles, manage roles or post updates.
 
 ## Capabilities and Constraints
 
-The first version centers on native and externally imported projects. It includes
-structured discovery, project drafts/publication, owner updates using existing
-posts, save/follow/interested, saved and followed lists, and profiles visible in a
-project's interested list only after explicit consent for that project. Interest
-defaults private. Following stores a selection; project alert emails are deferred.
-Import activity must not invent recruitment status, team size or commitment.
+Discovery offers All, Projects, People and Open roles results. People choose
+whether their collaboration profile is discoverable and may pause it at any time.
+Profiles can include skills, interests, wanted skills, intent, timezone,
+commitment, languages and external links. Private contact details are never
+inferred from account email.
 
-Public project and update URLs carry escaped HTML and object-specific OpenGraph
-metadata. The interactive app supplies account actions; public share pages remain
-useful without JavaScript or authentication. Existing accounts, author follows,
-post publication, photos, stories, comments, reactions and email flows remain.
+Members can start native projects independently of external repositories. Owners
+publish real openings, receive applications and accept or reject them. Applicants
+may withdraw. Contact URLs are shared only with the project owner and, after
+acceptance, the accepted applicant. Owners and accepted members can publish
+project updates using the existing post editor. Counts describe actual opted-in
+interest, membership, open roles and published updates; no audience or recruiting
+figures are fabricated.
 
-No teams/applications, chat, task management, billing, AI matching, reputation scores,
-mobile app or federation in this version. FastAPI and PostgreSQL remain the backend;
-the existing Redis/Celery mail pipeline stays. Fedora remains the deployment host.
-User content is never translated. RU/EN account language and per-browser
-light/dark/system themes remain available.
+External project suggestions and requests to represent an imported project enter
+an administrator review queue. Approval retains source attribution. Public project
+and update URLs carry escaped HTML and object-specific OpenGraph metadata. Existing
+accounts, stories, photos, comments, reactions and email flows remain available.
+
+No chat, task management, billing, AI matching, reputation scores, mobile app or
+federation. FastAPI and PostgreSQL remain the backend; the existing Redis/Celery
+mail pipeline stays. Fedora remains the deployment host. User content is never
+translated. RU/EN account language and per-browser light/dark/system themes remain.
 
 ## Brand Commitments
 
 Cold graphite and restrained blue, clear native sans-serif typography. Discovery
-is an operating surface: prominent search, a desktop filter sidebar and compact
-project cards; mobile filters collapse beneath search. Real titles, summaries,
-skills, status and source take precedence over decorative imagery or fake metrics.
+uses prominent search, compact intent-aware filters, distinct people/project/role
+cards and a native-project highlight supported by actual records. Mobile keeps
+four primary destinations reachable and collapses filters below search. Wide
+discovery layouts expand fluidly while project details keep a readable text measure.
 Stories retain their proportional-photo masonry layout outside primary discovery.
 
 Motion communicates navigation and feedback: short ease-out opacity/transform

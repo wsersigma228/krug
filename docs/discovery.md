@@ -2,22 +2,25 @@
 
 Krug connects developers with native projects and public GitHub projects.
 Anonymous visitors can search, filter, read project pages and published updates,
-and open external sources. Accounts are required only to create/edit projects,
-publish updates, save, follow or express interest.
+and open external sources. Accounts are required to create/edit projects, apply
+for roles, publish updates, save, follow or express interest.
 
 ## Deliberate boundary
 
 Native projects and imported repositories share `Project`. A nullable
 `posts.project_id` gives a post the product role of project update without moving
 post IDs, photos, likes or comments. Existing standalone stories and author follows
-remain supported. Project owners alone edit their projects and publish updates.
+remain supported. Project owners alone edit project metadata; owners and accepted
+members can publish updates. Only an update's author can edit or delete it.
 Account removal is refused while the user owns a project; deleting an account
 must not silently erase project history. Ownership transfer is not implemented.
 
-Teams, applications, game-jam/hackathon collectors, chat, saved-search alerts,
-matching and billing are outside v0.1. An imported repository is not a promise
-that its maintainers are recruiting. Repository contributors are not team size.
-The API deliberately returns unknown recruitment/stage when not established.
+Applications and membership now connect people to roles on owned projects. An
+imported repository is still not a promise that its maintainers are recruiting;
+unowned external records cannot open roles or accept applications. Repository
+contributors are not team size. Stage and recruitment stay unknown unless a
+reviewed owner establishes them. Chat, event collectors, saved-search alerts,
+automated matching and billing remain outside this scope.
 
 Save is a private bookmark. Follow persists an in-app following list, without
 automatic email alerts. Interested is independent of both and is private by
@@ -54,6 +57,13 @@ Stale/archived records remain accessible but are excluded from default discovery
 explicit status filters can show them. Exact `game dev` aliases match
 `gamedev`/`game-development` tags or skills; there is no semantic/ML search.
 
+External metadata submitted by users stays private until an admin approves it;
+approval creates an unowned external project and never asserts maintainer access.
+An imported project claim requires evidence and admin approval before assigning
+an owner. Claimed projects retain external source fields and IDs, and the GitHub
+collector skips their later updates. A native project inspired by an external
+record stores `derived_from_project_id` and does not reuse its canonical URL.
+
 Sources: [GitHub repository API](https://docs.github.com/en/rest/repos/repos#get-a-repository),
 [API best practices](https://docs.github.com/en/rest/using-the-rest-api/best-practices-for-using-the-rest-api).
 
@@ -63,8 +73,21 @@ Sources: [GitHub repository API](https://docs.github.com/en/rest/repos/repos#get
 HTML with object-specific title, description, canonical and OpenGraph metadata.
 Set `PUBLIC_APP_URL` to the externally reachable HTTPS origin for useful share
 previews. A loopback URL is suitable for local preview only. Draft projects and
-updates return no public content. The native application provides editing and
-interactive discovery; it still has no frontend build step.
+updates return no public content. Project pages include factual consented interest,
+membership, open-role and published-update counts, current role listings and public
+member names, with no private contact links. The native application provides
+editing and interactive discovery; it still has no frontend build step.
+
+`/profile/{username}` shares public identity and project history. Current intent
+appears only while collaboration discovery is opted in, active, and updated in
+the last 30 days. `/people` applies the same visibility rule; account email and
+private application/contact-settings URLs are never public. Profile external links
+are public when their owner opts into discovery. Public project responses report consented interest, actual
+members including the owner, open roles, and published updates. Private interest,
+saves and follows do not create public counts. Accepting an application creates
+one membership. The owner and accepted applicant receive each other's supplied
+contact links only after acceptance. A member sees their own drafts; other members
+see published updates only.
 
 ## Explicit fresh start
 

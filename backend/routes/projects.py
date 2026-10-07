@@ -4,23 +4,47 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse
-from sqlalchemy import Float, cast, func, select, tuple_, update, or_
+from sqlalchemy import Float, case, cast, func, select, tuple_, update, or_
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.config import PUBLIC_APP_URL
 from backend.database import get_db
-from backend.models import EmailDelivery, Post, Project, ProjectEngagement, User
+from backend.models import EmailDelivery, Post, Project, ProjectEngagement, ProjectMember, ProjectOpening, User
 from backend.pagination import cursor_scope, decode_cursor, encode_cursor, make_page, seek_page
 from backend.project_schemas import (DiscoveryParams, EngagementPatch, EngagementResponse,
-    InterestedUser, ProjectCreate, ProjectPatch, ProjectResponse)
+    DiscoveryProjectResponse, InterestedUser, ProjectCreate, ProjectPatch, ProjectResponse)
 from backend.schemas import Page, PageParams, PostResponse
 from backend.security import get_current_user, get_optional_user
 from backend.project_access import canonical_project_url
 from backend.rate_limit import check_rate_limit
 
 router = APIRouter()
+
+
+async def with_project_counts(db, projects):
+    projects = list(projects)
+    if not projects:
+        return []
+    ids = [project.id for project in projects]
+    queries = (
+        select(ProjectEngagement.project_id, func.count()).where(
+            ProjectEngagement.project_id.in_(ids), ProjectEngagement.interested.is_(True),
+            ProjectEngagement.interested_visible.is_(True)).group_by(ProjectEngagement.project_id),
+        select(ProjectMember.project_id, func.count()).where(ProjectMember.project_id.in_(ids)).group_by(ProjectMember.project_id),
+        select(ProjectOpening.project_id, func.count()).join(Project).where(
+            ProjectOpening.project_id.in_(ids), ProjectOpening.status == "open",
+            Project.status.not_in(["stale", "archived"])).group_by(ProjectOpening.project_id),
+        select(Post.project_id, func.count()).where(Post.project_id.in_(ids), Post.is_published.is_(True)).group_by(Post.project_id),
+    )
+    grouped = []
+    for query in queries:
+        grouped.append({project_id: count for project_id, count in (await db.execute(query)).all()})
+    return [DiscoveryProjectResponse.model_validate(project).model_copy(update={
+        "interested_count": grouped[0].get(project.id, 0), "member_count": grouped[1].get(project.id, 0),
+        "open_roles_count": grouped[2].get(project.id, 0), "published_updates_count": grouped[3].get(project.id, 0),
+    }) for project in projects]
 
 
 async def get_project(db, slug, user=None, *, owned=False, lock=False):
@@ -35,7 +59,7 @@ async def get_project(db, slug, user=None, *, owned=False, lock=False):
     return project
 
 
-@router.get("/discovery", response_model=Page[ProjectResponse])
+@router.get("/discovery", response_model=Page[DiscoveryProjectResponse])
 async def discovery(params: Annotated[DiscoveryParams, Query()], db: AsyncSession = Depends(get_db)):
     filters = params.model_dump(exclude={"cursor", "limit"})
     search = (params.search or "").strip()
@@ -47,7 +71,10 @@ async def discovery(params: Annotated[DiscoveryParams, Query()], db: AsyncSessio
     if params.skill:
         query = query.where(Project.skills.contains([params.skill.strip().lower()]))
     if params.source:
-        query = query.where(Project.origin == "native" if params.source == "native" else Project.source_name == params.source)
+        if params.source in {"native", "external"}:
+            query = query.where(Project.origin == params.source)
+        else:
+            query = query.where(Project.source_name == params.source)
     if params.status:
         query = query.where(Project.status == params.status)
     elif params.active is None:
@@ -57,23 +84,36 @@ async def discovery(params: Annotated[DiscoveryParams, Query()], db: AsyncSessio
     if params.active is not None:
         query = query.where(Project.status == "active" if params.active else Project.status != "active")
     if not search:
-        rows = (await db.scalars(seek_page(query, Project, cursor, params.limit))).all()
-        return make_page(rows, params.limit, scope)
+        activity = func.coalesce(Project.last_activity_at, Project.created_at)
+        if cursor:
+            query = query.where(tuple_(activity, Project.id) < tuple_(cursor.created_at, cursor.id))
+        rows = (await db.scalars(query.order_by(activity.desc(), Project.id.desc()).limit(params.limit + 1))).all()
+        selected, more = rows[:params.limit], len(rows) > params.limit
+        page = {"items": selected, "has_more": more,
+                "next_cursor": encode_cursor(selected[-1].last_activity_at or selected[-1].created_at, selected[-1].id, scope) if more else None}
+        page["items"] = await with_project_counts(db, page["items"])
+        return page
     terms = func.websearch_to_tsquery("pg_catalog.simple", search)
-    rank = cast(func.ts_rank(Project.search_vector, terms), Float(53))
     labels = [search.lower()]
     if search.lower() in {"game dev", "gamedev", "game development", "game-development"}:
-        labels = ["gamedev", "game-development"]
+        labels = ["game dev", "gamedev", "game development", "game-development"]
+    pattern = f"%{search}%"
+    role_match = select(ProjectOpening.id).where(ProjectOpening.project_id == Project.id,
+        ProjectOpening.status == "open", or_(ProjectOpening.title.ilike(pattern), ProjectOpening.role.ilike(pattern),
+            ProjectOpening.description.ilike(pattern), ProjectOpening.skills.overlap(labels))).exists()
+    rank = cast(func.ts_rank(Project.search_vector, terms) + case((role_match, 0.25), else_=0), Float(53))
     query = query.add_columns(rank.label("rank")).where(or_(
         Project.search_vector.bool_op("@@")(terms), Project.tags.overlap(labels),
-        Project.skills.overlap(labels),
+        Project.skills.overlap(labels), role_match,
     ))
+    activity = func.coalesce(Project.last_activity_at, Project.created_at)
     if cursor:
-        query = query.where(tuple_(rank, Project.created_at, Project.id) < tuple_(cursor.rank, cursor.created_at, cursor.id))
-    rows = (await db.execute(query.order_by(rank.desc(), Project.created_at.desc(), Project.id.desc()).limit(params.limit + 1))).all()
+        query = query.where(tuple_(rank, activity, Project.id) < tuple_(cursor.rank, cursor.created_at, cursor.id))
+    rows = (await db.execute(query.order_by(rank.desc(), activity.desc(), Project.id.desc()).limit(params.limit + 1))).all()
     items, more = rows[:params.limit], len(rows) > params.limit
-    return {"items": [project for project, _ in items], "has_more": more,
-            "next_cursor": encode_cursor(items[-1][0].created_at, items[-1][0].id, scope, rank=items[-1][1]) if more else None}
+    projects = await with_project_counts(db, [project for project, _ in items])
+    return {"items": projects, "has_more": more,
+            "next_cursor": encode_cursor(items[-1][0].last_activity_at or items[-1][0].created_at, items[-1][0].id, scope, rank=items[-1][1]) if more else None}
 
 
 @router.post("/projects", response_model=ProjectResponse, status_code=201)
@@ -83,10 +123,17 @@ async def create_project(body: ProjectCreate, request: Request, db: AsyncSession
     actor = await db.scalar(select(User.id).where(User.id == user.id).with_for_update(read=True, key_share=True))
     if actor is None:
         raise HTTPException(401, "Account no longer exists")
-    project = Project(**body.model_dump(), owner_id=user.id, origin="native", canonical_url=canonical_project_url(body.source_url),
+    project = Project(**body.model_dump(), owner_id=user.id, origin="native", canonical_url=None if body.derived_from_project_id else canonical_project_url(body.source_url),
                       last_activity_at=datetime.now(timezone.utc) if body.visibility == "public" else None)
     db.add(project)
     try:
+        if body.derived_from_project_id is not None:
+            source = await db.scalar(select(Project).where(Project.id == body.derived_from_project_id,
+                Project.origin == "external", Project.visibility == "public").with_for_update(read=True))
+            if source is None:
+                raise HTTPException(404, "Source project not found")
+        await db.flush()
+        db.add(ProjectMember(project_id=project.id, user_id=user.id, role="Owner"))
         await db.commit()
     except IntegrityError:
         await db.rollback()
@@ -121,15 +168,19 @@ async def followed_projects(params: Annotated[PageParams, Query()], db: AsyncSes
     return make_page(rows, params.limit, scope)
 
 
-@router.get("/projects/{slug}", response_model=ProjectResponse)
+@router.get("/projects/{slug}", response_model=DiscoveryProjectResponse)
 async def project_detail(slug: str, db: AsyncSession = Depends(get_db), user: User | None = Depends(get_optional_user)):
-    return await get_project(db, slug, user)
+    project = await get_project(db, slug, user)
+    return (await with_project_counts(db, [project]))[0]
 
 
 @router.patch("/projects/{slug}", response_model=ProjectResponse)
 async def edit_project(slug: str, body: ProjectPatch, db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)):
     project = await get_project(db, slug, user, owned=True, lock=True)
-    for key, value in body.model_dump(exclude_unset=True).items():
+    changes = body.model_dump(exclude_unset=True)
+    if project.origin == "external" and "source_url" in changes:
+        raise HTTPException(422, "External source identity is preserved")
+    for key, value in changes.items():
         setattr(project, key, value)
     if "source_url" in body.model_fields_set:
         project.canonical_url = canonical_project_url(body.source_url)
@@ -151,9 +202,22 @@ async def edit_project(slug: str, body: ProjectPatch, db: AsyncSession = Depends
 async def project_updates(slug: str, params: Annotated[PageParams, Query()], db: AsyncSession = Depends(get_db), user: User | None = Depends(get_optional_user)):
     project = await get_project(db, slug, user)
     query = select(Post).where(Post.project_id == project.id)
-    if user is None or project.owner_id != user.id:
+    viewer_scope = None
+    if user is None:
         query = query.where(Post.is_published.is_(True))
-    scope = cursor_scope("project_updates", project_id=project.id, owner=user.id if user and user.id == project.owner_id else None)
+    else:
+        is_member = project.owner_id == user.id or await db.scalar(select(ProjectMember.id).where(
+            ProjectMember.project_id == project.id, ProjectMember.user_id == user.id)) is not None
+        if is_member:
+            query = query.where(or_(Post.is_published.is_(True), Post.author_id == user.id))
+            viewer_scope = user.id
+        else:
+            query = query.where(Post.is_published.is_(True))
+    scope_values = {"project_id": project.id,
+                    "owner": user.id if user and user.id == project.owner_id else None}
+    if viewer_scope is not None and user.id != project.owner_id:
+        scope_values["viewer"] = viewer_scope
+    scope = cursor_scope("project_updates", **scope_values)
     rows = (await db.scalars(seek_page(query, Post, decode_cursor(params.cursor, scope), params.limit))).all()
     return make_page(rows, params.limit, scope)
 
@@ -221,6 +285,7 @@ async def project_page(slug: str, db: AsyncSession = Depends(get_db)):
     project = await get_project(db, slug)
     owner = await db.get(User, project.owner_id) if project.owner_id is not None else None
     byline = f'<p class="share-byline">By {escape(owner.display_name or owner.username)}</p>' if owner else ""
+    counts = (await with_project_counts(db, [project]))[0]
     updates = (await db.scalars(select(Post).where(Post.project_id == project.id, Post.is_published.is_(True))
                                .order_by(Post.created_at.desc(), Post.id.desc()).limit(20))).all()
     links = "".join(f'<li><a href="/project/{escape(slug)}/updates/{post.id}">{escape(post.title or post.content[:80])}</a><time datetime="{post.created_at.isoformat()}">{post.created_at.date()}</time></li>' for post in updates)
@@ -242,7 +307,26 @@ async def project_page(slug: str, db: AsyncSession = Depends(get_db)):
         facts += f'<div><dt>Experience</dt><dd>{escape(project.experience_level)}</dd></div>'
     fact_list = f'<dl class="share-facts">{facts}</dl>' if facts else ""
     updates_content = f'<ul class="share-update-list">{links}</ul>' if updates else '<p class="share-empty">No updates published in Krug yet.</p>'
-    body = f'<article class="share-project"><h1 class="share-title">{escape(project.title)}</h1>{byline}{provenance}<p class="share-summary">{escape(project.summary)}</p><div class="share-meta"><span>{escape(project.status.capitalize())}</span><span>{escape(project.stage.capitalize())}</span></div><div class="share-tags">{tags}</div><div class="prose">{escape(project.description)}</div>{fact_list}<div class="share-actions"><a class="share-primary" href="/app#project/{slug}">Open project in Krug</a>{source}</div></article><section class="share-updates"><h2>Project updates</h2>{updates_content}</section>'
+    stats = (f'<dl class="share-facts"><div><dt>Interested people</dt><dd>{counts.interested_count}</dd></div>'
+             f'<div><dt>Members</dt><dd>{counts.member_count}</dd></div>'
+             f'<div><dt>Open roles</dt><dd>{counts.open_roles_count}</dd></div>'
+             f'<div><dt>Published updates</dt><dd>{counts.published_updates_count}</dd></div></dl>')
+    roles = []
+    if project.status not in {"stale", "archived"}:
+        openings = (await db.scalars(select(ProjectOpening).where(
+            ProjectOpening.project_id == project.id, ProjectOpening.status == "open")
+            .order_by(ProjectOpening.created_at, ProjectOpening.id))).all()
+        roles = [f'<li><strong>{escape(opening.title)}</strong><p>{escape(opening.role)}</p>'
+                 f'<div class="share-tags">{"".join(f"<span class=\"share-tag\">{escape(skill)}</span>" for skill in opening.skills)}</div>'
+                 f'<a href="/app#project/{escape(slug, quote=True)}">View role and apply</a></li>' for opening in openings]
+    roles_content = f'<ul class="share-update-list">{"".join(roles)}</ul>' if roles else '<p class="share-empty">No open roles right now.</p>'
+    member_rows = (await db.execute(select(ProjectMember, User).join(User).where(
+        ProjectMember.project_id == project.id).order_by(ProjectMember.joined_at, ProjectMember.id))).all()
+    member_links = "".join(f'<li><a href="/app#profile/{person.id}">{escape(person.display_name or person.username)}</a>'
+                            f'<span class="share-byline">{escape(member.role)}</span></li>'
+                            for member, person in member_rows)
+    members_content = f'<ul class="share-update-list">{member_links}</ul>' if member_links else '<p class="share-empty">No members listed yet.</p>'
+    body = f'<article class="share-project"><h1 class="share-title">{escape(project.title)}</h1>{byline}{provenance}<p class="share-summary">{escape(project.summary)}</p><div class="share-meta"><span>{escape(project.status.capitalize())}</span><span>{escape(project.stage.capitalize())}</span></div><div class="share-tags">{tags}</div><div class="prose">{escape(project.description)}</div>{fact_list}{stats}<div class="share-actions"><a class="share-primary" href="/app#project/{escape(slug, quote=True)}">Open project in Krug</a><a class="share-secondary" href="/app#project-interested/{escape(slug, quote=True)}">Interested people</a><a class="share-secondary" href="/app#explore?kind=people">Find people</a><a class="share-secondary" href="/app#explore?kind=openings">Browse roles</a>{source}</div></article><section class="share-updates"><h2>Open roles</h2>{roles_content}</section><section class="share-updates"><h2>Project members</h2>{members_content}</section><section class="share-updates"><h2>Project updates</h2>{updates_content}</section>'
     return public_page(project.title, project.summary, f"/project/{slug}", body)
 
 

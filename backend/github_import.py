@@ -110,12 +110,12 @@ async def store_repository(db, item: Repository, now: datetime) -> bool:
         last_activity_at=item.activity_at, last_verified_at=now,
     )
     statement = insert(Project).values(**values)
-    # Source identity survives repository renames; native owner fields are never overwritten.
+    # Preserve all curator-owned fields after an external project has been claimed.
     changes = {key: value for key, value in values.items() if key not in {"slug", "origin", "owner_id"}}
     changes["updated_at"] = now
     await db.execute(statement.on_conflict_do_update(
         index_elements=[Project.source_name, Project.source_external_id], set_=changes,
-        where=Project.origin == "external",
+        where=(Project.origin == "external") & Project.claimed_at.is_(None),
     ))
     return True
 
@@ -144,7 +144,7 @@ async def import_repositories(db, names: list[str] | None = None) -> dict:
                 break
     await db.execute(update(Project).where(
         Project.origin == "external", Project.source_name == "github",
-        Project.status == "active",
+        Project.status == "active", Project.claimed_at.is_(None),
         Project.last_verified_at < now - timedelta(days=STALE_VERIFICATION_DAYS),
     ).values(status="stale"))
     await db.commit()
