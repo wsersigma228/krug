@@ -50,16 +50,17 @@ translated. RU/EN account language and per-browser light/dark/system themes rema
 
 ## Brand Commitments
 
-Cold graphite and restrained blue, clear native sans-serif typography. Discovery
-uses prominent search, compact intent-aware filters, distinct people/project/role
-cards and a native-project highlight supported by actual records. Mobile keeps
-four primary destinations reachable and collapses filters below search. Wide
-discovery layouts expand fluidly while project details keep a readable text measure.
-Stories retain their proportional-photo masonry layout outside primary discovery.
+Coral actions on graphite surfaces, with separate accessible coral/text pairs for
+light and dark themes. Discovery places compact copy and a prominent search above
+the result tabs, with a usable desktop filter rail and a balanced project grid.
+Mobile keeps four real destinations reachable, collapses filters below search and
+shows a project card early in the first viewport. Layouts stay fluid from narrow
+phones to ultrawide screens; stories retain their proportional-photo masonry grid.
 
-Motion communicates navigation and feedback: short ease-out opacity/transform
-transitions, stable focused controls and reduced-motion support. No cinematic
-scroll scenes, motion dependencies or mandatory animations.
+Theme changes use a native circular reveal where supported, preserving the same
+controls and scroll position; interruption, fallback and reduced-motion paths
+remain immediate. Existing navigation and feedback motion stays short, with
+no cinematic scroll scenes, motion dependencies or mandatory animations.
 
 ## Evidence on Hand
 

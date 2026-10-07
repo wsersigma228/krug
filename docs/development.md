@@ -164,12 +164,12 @@ recipient language at delivery time, falling back to English for unset accounts.
 `krug-theme` stores `light`, `dark` or `system` per browser. System mode follows
 `prefers-color-scheme`; theme does not sync through the account. Storage failures
 allow preferences to work for the current visit. Without a saved choice, the UI
-starts in the cold graphite dark theme with a blue accent. The native frontend
+starts in the cold graphite dark theme with a warm coral accent. The native frontend
 uses the system sans-serif font for headings, reading and controls. The sticky header
 compacts on downward scrolling and expands upward; controls stay in the same DOM
 and reduced-motion disables transitions. Story/feed pages use
-`min(calc(100% - 64px), 3600px)`. Collaboration discovery uses a 2500px shell,
-expanding to 2900px above 3600px viewports; project detail and updates cap at
+`min(calc(100% - 64px), 3600px)`. Collaboration discovery uses an 1800px shell,
+expanding to at most 2200px on wide viewports; project detail and updates cap at
 1800px. Discovery presents native and external projects, opt-in people and actual
 openings. Listings use a responsive CSS grid with 350px minimum columns, 8px
 automatic rows and 24px gaps (16px on mobile). ResizeObserver measures intrinsic `.post-card-inner` height to update
@@ -191,7 +191,7 @@ controls. Tablet/mobile retain their prior row layouts. Search spans the feed
 container rather than a separate 1000px cap.
 Header
 expanded/compact heights are 92/72px on desktop, 128/112px from 651–1399px,
-and 120/104px on mobile. From 651–1000px, account/compose icons retain accessible
+and 100/88px on mobile. From 651–1000px, account/compose icons retain accessible
 names and navigation labels use 12px type. Search labels remain accessible while
 visually hidden. [DESIGN.md](../DESIGN.md) records the current shared visual system.
 Likes in listing
@@ -226,3 +226,7 @@ proxy handling and your SMTP credentials. Compose alone does not provide a TLS
 reverse proxy. Account rate limits use socket IP; unconfigured proxy forwarding
 can make all visitors share an IP budget. SMTP authentication requires STARTTLS.
 The WIP has no automatic backup/restore workflow; test your own restore procedure.
+
+Коралловое оформление discovery: поиск над выдачей, отдельная форма фильтров с кнопкой применения, смешанная сетка реальных результатов во вкладке «Всё». Переключение темы использует native View Transition с круговым раскрытием 400ms от переключателя; при reduced-motion или недоступном API тема применяется сразу. Быстрые смены выбора отменяют прежнюю анимацию, сохраняя последний выбор.
+
+`frontend/og-default.svg` — редактируемый источник общего OpenGraph изображения; `frontend/og-default.png` — экспорт 1200×630. PNG проверяется визуально после экспорта, SVG не заменяет PNG в OpenGraph.

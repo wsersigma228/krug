@@ -84,8 +84,9 @@ Posts, comments, biographies and usernames are never translated. Search language
 is an independent PostgreSQL matching mode, not the interface language.
 
 Light, dark and system themes are available. The default uses cold graphite and a
-restrained blue accent; existing saved choices are respected. Collaboration
-discovery uses distinct person, project and role cards in a fluid wide shell. Stories
+warm coral accent; existing saved choices are respected. Collaboration
+discovery places search above the results, with a desktop filter rail and compact
+mobile controls. Distinct person, project and role cards use real records. Stories
 retain a responsive masonry feed with native sans-serif text and distinct author,
 title and date hierarchy. Story layouts use a centered shell capped at 3600 CSS px.
 Each story card shows its author, optional proportional photo, optional title and

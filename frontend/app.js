@@ -220,7 +220,7 @@ function shell(route) {
     if (!button) return;
     theme = button.dataset.themeChoice;
     storePreference("krug-theme", theme);
-    applyPreferences();
+    applyPreferences({ transitionTheme: true });
     picker.querySelector("summary").innerHTML = themeIcon(theme);
     picker.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b === button)));
     picker.open = false;

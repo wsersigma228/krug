@@ -39,18 +39,27 @@ async function discoveryScreen(root, query, stamp) {
   const kind = ["all", "projects", "people", "openings"].includes(query.get("kind")) ? query.get("kind") : "all";
   const compactIntro = kind !== "all" || query.has("search");
   const mobileSearch = matchMedia("(max-width: 850px)");
-  root.innerHTML = html`<section class="discovery-intro${compactIntro ? " discovery-intro-compact" : ""}"><div><h1>Найдите людей и проекты для совместной работы.</h1><p class="intro">Ищите свою команду, делитесь замыслом или присоединяйтесь к открытой роли.</p></div><div class="discovery-actions"><a class="button" href="/app#project-new">${t("Начать проект")}</a><a class="text-button" href="/app#external-submit">${t("Предложить внешний проект")}</a><a class="text-button" href="/project/krug">${t("Как строится Круг")} ${icon("arrow")}</a></div></section>
-    <div class="discovery-workspace"><aside class="discovery-sidebar"><form class="discovery-search" role="search"><div class="discovery-search-main"><label class="field"><span>Поиск по Кругу</span><input name="search" maxlength="100" placeholder="Python, дизайн, совместный проект…" value="${esc(query.get("search") || "")}"></label><button>${icon("explore")} Найти</button></div>
-    <details class="discovery-filters" ${kind === "all" ? "hidden" : ""} ${!mobileSearch.matches || ["tag", "skill", "source", "status", "active", "intent_kind"].some(key => query.has(key)) ? "open" : ""}><summary>${t("Фильтры")}</summary><div class="filter-fields">
+  root.innerHTML = html`<section class="discovery-intro${compactIntro ? " discovery-intro-compact" : ""}"><div><h1>Найдите людей и проекты для совместной работы.</h1><p class="intro">Ищите команду или присоединяйтесь к открытой роли.</p></div><div class="discovery-actions"><a class="button" href="/app#project-new">${t("Начать проект")}</a><a class="text-button" href="/app#external-submit">${t("Предложить внешний проект")}</a><a class="text-button" href="/project/krug">${t("Как строится Круг")} ${icon("arrow")}</a></div></section>
+    <form class="discovery-search" role="search"><div class="discovery-search-main"><label class="field"><span>Поиск по Кругу</span><input name="search" maxlength="100" placeholder="Python, дизайн, совместный проект…" value="${esc(query.get("search") || "")}"></label><button>${icon("explore")} Найти</button></div></form>
+    <div class="discovery-workspace"><aside class="discovery-sidebar"><form class="discovery-filter-form"><input type="hidden" name="search" value="${esc(query.get("search") || "")}">
+    <details class="discovery-filters" ${!mobileSearch.matches || ["tag", "skill", "source", "status", "active", "intent_kind"].some(key => query.has(key)) ? "open" : ""}><summary>${t("Фильтры")}</summary><div class="filter-fields">
     ${input("skill", t("Навык"), "text", 'maxlength="50"')}
     <div data-project-filter ${kind === "projects" ? "" : "hidden"}>${input("tag", t("Тег"), "text", 'maxlength="50"')}${input("source", t("Источник"), "text", 'maxlength="40"')}<label class="field">${t("Статус")}<select name="status"><option value="">${t("Все статусы")}</option>${["active", "paused", "completed", "archived", "stale"].map(value => html`<option value="${value}">${projectLabel(value)}</option>`).join("")}</select></label><label class="checkbox"><input name="active" type="checkbox">${t("Только активные")}</label></div>
-    <label class="field" data-people-filter ${kind === "people" ? "" : "hidden"}>${t("Намерение")}<select name="intent_kind"><option value="">${t("Любое намерение")}</option><option value="looking_for_teammates">${t("Ищу участников в проект")}</option><option value="looking_for_project">${t("Ищу проект")}</option><option value="open_to_collaboration">${t("Открыт к сотрудничеству")}</option><option value="interested_in_event">${t("Интересуюсь мероприятиями")}</option></select></label><a class="text-button" href="/app#explore?kind=${kind}">${t("Сбросить фильтры")}</a></div></details></form></aside>
+    <label class="field" data-people-filter ${kind === "people" ? "" : "hidden"}>${t("Намерение")}<select name="intent_kind"><option value="">${t("Любое намерение")}</option><option value="looking_for_teammates">${t("Ищу участников в проект")}</option><option value="looking_for_project">${t("Ищу проект")}</option><option value="open_to_collaboration">${t("Открыт к сотрудничеству")}</option><option value="interested_in_event">${t("Интересуюсь мероприятиями")}</option></select></label><button type="submit" class="secondary">${t("Применить фильтры")}</button><a class="text-button" href="/app#explore?kind=${kind}${query.get("search") ? "&search=" + encodeURIComponent(query.get("search")) : ""}">${t("Сбросить фильтры")}</a></div></details></form></aside>
     <section class="discovery-results"><nav class="discovery-tabs" aria-label="${t("Тип результатов")}">${[["all", "Всё"], ["projects", "Проекты"], ["people", "Люди"], ["openings", "Открытые роли"]].map(([value,label]) => html`<a href="/app#explore?kind=${value}${query.get("search") ? "&search=" + encodeURIComponent(query.get("search")) : ""}" class="${kind === value ? "active" : ""}" ${kind === value ? 'aria-current="page"' : ""}>${t(label)}</a>`).join("")}</nav><div class="discovery-results-heading"><h2>${t({all:"Все результаты",projects:"Проекты",people:"Люди",openings:"Открытые роли"}[kind])}</h2></div><div id="discovery-results"></div></section></div>`;
   const filterDisclosure = root.querySelector(".discovery-filters");
   let manualDisclosure = false;
-  filterDisclosure.addEventListener("toggle", () => { if (!filterDisclosure.hidden) manualDisclosure = true; });
-  mobileSearch.addEventListener("change", event => { if (!manualDisclosure && !["tag", "skill", "source", "status", "active"].some(key => query.has(key))) filterDisclosure.open = !event.matches; });
-  const form = root.querySelector("form");
+  filterDisclosure.querySelector("summary").addEventListener("click", () => { manualDisclosure = true; });
+  mobileSearch.addEventListener("change", event => { if (!manualDisclosure && !["tag", "skill", "source", "status", "active", "intent_kind"].some(key => query.has(key))) filterDisclosure.open = !event.matches; });
+  const searchForm = root.querySelector(".discovery-search");
+  bindForm(searchForm, async data => {
+    const params = new URLSearchParams(query);
+    const value = data.get("search")?.trim();
+    if (value) params.set("search", value); else params.delete("search");
+    params.set("kind", kind);
+    go("explore?" + params);
+  });
+  const form = root.querySelector(".discovery-filter-form");
   ["tag", "skill", "source", "status", "intent_kind"].forEach(key => { if (form.elements[key]) form.elements[key].value = query.get(key) || ""; });
   if (form.elements.active) form.elements.active.checked = query.get("active") === "true";
   bindForm(form, async data => {
@@ -77,11 +86,23 @@ async function discoveryScreen(root, query, stamp) {
     const target = root.querySelector("#discovery-results");
     const nativeParams = new URLSearchParams(params); nativeParams.set("source", "native");
     const externalParams = new URLSearchParams(params); externalParams.set("source", "external");
-    for (const [label,path,render,type] of [["Проекты Круга", "/discovery?" + nativeParams, projectCard, "projects"], ["Открытые роли", openings, openingCard, "openings"], ["Люди", people, personCard, "people"], ["Внешние проекты", "/discovery?" + externalParams, projectCard, "projects"]]) {
-      const section = document.createElement("section"); section.className = "discovery-group"; const tabQuery = new URLSearchParams(query); tabQuery.set("kind", type); section.innerHTML = html`<div class="discovery-results-heading"><h2>${t(label)}</h2><a class="text-button" href="/app#explore?${tabQuery}">${t("Все")}${icon("arrow")}</a></div><p class="hint" role="status">${t("Загрузка…")}</p>`; target.append(section);
-      try { const page = await api(path + (path.includes("?") ? "&" : "?") + "limit=3"); if (stamp !== generation) return; section.querySelector(".hint").remove(); if (!page.items.length) section.insertAdjacentHTML("beforeend", `<p class="hint">${t("Пока нет результатов этого типа.")}</p>`); else { const grid = document.createElement("div"); grid.className = "project-grid"; grid.innerHTML = page.items.map(render).join(""); section.append(grid); } }
-      catch (error) { const state = section.querySelector(".hint"); state.className = "error"; state.setAttribute("role", "alert"); state.textContent = errorText(error); }
+    const sources = [
+      ["Проекты Круга", "/discovery?" + nativeParams, projectCard],
+      ["Открытые роли", openings, openingCard],
+      ["Люди", people, personCard],
+      ["Внешние проекты", "/discovery?" + externalParams, projectCard],
+    ];
+    const pages = await Promise.all(sources.map(async ([label, path, render]) => {
+      try { return { label, items: (await api(path + (path.includes("?") ? "&" : "?") + "limit=3")).items.map(render) }; }
+      catch (error) { return { label, error: errorText(error) }; }
+    }));
+    if (stamp !== generation) return;
+    const cards = [];
+    for (let index = 0; index < Math.max(...pages.map(page => page.items?.length || 0)); index++) {
+      for (const page of pages) if (page.items?.[index]) cards.push(page.items[index]);
     }
+    const errors = pages.filter(page => page.error).map(page => `<p class="error" role="alert">${t(page.label)}: ${esc(page.error)}</p>`).join("");
+    target.innerHTML = `${cards.length ? `<div class="project-grid">${cards.join("")}</div>` : errors ? "" : blank}${errors}`;
   }
 }
 async function projectListScreen(root, saved, stamp, query = new URLSearchParams()) {

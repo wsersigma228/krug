@@ -330,6 +330,8 @@ Object.assign(english, { "Проекты Круга": "Projects on Krug", "Вн�
 
 Object.assign(english, { "Ожидает": "Pending", "Принято": "Accepted", "Отклонено": "Rejected", "Отозвано": "Withdrawn" });
 Object.assign(english, { "Контактные ссылки открываются только после принятия заявки.": "Contact links become available only after an application is accepted." });
+Object.assign(english, { "Ищите команду или присоединяйтесь к открытой роли.": "Find a team or join an open role." });
+Object.assign(english, { "Применить фильтры": "Apply filters" });
 const validLanguage = (value) => ["ru", "en"].includes(value);
 function storedPreference(key) {
   try { return localStorage.getItem(key); } catch { return null; }
@@ -346,6 +348,7 @@ if (!validLanguage(language)) {
 let theme = storedPreference("krug-theme");
 if (!["system", "light", "dark"].includes(theme)) theme = "dark";
 const darkMedia = matchMedia("(prefers-color-scheme: dark)");
+let themeTransition;
 const translationPattern = new RegExp(Object.keys(english).sort((a, b) => b.length - a.length)
   .map((key) => key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|"), "g");
 function t(copy) {
@@ -354,13 +357,53 @@ function t(copy) {
 function html(strings, ...values) {
   return strings.reduce((copy, part, index) => copy + t(part) + (index < values.length ? values[index] : ""), "");
 }
-function applyPreferences() {
+function cancelThemeTransition() {
+  const pending = themeTransition;
+  themeTransition = null;
+  pending?.skipTransition();
+}
+function applyTheme({ transition = false } = {}) {
+  const root = document.documentElement;
+  const nextTheme = theme === "system" ? (darkMedia.matches ? "dark" : "light") : theme;
+  const update = () => {
+    const rendered = theme === "system" ? (darkMedia.matches ? "dark" : "light") : theme;
+    root.dataset.theme = rendered;
+    document.querySelector('meta[name="theme-color"]').content = rendered === "dark" ? "#181c22" : "#f5f6f8";
+  };
+  try {
+    if (root.dataset.theme === nextTheme) {
+      cancelThemeTransition();
+      return;
+    }
+    if (!transition || !document.startViewTransition || matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      cancelThemeTransition();
+      update();
+      return;
+    }
+    cancelThemeTransition();
+    const control = document.querySelector("#ui-theme");
+    const bounds = control?.getBoundingClientRect();
+    if (bounds) {
+      root.style?.setProperty("--theme-origin-x", `${bounds.left + bounds.width / 2}px`);
+      root.style?.setProperty("--theme-origin-y", `${bounds.top + bounds.height / 2}px`);
+    }
+    const next = document.startViewTransition(update);
+    themeTransition = next;
+    next.ready?.catch(() => {
+      if (themeTransition === next) {
+        themeTransition = null;
+        update();
+      }
+    });
+    next.finished.then(() => { if (themeTransition === next) themeTransition = null; }, () => { if (themeTransition === next) themeTransition = null; });
+  } catch { themeTransition = null; update(); }
+}
+function applyPreferences({ transitionTheme = false } = {}) {
   document.documentElement.lang = language;
-  document.documentElement.dataset.theme = theme === "system" ? (darkMedia.matches ? "dark" : "light") : theme;
+  applyTheme({ transition: transitionTheme });
   document.title = language === "ru" ? "Круг — люди, проекты, возможности" : "Krug — people, projects, possibilities";
   const skip = document.querySelector(".skip");
   if (skip) skip.textContent = t("К содержимому");
-  document.querySelector('meta[name="theme-color"]').content = document.documentElement.dataset.theme === "dark" ? "#151c21" : "#edf1f4";
 }
-darkMedia.addEventListener("change", applyPreferences);
+darkMedia.addEventListener("change", () => applyPreferences({ transitionTheme: theme === "system" }));
 applyPreferences();
