@@ -184,6 +184,7 @@ async function main() {
     await phone.locator('[name=password]').fill(password);
     await phone.getByRole('button', { name: 'Sign in', exact: true }).click();
     await phone.waitForURL('**/app#explore');
+    await phone.goto(base + '/app#stories');
     await phone.getByRole('link', { name: title, exact: true }).waitFor();
     assert.equal(await phone.locator('html').getAttribute('lang'), 'en');
     await phone.reload();
@@ -203,7 +204,7 @@ async function main() {
     otherHeaders = { Authorization: 'Bearer ' + otherTokens.access_token };
     for (let index = 0; index < 2; index++) await request('/posts', 'POST', { title: 'Another author ' + index, content: 'Temporary synthetic story for author-rail verification.', is_published: true }, otherHeaders);
     for (const [p, label] of [[page, 'desktop'], [phone, 'mobile']]) {
-      await p.goto(base + '/app#explore');
+      await p.goto(base + '/app#stories');
       await p.reload();
       await p.getByRole('link', { name: title, exact: true }).waitFor();
       await loadPhotos(p);
@@ -251,7 +252,7 @@ async function main() {
       }
       await request('/posts/' + post.id, 'PUT', { is_published: true });
     }
-    await page.goto(base + '/app#explore');
+    await page.goto(base + '/app#stories');
     await page.reload();
     await page.waitForFunction(() => document.querySelectorAll('.post-card').length === 24);
     await page.locator('.load-more').click();
