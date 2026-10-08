@@ -27,7 +27,7 @@ Separate Team, Community and Event records; existing Project/Post capabilities s
 
 Discovery supports all six concept types, with existing open roles accessible within teams/projects. Upcoming events come from Event records. Native creation and manual external attribution work for any safe public source URL; the source set is open. A further public source integration uses GitLab's documented public Projects API, preserving source identity/activity without inventing recruiting claims. The itch.io jam RSS URL checked during research returned HTML, so that endpoint is not treated as a supported feed.
 
-Preview and synthetic fixture content remain isolated from the main Fedora database. Main deployment waits for a coherent migration, API/security checks, browser flows and visual comparison against the concept.
+Preview and synthetic fixture content remain isolated from the main Fedora database. Main Fedora deployment completed for application commit `15aaf50`, migration `db71e945ac30`; health and running source hashes verified. CI passed all 294 tests. Preview resources were removed after final captures.
 
 ## Verified functional correction — 8 October
 
