@@ -12,101 +12,156 @@ function projectTags(project) {
   return [...tags, ...skills].slice(0, 8).map(({ value, filter }) => html`<a class="project-tag" href="/app#explore?kind=projects&${filter}=${encodeURIComponent(value)}">${esc(value)}</a>`).join("");
 }
 function projectCard(project) {
-  const native = project.origin === "native";
-  const canJoin = native || Boolean(project.owner_id);
-  const hasCounts = [project.interested_count, project.member_count, project.open_roles_count, project.published_updates_count].every(Number.isInteger);
-  return html`<article class="project-card">
-    <div class="project-card-meta"><span>${canJoin ? t("Проект Круга") : project.owner_id ? t("Владелец в Круге") : t("Внешний проект")}</span><span class="project-status" data-status="${esc(project.status)}">${projectLabel(project.status)}</span></div>
-    <h2><a href="/app#project/${esc(project.slug)}">${esc(project.title)}</a></h2>
-    <p class="project-summary">${esc(project.summary)}</p>
-    <div class="project-tags">${projectTags(project)}</div>
-    ${hasCounts ? html`<div class="project-card-counts"><span>${project.interested_count} ${t("заинтересованы")}</span><span>${project.member_count} ${t("участников")}</span><span>${project.open_roles_count} ${t("открытых ролей")}</span><span>${project.published_updates_count} ${t("обновлений")}</span></div>` : ""}${project.origin === "external" && !project.owner_id ? html`<p class="hint">${t("Внешняя ссылка не показывает, ищут ли создатели проекта участников.")}</p>` : ""}
-    <div class="project-card-bottom"><span class="hint">${projectLabel(project.stage)}</span><a class="project-open" href="/app#project/${esc(project.slug)}" aria-label="${t("Открыть проект")} ${esc(project.title)}">${native ? t("Подробнее и присоединиться") : t("Посмотреть и создать похожий проект")}${icon("arrow")}</a></div>
-  </article>`;
+  return platformCard(project, "project");
 }
 function personCard(person) {
-  const name = person.display_name || person.username;
-  const intent = { looking_for_teammates:"Ищу участников в проект", looking_for_project:"Ищу проект", open_to_collaboration:"Открыт к сотрудничеству", interested_in_event:"Интересуюсь мероприятиями" }[person.intent_kind];
-  return html`<article class="discovery-person"><a class="avatar" href="/app#profile/${person.id}" aria-label="${t("Профиль")} ${esc(name)}">${esc(name[0]?.toUpperCase())}</a><div class="discovery-person-body"><div class="project-card-meta"><a class="author" href="/app#profile/${person.id}">${esc(name)}</a><span>@${esc(person.username)}</span></div>${intent ? html`<p class="project-card-meta">${t(intent)}</p>` : ""}<p>${esc(person.intent_text || person.bio || "")}</p><div class="project-tags">${(person.skills || []).slice(0, 5).map(skill => html`<span class="project-tag">${esc(skill)}</span>`).join("")}</div>${person.wanted_skills?.length ? html`<p class="hint">${t("Ищет навыки")}: ${person.wanted_skills.slice(0, 4).map(esc).join(", ")}</p>` : ""}<p class="hint">${[person.timezone, person.commitment].filter(Boolean).map(esc).join(" · ")}</p></div><a class="project-open" href="/app#profile/${person.id}">${t("Профиль")}${icon("arrow")}</a></article>`;
+  return platformCard(person, "person");
 }
 function openingCard(opening) {
-  return html`<article class="discovery-opening"><div class="project-card-meta"><span>${t("Открытая роль")}</span><span>${esc(opening.commitment || "")}</span></div><h2><a href="/app#project/${esc(opening.project.slug)}">${esc(opening.role)}</a></h2><p class="project-summary">${esc(opening.description || opening.project.summary)}</p><p class="hint">${t("Проект")}: ${esc(opening.project.title)}${opening.timezone ? " · " + esc(opening.timezone) : ""}</p><div class="project-tags">${(opening.skills || []).slice(0, 5).map(skill => html`<span class="project-tag">${esc(skill)}</span>`).join("")}</div><div class="project-card-bottom"><a class="project-open" href="/app#project/${esc(opening.project.slug)}">${t("Посмотреть и откликнуться")}${icon("arrow")}</a></div></article>`;
+  return platformCard(opening, "opening");
 }
 function applicationLabel(value) {
   return projectLabel(value);
 }
 async function discoveryScreen(root, query, stamp) {
-  const kind = ["all", "projects", "people", "openings"].includes(query.get("kind")) ? query.get("kind") : "all";
-  const compactIntro = kind !== "all" || query.has("search");
-  const mobileSearch = matchMedia("(max-width: 850px)");
-  root.innerHTML = html`<section class="discovery-intro${compactIntro ? " discovery-intro-compact" : ""}"><div><h1>Найдите людей и проекты для совместной работы.</h1><p class="intro">Ищите команду или присоединяйтесь к открытой роли.</p></div><div class="discovery-actions"><a class="button" href="/app#project-new">${t("Начать проект")}</a><a class="text-button" href="/app#external-submit">${t("Предложить внешний проект")}</a><a class="text-button" href="/project/krug">${t("Как строится Круг")} ${icon("arrow")}</a></div></section>
-    <form class="discovery-search" role="search"><div class="discovery-search-main"><label class="field"><span>Поиск по Кругу</span><input name="search" maxlength="100" placeholder="Python, дизайн, совместный проект…" value="${esc(query.get("search") || "")}"></label><button>${icon("explore")} Найти</button></div></form>
-    <div class="discovery-workspace"><aside class="discovery-sidebar"><form class="discovery-filter-form"><input type="hidden" name="search" value="${esc(query.get("search") || "")}">
-    <details class="discovery-filters" ${!mobileSearch.matches || ["tag", "skill", "source", "status", "active", "intent_kind"].some(key => query.has(key)) ? "open" : ""}><summary>${t("Фильтры")}</summary><div class="filter-fields">
-    ${input("skill", t("Навык"), "text", 'maxlength="50"')}
-    <div data-project-filter ${kind === "projects" ? "" : "hidden"}>${input("tag", t("Тег"), "text", 'maxlength="50"')}${input("source", t("Источник"), "text", 'maxlength="40"')}<label class="field">${t("Статус")}<select name="status"><option value="">${t("Все статусы")}</option>${["active", "paused", "completed", "archived", "stale"].map(value => html`<option value="${value}">${projectLabel(value)}</option>`).join("")}</select></label><label class="checkbox"><input name="active" type="checkbox">${t("Только активные")}</label></div>
-    <label class="field" data-people-filter ${kind === "people" ? "" : "hidden"}>${t("Намерение")}<select name="intent_kind"><option value="">${t("Любое намерение")}</option><option value="looking_for_teammates">${t("Ищу участников в проект")}</option><option value="looking_for_project">${t("Ищу проект")}</option><option value="open_to_collaboration">${t("Открыт к сотрудничеству")}</option><option value="interested_in_event">${t("Интересуюсь мероприятиями")}</option></select></label><button type="submit" class="secondary">${t("Применить фильтры")}</button><a class="text-button" href="/app#explore?kind=${kind}${query.get("search") ? "&search=" + encodeURIComponent(query.get("search")) : ""}">${t("Сбросить фильтры")}</a></div></details></form></aside>
-    <section class="discovery-results"><nav class="discovery-tabs" aria-label="${t("Тип результатов")}">${[["all", "Всё"], ["projects", "Проекты"], ["people", "Люди"], ["openings", "Открытые роли"]].map(([value,label]) => html`<a href="/app#explore?kind=${value}${query.get("search") ? "&search=" + encodeURIComponent(query.get("search")) : ""}" class="${kind === value ? "active" : ""}" ${kind === value ? 'aria-current="page"' : ""}>${t(label)}</a>`).join("")}</nav><div class="discovery-results-heading"><h2>${t({all:"Все результаты",projects:"Проекты",people:"Люди",openings:"Открытые роли"}[kind])}</h2></div><div id="discovery-results"></div></section></div>`;
-  const filterDisclosure = root.querySelector(".discovery-filters");
-  let manualDisclosure = false;
-  filterDisclosure.querySelector("summary").addEventListener("click", () => { manualDisclosure = true; });
-  mobileSearch.addEventListener("change", event => { if (!manualDisclosure && !["tag", "skill", "source", "status", "active", "intent_kind"].some(key => query.has(key))) filterDisclosure.open = !event.matches; });
-  const searchForm = root.querySelector(".discovery-search");
-  bindForm(searchForm, async data => {
-    const params = new URLSearchParams(query);
-    const value = data.get("search")?.trim();
-    if (value) params.set("search", value); else params.delete("search");
-    params.set("kind", kind);
-    go("explore?" + params);
-  });
+  const kinds = ["all", "projects", "teams", "events", "communities", "people"];
+  const kind = kinds.includes(query.get("kind")) ? query.get("kind") : "all";
+  const filters = ["search", "skill", "language", "format"];
+  const supportedFilters = kind === "people" ? filters.filter(key => key !== "format") : filters;
+  const hrefFor = (value, reset = false) => { const params = new URLSearchParams(); if (query.has("search")) params.set("search", query.get("search")); if (!reset) for (const key of filters.slice(1)) if (key !== "format" || value !== "people") if (query.has(key)) params.set(key, query.get(key)); params.set("kind", value); return "/app#explore?" + params; };
+  const mobile = matchMedia("(max-width: 850px)");
+  root.innerHTML = html`<div class="discovery-shell">
+    <aside class="discovery-sidebar"><form class="discovery-filter-form"><input type="hidden" name="search" value="${esc(query.get("search") || "")}"><input type="hidden" name="kind" value="${kind}">
+      <details class="discovery-filters" ${!mobile.matches || filters.slice(1).some(key => query.has(key)) ? "open" : ""}><summary>${icon("filter")} ${t("Фильтры")}</summary><div class="filter-fields">
+        ${input("skill", t("Навык"), "text", 'maxlength="80"')}${input("language", t("Язык"), "text", 'maxlength="80" placeholder="Русский, English"')}
+        ${kind === "people" ? "" : html`<label class="field">${t("Формат")}<select name="format"><option value="">${t("Любой")}</option><option value="online">${t("Онлайн")}</option><option value="local">${t("На месте")}</option><option value="hybrid">${t("Гибридный")}</option></select></label>`}
+        <button type="submit" class="secondary">${t("Применить фильтры")}</button><a class="text-button" href="${hrefFor(kind, true)}">${t("Сбросить фильтры")}</a>
+      </div></details></form></aside>
+    <main class="discovery-center"><section class="discovery-intro"><h1>${t("Найдите, с кем создавать дальше")}</h1><p class="intro">${t("Проекты, команды, встречи и сообщества для совместной работы.")}</p></section>
+      <form class="discovery-search" role="search"><label class="field"><span>${t("Поиск по Кругу")}</span><input name="search" maxlength="100" placeholder="${t("Проект, навык или человек")}" value="${esc(query.get("search") || "")}"></label><button>${icon("explore")} ${t("Найти")}</button></form>
+      <nav class="discovery-tabs" aria-label="${t("Тип результатов")}">${[["all", "Всё"], ["projects", "Проекты"], ["teams", "Команды"], ["events", "События"], ["communities", "Сообщества"], ["people", "Люди"]].map(([value, label]) => html`<a href="${hrefFor(value)}" class="${kind === value ? "active" : ""}" ${kind === value ? 'aria-current="page"' : ""}>${t(label)}</a>`).join("")}</nav>
+      <div class="discovery-results-heading"><h2>${t({ all:"Все результаты", projects:"Проекты", teams:"Команды", events:"События", communities:"Сообщества", people:"Люди" }[kind])}</h2><div class="toolbar">${kind === "projects" || kind === "all" ? html`<a class="text-button" href="/app#roles">${t("Открытые роли")}</a>` : ""}${session && ["all", "projects"].includes(kind) ? html`<a class="text-button" href="/app#project-new">${icon("plus")} ${t("Новый проект")}</a>` : ""}</div></div><div id="discovery-results"></div>
+    </main><aside class="upcoming-rail"><div class="upcoming-heading"><h2>${t("Скоро")}</h2><a href="${hrefFor("events")}">${t("Все события")}</a></div><div id="upcoming-events"><p class="hint">${t("Загружаем события…")}</p></div></aside>
+  </div>`;
   const form = root.querySelector(".discovery-filter-form");
-  ["tag", "skill", "source", "status", "intent_kind"].forEach(key => { if (form.elements[key]) form.elements[key].value = query.get(key) || ""; });
-  if (form.elements.active) form.elements.active.checked = query.get("active") === "true";
-  bindForm(form, async data => {
-    const params = new URLSearchParams();
-    const keys = kind === "projects" ? ["search", "tag", "skill", "source", "status"] : kind === "people" ? ["search", "skill", "intent_kind"] : ["search", "skill"];
-    keys.forEach(key => { const value = data.get(key)?.trim(); if (value) params.set(key, value); });
-    if (kind === "projects" && data.has("active")) params.set("active", "true");
-    params.set("kind", kind);
-    go("explore?" + params);
+  const disclosure = root.querySelector(".discovery-filters");
+  let manualDisclosure = false;
+  disclosure.querySelector("summary").addEventListener("click", () => { manualDisclosure = true; });
+  mobile.addEventListener("change", event => { if (!manualDisclosure && !filters.slice(1).some(key => query.has(key))) disclosure.open = !event.matches; });
+  supportedFilters.slice(1).forEach(key => { if (form.elements[key]) form.elements[key].value = query.get(key) || ""; });
+  bindForm(root.querySelector(".discovery-search"), async data => {
+    const params = new URLSearchParams(query), value = data.get("search")?.trim();
+    if (value) params.set("search", value); else params.delete("search");
+    params.set("kind", kind); go("explore?" + params);
   });
-  const params = new URLSearchParams();
-  ["search", "tag", "skill", "source", "status", "active"].forEach(key => { if (query.has(key)) params.set(key, query.get(key)); });
-  const peopleParams = new URLSearchParams({ search: query.get("search") || "" });
-  const openingParams = new URLSearchParams({ search: query.get("search") || "" });
-  if (query.has("skill")) { peopleParams.set("skill", query.get("skill")); openingParams.set("skill", query.get("skill")); }
-  if (query.has("intent_kind")) peopleParams.set("intent_kind", query.get("intent_kind"));
-  const people = "/people?" + peopleParams;
-  const openings = "/openings?" + openingParams;
-  const blank = empty(t("Пока нет результатов"), t("Измените запрос или вернитесь позже: здесь показываются только настоящие профили, проекты и открытые роли."));
-  if (kind === "projects") await paged(root.querySelector("#discovery-results"), "/discovery?" + params, projectCard, stamp, blank);
-  else if (kind === "people") await paged(root.querySelector("#discovery-results"), people, personCard, stamp, blank);
-  else if (kind === "openings") await paged(root.querySelector("#discovery-results"), openings, openingCard, stamp, blank);
-  else {
-    const target = root.querySelector("#discovery-results");
-    const nativeParams = new URLSearchParams(params); nativeParams.set("source", "native");
-    const externalParams = new URLSearchParams(params); externalParams.set("source", "external");
-    const sources = [
-      ["Проекты Круга", "/discovery?" + nativeParams, projectCard],
-      ["Открытые роли", openings, openingCard],
-      ["Люди", people, personCard],
-      ["Внешние проекты", "/discovery?" + externalParams, projectCard],
-    ];
-    const pages = await Promise.all(sources.map(async ([label, path, render]) => {
-      try { return { label, items: (await api(path + (path.includes("?") ? "&" : "?") + "limit=3")).items.map(render) }; }
-      catch (error) { return { label, error: errorText(error) }; }
-    }));
-    if (stamp !== generation) return;
-    const cards = [];
-    for (let index = 0; index < Math.max(...pages.map(page => page.items?.length || 0)); index++) {
-      for (const page of pages) if (page.items?.[index]) cards.push(page.items[index]);
+  bindForm(form, async data => {
+    const params = new URLSearchParams(query);
+    for (const key of supportedFilters.slice(1)) { const value = data.get(key)?.trim(); if (value) params.set(key, value); else params.delete(key); }
+    params.set("kind", kind); go("explore?" + params);
+  });
+  const params = new URLSearchParams(); supportedFilters.forEach(key => { if (query.has(key)) params.set(key, query.get(key)); });
+  const sources = {
+    projects: [["Проекты", "/discovery?source=native", item => projectCard(item)], ["Внешние проекты", "/discovery?source=external", item => projectCard(item)]],
+    teams: [["Команды", "/teams", item => platformCard(item, "team")]],
+    events: [["События", "/events", item => platformCard(item, "event")]],
+    communities: [["Сообщества", "/communities", item => platformCard(item, "community")]],
+    people: [["Люди", "/people", item => personCard(item)]],
+  };
+  const specs = kind === "all" ? Object.values(sources).flat() : sources[kind];
+  if (kind !== "all") {
+    const results = root.querySelector("#discovery-results");
+    const filteredPath = path => path + (path.includes("?") ? "&" : "?") + params;
+    if (kind === "projects") {
+      results.innerHTML = specs.map(([label]) => html`<section class="discovery-source"><div class="discovery-results-heading"><h3>${t(label)}</h3></div><div class="discovery-source-results"></div></section>`).join("");
+      const groups = results.querySelectorAll(".discovery-source-results");
+      await Promise.all(specs.map(async ([label, path, renderCard], index) => {
+        try { await paged(groups[index], filteredPath(path), renderCard, stamp, empty(t("Пока нет результатов"), t("Измените запрос или попробуйте позже. Здесь показывается только актуальное содержимое участников."))); }
+        catch (error) { groups[index].innerHTML = `<p class="error" role="alert">${t(label)}: ${esc(errorText(error))}</p>`; }
+      }));
+    } else {
+      try { await paged(results, filteredPath(specs[0][1]), specs[0][2], stamp, empty(t("Пока нет результатов"), t("Измените запрос или попробуйте позже. Здесь показывается только актуальное содержимое участников."))); }
+      catch (error) { results.innerHTML = `<p class="error" role="alert">${esc(errorText(error))}</p>`; }
     }
-    const errors = pages.filter(page => page.error).map(page => `<p class="error" role="alert">${t(page.label)}: ${esc(page.error)}</p>`).join("");
-    target.innerHTML = `${cards.length ? `<div class="project-grid">${cards.join("")}</div>` : errors ? "" : blank}${errors}`;
+    bindPlatformSaves(results, stamp);
+    try {
+      const upcoming = await api("/events?upcoming=true&limit=3");
+      if (stamp === generation) root.querySelector("#upcoming-events").innerHTML = upcoming.items.length ? upcoming.items.map(platformEventRow).join("") : `<p class="hint">${t("Событий пока нет.")}</p>`;
+    } catch (error) { if (stamp === generation) root.querySelector("#upcoming-events").innerHTML = `<p class="hint">${esc(errorText(error))}</p>`; }
+    return;
   }
+  const formatDoesNotApply = params.has("format");
+  const pages = await Promise.all(specs.map(async ([label, path, renderCard]) => {
+    if (label === "Люди" && formatDoesNotApply) return { label, items: [], hint: t("Фильтр формата применяется к проектам, командам, событиям и сообществам; для поиска людей снимите его.") };
+    const listParams = new URLSearchParams(params); listParams.set("limit", kind === "all" ? "3" : "24");
+    try { return { label, items: (await api(path + (path.includes("?") ? "&" : "?") + listParams)).items.map(renderCard) }; }
+    catch (error) { return { label, error: errorText(error) }; }
+  }));
+  if (stamp !== generation) return;
+  const cards = [];
+  for (let index = 0; index < Math.max(0, ...pages.map(page => page.items?.length || 0)); index++) for (const page of pages) if (page.items?.[index]) cards.push(page.items[index]);
+  const errors = pages.filter(page => page.error).map(page => `<p class="error" role="alert">${t(page.label)}: ${esc(page.error)}</p>`).join("");
+  const hints = pages.filter(page => page.hint).map(page => `<p class="hint">${page.hint}</p>`).join("");
+  const results = root.querySelector("#discovery-results");
+  results.innerHTML = `${cards.length ? `<div class="project-grid">${cards.join("")}</div>` : errors ? "" : empty(t("Пока нет результатов"), t("Измените запрос или попробуйте позже. Здесь показывается только актуальное содержимое участников."))}${errors}${hints}`;
+  bindPlatformSaves(results, stamp);
+  try {
+    const upcoming = await api("/events?upcoming=true&limit=3");
+    if (stamp === generation) root.querySelector("#upcoming-events").innerHTML = upcoming.items.length ? upcoming.items.map(platformEventRow).join("") : `<p class="hint">${t("Событий пока нет.")}</p>`;
+  } catch (error) { if (stamp === generation) root.querySelector("#upcoming-events").innerHTML = `<p class="hint">${esc(errorText(error))}</p>`; }
 }
+
+function projectOpeningCard(opening) {
+  const project = opening.project;
+  const href = project?.slug ? projectPath(project) : "/app#projects";
+  return html`<article class="platform-card platform-card-opening">
+    ${platformCover(project, "project")}<div class="platform-card-copy"><div class="platform-card-meta"><span>${t("Открытая роль")}</span>${opening.commitment ? html`<span>${esc(opening.commitment)}</span>` : ""}</div>
+      <h3><a href="${href}">${esc(opening.title || opening.role)}</a></h3>${project ? html`<p class="hint">${t("Проект")}: ${esc(project.title)}</p><p class="platform-card-summary">${esc(project.summary)}</p>` : ""}<p class="platform-card-summary">${esc(opening.description || "")}</p>${platformTags(opening)}
+    </div><a class="project-open" href="${href}">${t("О проекте")}${icon("arrow")}</a>
+  </article>`;
+}
+
+async function openRolesScreen(root, query, stamp) {
+  const params = new URLSearchParams();
+  for (const key of ["search", "skill"]) if (query.has(key)) params.set(key, query.get(key));
+  root.innerHTML = heading(t("Открытые роли"), t("Роли в проектах"), t("Просматривайте актуальные роли и откликайтесь на странице проекта.")) + html`<form class="discovery-search" role="search"><label class="field"><span>${t("Поиск")}</span><input name="search" value="${esc(query.get("search") || "")}" maxlength="100" placeholder="${t("Название роли или навык")}"></label><button>${icon("explore")} ${t("Найти")}</button></form><div id="open-roles-results"></div>`;
+  bindForm(root.querySelector(".discovery-search"), async data => { const next = new URLSearchParams(query); const search = data.get("search").trim(); if (search) next.set("search", search); else next.delete("search"); go("roles?" + next); });
+  if (stamp !== generation) return;
+  await paged(root.querySelector("#open-roles-results"), "/openings?" + params, projectOpeningCard, stamp, empty(t("Пока нет открытых ролей"), t("Открытые роли появятся здесь, когда проекты начнут набор."), html`<a class="button" href="/app#explore?kind=projects">${t("Найти проекты")}</a>`));
+}
+
 async function projectListScreen(root, saved, stamp, query = new URLSearchParams()) {
   const following = saved && query.get("following") === "true";
+  if (saved && !following) {
+    const savedKinds = { projects: ["/me/saved-projects", "project"], teams: ["/teams?saved=true", "team"], communities: ["/communities?saved=true", "community"], events: ["/events?saved=true", "event"] };
+    const selectedKind = savedKinds[query.get("kind")];
+    if (selectedKind) {
+      const kind = query.get("kind");
+      root.innerHTML = heading("", t("Сохранённое"), t("Вы просматриваете сохранённые материалы этого типа.")) + html`<div class="tabs"><a href="/app#saved">${t("Всё сохранённое")}</a><a href="/app#saved?following=true">${t("Подписки на проекты")}</a></div><a class="back" href="/app#saved">${t("Назад ко всему сохранённому")}</a><div id="saved-kind-results"></div>`;
+      await paged(root.querySelector("#saved-kind-results"), selectedKind[0], item => platformCard(item, selectedKind[1]), stamp, empty(t("Пока ничего не сохранено"), t("Откройте интересующую страницу и сохраните её.")));
+      bindPlatformSaves(root.querySelector("#saved-kind-results"), stamp);
+      return;
+    }
+    root.innerHTML = heading("", t("Сохранённое"), t("Сохраняйте команды, сообщества, события и проекты, чтобы вернуться к ним позже.")) +
+      html`<div class="tabs"><a href="/app#saved" class="active">${t("Всё сохранённое")}</a><a href="/app#saved?following=true">${t("Подписки на проекты")}</a></div><div id="saved-results"></div>`;
+    const endpoints = [
+      ["/me/saved-projects?limit=8", "project", "projects"], ["/teams?saved=true&limit=8", "team", "teams"],
+      ["/communities?saved=true&limit=8", "community", "communities"], ["/events?saved=true&limit=8", "event", "events"],
+    ];
+    const pages = await Promise.all(endpoints.map(async ([path, kind, route]) => {
+      try { return { kind, route, ...(await api(path)) }; }
+      catch (error) { return { kind, route, error: errorText(error) }; }
+    }));
+    if (stamp !== generation) return;
+    const items = [];
+    for (let index = 0; index < Math.max(0, ...pages.map(page => page.items?.length || 0)); index++) {
+      for (const page of pages) if (page.items?.[index]) items.push(platformCard(page.items[index], page.kind));
+    }
+    const errors = pages.filter(page => page.error).map(page => `<p class="error" role="alert">${t(page.kind)}: ${esc(page.error)}</p>`).join("");
+    const more = pages.filter(page => page.has_more).map(page => html`<a class="text-button" href="/app#saved?kind=${page.route}">${t("Показать больше")}: ${t(page.kind)} ${icon("arrow")}</a>`).join("");
+    root.querySelector("#saved-results").innerHTML = items.length ? `<div class="project-grid">${items.join("")}</div>${more}${errors}` : errors || empty(t("Пока ничего не сохранено"), t("Откройте интересующую страницу и сохраните её."), html`<a class="button" href="/app#explore">${t("Исследовать")}</a>`);
+    bindPlatformSaves(root.querySelector("#saved-results"), stamp);
+    return;
+  }
   root.innerHTML = heading("", saved ? (following ? t("Подписки на проекты") : t("Сохранённые проекты")) : t("Мои проекты"), saved ? t("Вернитесь к тому, что вас заинтересовало.") : t("Ваши проекты и черновики. Публичные страницы можно отправить кому угодно.")) +
     (saved ? html`<div class="tabs"><a href="/app#saved" class="${following ? "" : "active"}">Сохранённое</a><a href="/app#saved?following=true" class="${following ? "active" : ""}">Подписки на проекты</a></div>` : html`<a class="button" href="/app#project-new">${icon("plus")} Создать проект</a><hr class="divider">`);
   await paged(root, saved ? (following ? "/me/followed-projects" : "/me/saved-projects") : "/me/projects", projectCard, stamp,
@@ -126,6 +181,7 @@ async function projectScreen(root, slug, stamp) {
     <aside class="project-engagement" aria-label="${t("Ваш интерес к проекту")}"><h2>${own ? t("Ваш проект") : t("Присоединяйтесь")}</h2><p class="hint">${project.origin === "external" && !project.owner_id ? t("Источник внешний и не связан с участниками Круга. Начните свой проект по мотивам или запросите подтверждение владения.") : t("Отметьте интерес или откликнитесь на открытую роль. Решение о заявке принимает владелец проекта.")}</p><div id="engagement">${session ? html`<p class="hint" role="status">Загрузка…</p>` : html`<a class="button" href="/app#login?next=${encodeURIComponent("project/" + slug)}">${t("Войти, чтобы присоединиться")}</a><p class="hint">${t("Проект и обновления доступны без входа.")}</p>`}</div><a class="text-button" href="/app#project-interested/${esc(project.slug)}">${t("Открытые профили интереса")} ${icon("arrow")}</a>${project.origin === "external" && !project.owner_id ? html`<div class="toolbar"><a class="button secondary" href="/app#project-new?inspired=${esc(project.slug)}">${t("Создать похожий проект")}</a>${session ? html`<a class="text-button" href="/app#project-claim/${esc(project.slug)}">${t("Я представляю этот проект")}</a>` : ""}</div>` : ""}</aside></article>
     <section class="project-community"><section><div class="discovery-results-heading"><h2>${t("Участники")}</h2>${Number.isInteger(project.member_count) ? html`<span class="hint">${project.member_count}</span>` : ""}</div><div id="project-members"></div></section><section class="project-roles"><div class="discovery-results-heading"><h2>${t("Открытые роли")}</h2>${own && Number.isInteger(project.open_roles_count) ? html`<span class="hint">${project.open_roles_count}</span>` : ""}</div><div id="project-openings"></div>${own ? html`<details class="project-role-editor"><summary>${t("Добавить роль")}</summary><form class="form" id="opening-create">${input("role", t("Название роли"), "text", 'required maxlength="100"')}${input("skills", t("Навыки через запятую"), "text", 'maxlength="1000"')}${input("commitment", t("Время на участие"), "text", 'maxlength="100"')}${input("timezone", t("Часовой пояс роли"), "text", 'maxlength="100"')}${input("experience_level", t("Опыт для роли"), "text", 'maxlength="50"')}<label class="field">${t("Описание роли")}<textarea name="description" maxlength="5000"></textarea></label><button>${t("Опубликовать роль")}</button></form></details><form class="form project-contact-form" id="owner-contact">${input("owner_contact_url", t("Контакт для принятых участников"), "url", 'maxlength="2048" placeholder="https://…"')}<p class="hint">${t("Ссылка показывается только участникам после принятия заявки.")}</p><button class="secondary">${t("Сохранить приватный контакт")}</button><span class="hint" role="status"></span></form><section class="project-applications"><h3>${t("Заявки")}</h3><div id="project-applications"></div></section>` : ""}</section></section>
     <section class="project-updates"><div class="discovery-results-heading"><h2>Обновления проекта</h2>${own ? html`<a class="text-button" href="/app#new?project=${project.id}">Написать обновление</a>` : ""}</div><div id="project-updates"></div></section>`;
+  root.querySelector(".project-detail-main").insertAdjacentHTML("afterbegin", platformCover(project, "project"));
   // Engagement failures must not hide a project's public description or updates.
   if (session) {
     try {
@@ -197,7 +253,7 @@ async function projectInterestedScreen(root, slug, stamp) {
     empty(t("Пока нет открытых профилей"), t("Интерес может оставаться приватным. Это не означает, что проект никому не интересен.")));
 }
 async function projectEditorScreen(root, slug, stamp, query = new URLSearchParams()) {
-  const project = slug ? await api("/projects/" + encodeURIComponent(slug)) : null;
+  let project = slug ? await api("/projects/" + encodeURIComponent(slug)) : null;
   const inspirationSlug = !project && /^[a-z0-9-]+$/.test(query.get("inspired") || "") ? query.get("inspired") : null;
   const inspiration = inspirationSlug ? await api("/projects/" + encodeURIComponent(inspirationSlug)) : null;
   if (stamp !== generation) return;
@@ -208,26 +264,41 @@ async function projectEditorScreen(root, slug, stamp, query = new URLSearchParam
     <label class="field">${t("Подробнее о проекте")}<textarea name="description" maxlength="20000"></textarea></label>
     <div class="project-editor-fields"><label class="field">Статус<select name="status">${[...new Set(["active", "paused", "completed", "archived", ...(project?.status ? [project.status] : [])])].map(value => html`<option value="${value}">${projectLabel(value)}</option>`).join("")}</select></label><label class="field">Этап<select name="stage">${[...new Set(["idea", "prototype", "building", "shipped", ...(project?.stage ? [project.stage] : [])])].map(value => html`<option value="${value}">${projectLabel(value)}</option>`).join("")}</select></label></div>
     ${input("tags", t("Теги через запятую"), "text", 'maxlength="1000" placeholder="gamedev, open-source"')}${input("skills", t("Технологии и навыки через запятую"), "text", 'maxlength="1000" placeholder="Python, Godot"')}
+    <div class="project-editor-fields"><label class="field">${t("Формат")}<select name="format"><option value="unspecified">${t("Не указан")}</option><option value="online">${t("Онлайн")}</option><option value="local">${t("На месте")}</option><option value="hybrid">${t("Гибридный")}</option></select></label>${input("location", t("Место или город"), "text", 'maxlength="160"')}</div>
+    ${input("languages", t("Языки через запятую"), "text", 'maxlength="500"')}
     ${project?.origin === "external" ? html`<p class="hint">${t("Первоисточник проекта")} <a href="${esc(project.source_url)}" target="_blank" rel="noopener noreferrer">${esc(project.source_url)}</a></p>` : input("source_url", t("Внешний источник, если есть"), "url", 'maxlength="2000" placeholder="https://…"')}<p class="hint">${t("Ссылка указывает на внешний сайт; она не связывает вас с его авторами.")}</p>
     <label class="field">Набор участников<select name="recruitment_status">${["unknown", "open", "closed"].map(value => html`<option value="${value}">${projectLabel(value)}</option>`).join("")}</select></label>
     ${input("commitment", t("Время на участие"), "text", 'maxlength="100"')}${input("experience_level", t("Опыт участников"), "text", 'maxlength="50"')}
-    <label class="checkbox"><input name="public" type="checkbox">Опубликовать проект</label><button>${project ? t("Сохранить изменения") : t("Создать проект")}</button></form>`;
+    <label class="field">${t("Обложка — необязательно, до 8 МиБ")}<input name="cover" type="file" accept="image/jpeg,image/png,image/webp"></label>${project?.cover_url ? html`<div class="cover-editor">${platformCover(project, "project")}<button type="button" class="secondary" data-remove-cover>${t("Удалить обложку")}</button></div>` : ""}
+    <label class="checkbox"><input name="public" type="checkbox">Опубликовать проект</label><button>${project ? t("Сохранить изменения") : t("Создать проект")}</button><p class="hint" role="status" data-cover-status></p></form>`;
   const form = root.querySelector("form");
   if (project) {
-    ["title", "summary", "description", "status", "stage", ...(project.origin === "external" ? [] : ["source_url"]), "recruitment_status", "commitment", "experience_level"].forEach(key => { form.elements[key].value = project[key] || ""; });
+    ["title", "summary", "description", "status", "stage", ...(project.origin === "external" ? [] : ["source_url"]), "recruitment_status", "commitment", "experience_level", "format", "location"].forEach(key => { form.elements[key].value = project[key] || ""; });
     ["tags", "skills"].forEach(key => { form.elements[key].value = project[key].join(", "); });
+    form.elements.languages.value = (project.languages || []).join(", ");
     form.elements.public.checked = project.visibility === "public";
   }
+  const removeCover = form.querySelector("[data-remove-cover]");
+  if (removeCover) actionButton(removeCover, async () => { await api(`/projects/${encodeURIComponent(project.slug)}/cover`, { method: "DELETE" }); toast(t("Обложка удалена.")); go("project-edit/" + project.slug); });
   bindForm(form, async data => {
     const body = Object.fromEntries(["title", "summary", "description", "status", "stage", "recruitment_status"].map(key => [key, data.get(key)]));
     (project?.origin === "external" ? ["commitment", "experience_level"] : ["source_url", "commitment", "experience_level"]).forEach(key => { body[key] = data.get(key).trim() || null; });
     body.visibility = data.has("public") ? "public" : "draft";
     ["tags", "skills"].forEach(key => { body[key] = [...new Set(data.get(key).split(",").map(value => value.trim()).filter(Boolean))]; });
+    body.languages = [...new Set(data.get("languages").split(",").map(value => value.trim()).filter(Boolean))];
+    body.format = data.get("format"); body.location = data.get("location").trim() || null;
     if (!project) body.slug = data.get("slug").trim();
     if (!project && inspiration) body.derived_from_project_id = inspiration.id;
-    const saved = await api(project ? "/projects/" + encodeURIComponent(slug) : "/projects", { method: project ? "PATCH" : "POST", body });
+    project = await api(project ? "/projects/" + encodeURIComponent(project.slug) : "/projects", { method: project ? "PATCH" : "POST", body });
+    const cover = data.get("cover");
+    if (cover?.size) {
+      if (cover.size > 8 * 1024 * 1024) throw new Error(t("Фото должно быть не больше 8 МиБ."));
+      if (!["image/jpeg", "image/png", "image/webp"].includes(cover.type)) throw new Error(t("Выберите изображение JPEG, PNG или WebP."));
+      try { await api(`/projects/${encodeURIComponent(project.slug)}/cover`, { method: "PUT", body: cover, headers: { "Content-Type": cover.type } }); }
+      catch (error) { form.querySelector("[data-cover-status]").textContent = t("Проект сохранён. Обложка не загрузилась; выберите её и отправьте форму ещё раз."); throw error; }
+    }
     toast(t("Проект сохранён."));
-    go("project/" + saved.slug);
+    go("project/" + project.slug);
   });
 }
 async function collaborationProfileScreen(root, stamp) {
@@ -296,8 +367,15 @@ async function adminReviewScreen(root, stamp) {
   root.querySelectorAll("[data-review]").forEach(button => actionButton(button, async () => { const path = button.dataset.type === "external" ? "/admin/external-submissions/" : "/admin/project-claims/"; await api(path + button.dataset.id, {method:"PATCH",body:{status:button.dataset.review}}); await render(); }));
 }
 async function applicationsScreen(root, stamp) {
-  const applications = await api("/me/applications");
+  const [projectResult, teamResult] = await Promise.allSettled([api("/me/applications"), api("/team-applications?limit=100")]);
   if (stamp !== generation) return;
-  root.innerHTML = heading("", t("Мои заявки"), t("Контактные ссылки открываются только после принятия заявки.")) + (applications.length ? applications.map(application => html`<article class="project-application"><div class="project-card-meta"><a class="author" href="/app#project/${esc(application.project_slug)}">${esc(application.project_title)}</a><span>${applicationLabel(application.status)}</span></div><p>${esc(application.message)}</p>${application.status === "accepted" && application.owner_contact_url ? html`<a class="button" href="${esc(application.owner_contact_url)}" target="_blank" rel="noopener noreferrer">${t("Связаться с командой")}</a>` : ""}${application.status === "pending" ? html`<button class="secondary" data-withdraw="${application.id}">${t("Отозвать заявку")}</button>` : ""}</article>`).join("") : empty(t("Заявок пока нет"), t("Открытые роли появятся здесь после отправки отклика."), html`<a class="button" href="/app#explore?kind=openings">${t("Найти открытые роли")}</a>`));
-  root.querySelectorAll("[data-withdraw]").forEach(button => actionButton(button, async () => { await api("/me/applications/" + button.dataset.withdraw + "/withdraw", {method:"POST"}); await render(); }));
+  const projects = projectResult.status === "fulfilled" ? projectResult.value : [];
+  const teams = teamResult.status === "fulfilled" ? teamResult.value.items : [];
+  const projectError = projectResult.status === "rejected" ? `<p class="error" role="alert">${esc(errorText(projectResult.reason))}</p>` : "";
+  const teamError = teamResult.status === "rejected" ? `<p class="error" role="alert">${esc(errorText(teamResult.reason))}</p>` : "";
+  root.innerHTML = heading("", t("Мои заявки"), t("Контактные ссылки открываются только после принятия заявки.")) +
+    `<section class="platform-detail-section"><h2>${t("Проекты")}</h2>${projectError}${projects.length ? projects.map(application => html`<article class="project-application"><div class="project-card-meta"><a class="author" href="/app#project/${esc(application.project_slug)}">${esc(application.project_title)}</a><span>${applicationLabel(application.status)}</span></div><p>${esc(application.message)}</p>${application.status === "accepted" && application.owner_contact_url ? html`<a class="button" href="${esc(application.owner_contact_url)}" target="_blank" rel="noopener noreferrer">${t("Связаться с командой")}</a>` : ""}${application.status === "pending" ? html`<button class="secondary" data-withdraw-project="${application.id}">${t("Отозвать заявку")}</button>` : ""}</article>`).join("") : projectError ? "" : `<p class="hint">${t("Заявок пока нет")}</p>`}</section>` +
+    `<section class="platform-detail-section"><h2>${t("Команды")}</h2>${teamError}${teams.length ? teams.map(application => html`<article class="project-application"><div class="project-card-meta"><a class="author" href="/app#team/${esc(application.team_slug)}">${esc(application.team_title)} · ${esc(application.opening_title)}</a><span>${applicationLabel(application.status)}</span></div><p>${esc(application.message)}</p>${application.status === "pending" ? html`<button class="secondary" data-withdraw-team="${application.id}">${t("Отозвать заявку")}</button>` : ""}</article>`).join("") : teamError ? "" : `<p class="hint">${t("Заявок пока нет")}</p>`}<a class="button secondary" href="/app#explore?kind=teams">${t("Найти команды")}</a></section>`;
+  root.querySelectorAll("[data-withdraw-project]").forEach(button => actionButton(button, async () => { await api("/me/applications/" + button.dataset.withdrawProject + "/withdraw", {method:"POST"}); await render(); }));
+  root.querySelectorAll("[data-withdraw-team]").forEach(button => actionButton(button, async () => { await api("/team-applications/" + button.dataset.withdrawTeam, {method:"PATCH", body:{status:"withdrawn"}}); await render(); }));
 }

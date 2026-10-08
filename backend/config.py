@@ -36,5 +36,8 @@ if SMTP_USER and not SMTP_STARTTLS:
 PUBLIC_APP_URL = os.getenv("PUBLIC_APP_URL", "http://localhost:8000").rstrip("/")
 RATE_LIMIT_PER_MINUTE = int(os.getenv("RATE_LIMIT_PER_MINUTE", "30"))
 MEDIA_ROOT = Path(os.getenv("MEDIA_ROOT", "media"))
+GITLAB_PROJECTS = tuple(name.strip() for name in os.getenv("GITLAB_PROJECTS", "").split(",") if name.strip())
+if len(GITLAB_PROJECTS) > 10:
+    raise RuntimeError("GITLAB_PROJECTS supports at most 10 projects")
 if RATE_LIMIT_PER_MINUTE < 1:
     raise RuntimeError("RATE_LIMIT_PER_MINUTE must be positive")

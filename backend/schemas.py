@@ -32,10 +32,17 @@ class ExploreParams(PageParams):
 
 
 class PostCreate(BaseModel):
-    project_id: int | None = Field(default=None, gt=0)
+    project_id: int | None = Field(default=None, gt=0, le=2_147_483_647)
+    community_id: int | None = Field(default=None, gt=0, le=2_147_483_647)
     title: str = Field(default="", max_length=200)
     content: str = Field(min_length=1)
     is_published: bool = False
+
+    @model_validator(mode="after")
+    def one_owner_entity(self):
+        if self.project_id is not None and self.community_id is not None:
+            raise ValueError("A post can belong to one entity")
+        return self
 
     @field_validator("title")
     @classmethod
@@ -61,11 +68,14 @@ class PostUpdate(BaseModel):
             for key in ("title", "content", "is_published")
         ):
             raise ValueError("Post fields cannot be null; omit fields you do not want to update")
+        if isinstance(values, dict) and any(key in values for key in ("project_id", "community_id")):
+            raise ValueError("Post entity cannot be changed after creation")
         return values
 
 
 class PostResponse(BaseModel):
     project_id: int | None = None
+    community_id: int | None = None
     id: int
     title: str
     content: str
@@ -94,6 +104,7 @@ class SubscriptionResponse(BaseModel):
 class AuthorWithSubscriptionResponse(BaseModel):
     id: int
     username: str
+    avatar_url: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -126,6 +137,7 @@ class UserResponse(BaseModel):
     email_verified: bool = False
     email_publications: bool = False
     bio: str = ""
+    avatar_url: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

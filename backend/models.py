@@ -16,9 +16,18 @@ def search_column(language: str):
     return deferred(Column(TSVECTOR, Computed(expression, persisted=True)))
 
 
+def entity_search_column():
+    expression = (
+        "setweight(to_tsvector('pg_catalog.simple'::regconfig, coalesce(title, '')), 'A') || "
+        "setweight(to_tsvector('pg_catalog.simple'::regconfig, coalesce(summary, '') || ' ' || coalesce(description, '')), 'B')"
+    )
+    return deferred(Column(TSVECTOR, Computed(expression, persisted=True)))
+
+
 class Post(Base):
     __tablename__ = "posts"
     __table_args__ = (
+        CheckConstraint("NOT (project_id IS NOT NULL AND community_id IS NOT NULL)", name="ck_posts_one_owner_entity"),
         Index("ix_posts_search_simple", "search_simple", postgresql_using="gin"),
         Index("ix_posts_search_russian", "search_russian", postgresql_using="gin"),
         Index("ix_posts_search_english", "search_english", postgresql_using="gin"),
@@ -43,6 +52,7 @@ class Post(Base):
     image_key = Column(String(40), nullable=True)
     author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     project_id = Column(Integer, ForeignKey("projects.id", ondelete="RESTRICT"), nullable=True, index=True)
+    community_id = Column(Integer, ForeignKey("communities.id", ondelete="RESTRICT"), nullable=True, index=True)
     created_at = Column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
@@ -123,6 +133,7 @@ class User(Base):
     token_version = Column(Integer, default=0, nullable=False)
     display_name = Column(String(100), default="", nullable=False)
     bio = Column(String(500), default="", nullable=False)
+    avatar_key = Column(String(40), nullable=True)
     language = Column(String(2), nullable=True)
 
     posts = relationship("Post", back_populates="author", cascade="all, delete-orphan")
@@ -140,6 +151,10 @@ class User(Base):
         cascade="all, delete-orphan"
     )
     collaboration_profile = relationship("CollaborationProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")
+
+    @property
+    def avatar_url(self):
+        return f"/users/{self.id}/avatar" if self.avatar_key else None
 
 
 class CollaborationProfile(Base):
@@ -208,11 +223,13 @@ class Project(Base):
         CheckConstraint("stage IN ('unknown', 'idea', 'prototype', 'building', 'shipped')", name="ck_projects_stage"),
         CheckConstraint("recruitment_status IN ('unknown', 'open', 'closed')", name="ck_projects_recruitment"),
         CheckConstraint("visibility IN ('draft', 'public')", name="ck_projects_visibility"),
+        CheckConstraint("format IN ('unspecified', 'online', 'local', 'hybrid')", name="ck_projects_format"),
         UniqueConstraint("source_name", "source_external_id", name="uq_projects_source_id"),
         Index("ix_projects_public_created_id", "created_at", "id", postgresql_where=text("visibility = 'public'")),
         Index("ix_projects_search", "search_vector", postgresql_using="gin"),
         Index("ix_projects_tags", "tags", postgresql_using="gin"),
         Index("ix_projects_skills", "skills", postgresql_using="gin"),
+        Index("ix_projects_languages", "languages", postgresql_using="gin"),
     )
     id = Column(Integer, primary_key=True)
     slug = Column(String(100), nullable=False, unique=True)
@@ -230,6 +247,10 @@ class Project(Base):
     claimed_at = Column(DateTime(timezone=True), nullable=True)
     tags = Column(ARRAY(String(50)), nullable=False, default=list)
     skills = Column(ARRAY(String(50)), nullable=False, default=list)
+    languages = Column(ARRAY(String(20)), nullable=False, default=list)
+    format = Column(String(12), nullable=False, default="unspecified")
+    location = Column(String(160), nullable=True)
+    cover_key = Column(String(40), nullable=True)
     recruitment_status = Column(String(10), nullable=False, default="unknown")
     commitment = Column(String(100), nullable=True)
     experience_level = Column(String(50), nullable=True)
@@ -245,6 +266,10 @@ class Project(Base):
         "setweight(to_tsvector('pg_catalog.simple'::regconfig, coalesce(title, '')), 'A') || "
         "setweight(to_tsvector('pg_catalog.simple'::regconfig, coalesce(summary, '') || ' ' || coalesce(description, '')), 'B')",
         persisted=True)))
+
+    @property
+    def cover_url(self):
+        return f"/projects/{self.slug}/cover" if self.cover_key else None
 
 
 class ProjectMember(Base):
@@ -334,6 +359,221 @@ class ProjectEngagement(Base):
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     saved = Column(Boolean, nullable=False, default=False)
     following = Column(Boolean, nullable=False, default=False)
+    interested = Column(Boolean, nullable=False, default=False)
+    interested_visible = Column(Boolean, nullable=False, default=False)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+
+
+class Team(Base):
+    __tablename__ = "teams"
+    __table_args__ = (
+        CheckConstraint("status IN ('recruiting', 'active', 'archived')", name="ck_teams_status"),
+        CheckConstraint("visibility IN ('draft', 'public')", name="ck_teams_visibility"),
+        CheckConstraint("format IN ('online', 'local', 'hybrid')", name="ck_teams_format"),
+        Index("ix_teams_public_created_id", "created_at", "id", postgresql_where=text("visibility = 'public' AND status <> 'archived'")),
+        Index("ix_teams_skills", "skills", postgresql_using="gin"),
+        Index("ix_teams_topics", "topics", postgresql_using="gin"),
+        Index("ix_teams_languages", "languages", postgresql_using="gin"),
+        Index("ix_teams_search", "search_vector", postgresql_using="gin"),
+        Index("ix_teams_event_id", "event_id"),
+    )
+    id = Column(Integer, primary_key=True)
+    slug = Column(String(100), nullable=False, unique=True)
+    title = Column(String(200), nullable=False)
+    summary = Column(String(500), nullable=False)
+    description = Column(Text, nullable=False, default="")
+    skills = Column(ARRAY(String(50)), nullable=False, default=list)
+    topics = Column(ARRAY(String(50)), nullable=False, default=list)
+    languages = Column(ARRAY(String(20)), nullable=False, default=list)
+    format = Column(String(10), nullable=False, default="online")
+    location = Column(String(160), nullable=True)
+    commitment = Column(String(100), nullable=True)
+    visibility = Column(String(10), nullable=False, default="draft")
+    status = Column(String(12), nullable=False, default="recruiting")
+    owner_id = Column(Integer, ForeignKey("users.id", ondelete="RESTRICT"), nullable=False, index=True)
+    cover_key = Column(String(40), nullable=True)
+    linked_project_id = Column(Integer, ForeignKey("projects.id", ondelete="SET NULL"), nullable=True, unique=True)
+    event_id = Column(Integer, ForeignKey("events.id", ondelete="SET NULL"), nullable=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    search_vector = entity_search_column()
+
+    @property
+    def cover_url(self):
+        return f"/teams/{self.slug}/cover" if self.cover_key else None
+
+
+class TeamMember(Base):
+    __tablename__ = "team_members"
+    __table_args__ = (UniqueConstraint("team_id", "user_id", name="uq_team_member"),
+                      Index("ix_team_members_user_id", "user_id"))
+    id = Column(Integer, primary_key=True)
+    team_id = Column(Integer, ForeignKey("teams.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    role = Column(String(100), nullable=False, default="Member")
+    joined_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+
+
+class TeamOpening(Base):
+    __tablename__ = "team_openings"
+    __table_args__ = (CheckConstraint("status IN ('open', 'closed')", name="ck_team_opening_status"),
+                      Index("ix_team_openings_team_status", "team_id", "status", "id"))
+    id = Column(Integer, primary_key=True)
+    team_id = Column(Integer, ForeignKey("teams.id", ondelete="CASCADE"), nullable=False)
+    title = Column(String(100), nullable=False)
+    role = Column(String(100), nullable=False)
+    skills = Column(ARRAY(String(50)), nullable=False, default=list)
+    commitment = Column(String(100), nullable=True)
+    description = Column(Text, nullable=False, default="")
+    status = Column(String(10), nullable=False, default="open")
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+
+class TeamApplication(Base):
+    __tablename__ = "team_applications"
+    __table_args__ = (UniqueConstraint("opening_id", "applicant_id", name="uq_team_opening_applicant"),
+                      Index("ix_team_applications_applicant_id", "applicant_id"),
+                      CheckConstraint("status IN ('pending', 'accepted', 'rejected', 'withdrawn')", name="ck_team_application_status"))
+    id = Column(Integer, primary_key=True)
+    opening_id = Column(Integer, ForeignKey("team_openings.id", ondelete="CASCADE"), nullable=False)
+    applicant_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    message = Column(Text, nullable=False)
+    status = Column(String(12), nullable=False, default="pending")
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+
+class TeamEngagement(Base):
+    __tablename__ = "team_engagements"
+    __table_args__ = (UniqueConstraint("team_id", "user_id", name="uq_team_engagement_user"),
+                      Index("ix_team_engagements_user_id", "user_id"),
+                      CheckConstraint("NOT interested_visible OR interested", name="ck_team_engagement_visible_interest"))
+    id = Column(Integer, primary_key=True)
+    team_id = Column(Integer, ForeignKey("teams.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    saved = Column(Boolean, nullable=False, default=False)
+    interested = Column(Boolean, nullable=False, default=False)
+    interested_visible = Column(Boolean, nullable=False, default=False)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+
+
+class Community(Base):
+    __tablename__ = "communities"
+    __table_args__ = (
+        CheckConstraint("visibility IN ('draft', 'public')", name="ck_communities_visibility"),
+        CheckConstraint("format IN ('online', 'local', 'hybrid')", name="ck_communities_format"),
+        Index("ix_communities_public_created_id", "created_at", "id", postgresql_where=text("visibility = 'public'")),
+        Index("ix_communities_topics", "topics", postgresql_using="gin"),
+        Index("ix_communities_skills", "skills", postgresql_using="gin"),
+        Index("ix_communities_languages", "languages", postgresql_using="gin"),
+        Index("ix_communities_search", "search_vector", postgresql_using="gin"),
+    )
+    id = Column(Integer, primary_key=True)
+    slug = Column(String(100), nullable=False, unique=True)
+    title = Column(String(200), nullable=False)
+    summary = Column(String(500), nullable=False)
+    description = Column(Text, nullable=False, default="")
+    topics = Column(ARRAY(String(50)), nullable=False, default=list)
+    skills = Column(ARRAY(String(50)), nullable=False, default=list)
+    languages = Column(ARRAY(String(20)), nullable=False, default=list)
+    format = Column(String(10), nullable=False, default="online")
+    location = Column(String(160), nullable=True)
+    visibility = Column(String(10), nullable=False, default="draft")
+    owner_id = Column(Integer, ForeignKey("users.id", ondelete="RESTRICT"), nullable=False, index=True)
+    cover_key = Column(String(40), nullable=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    search_vector = entity_search_column()
+
+    @property
+    def cover_url(self):
+        return f"/communities/{self.slug}/cover" if self.cover_key else None
+
+
+class CommunityMember(Base):
+    __tablename__ = "community_members"
+    __table_args__ = (UniqueConstraint("community_id", "user_id", name="uq_community_member"),
+                      Index("ix_community_members_user_id", "user_id"))
+    id = Column(Integer, primary_key=True)
+    community_id = Column(Integer, ForeignKey("communities.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    joined_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+
+
+class CommunityEngagement(Base):
+    __tablename__ = "community_engagements"
+    __table_args__ = (UniqueConstraint("community_id", "user_id", name="uq_community_engagement_user"),
+                      Index("ix_community_engagements_user_id", "user_id"))
+    id = Column(Integer, primary_key=True)
+    community_id = Column(Integer, ForeignKey("communities.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    saved = Column(Boolean, nullable=False, default=False)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+
+
+class Event(Base):
+    __tablename__ = "events"
+    __table_args__ = (
+        CheckConstraint("origin IN ('native', 'external')", name="ck_events_origin"),
+        CheckConstraint("origin <> 'native' OR owner_id IS NOT NULL", name="ck_events_native_owner"),
+        CheckConstraint("type IN ('hackathon', 'game_jam', 'meetup', 'other')", name="ck_events_type"),
+        CheckConstraint("status IN ('scheduled', 'active', 'ended', 'cancelled')", name="ck_events_status"),
+        CheckConstraint("visibility IN ('draft', 'public')", name="ck_events_visibility"),
+        CheckConstraint("format IN ('online', 'local', 'hybrid')", name="ck_events_format"),
+        CheckConstraint("ends_at IS NULL OR ends_at >= starts_at", name="ck_events_time_order"),
+        CheckConstraint("deadline IS NULL OR ends_at IS NULL OR deadline <= ends_at", name="ck_events_deadline_order"),
+        UniqueConstraint("source_name", "source_external_id", name="uq_events_source_id"),
+        UniqueConstraint("canonical_url", name="uq_events_canonical_url"),
+        Index("ix_events_public_start", "starts_at", "id", postgresql_where=text("visibility = 'public' AND status IN ('scheduled', 'active')")),
+        Index("ix_events_skills", "skills", postgresql_using="gin"),
+        Index("ix_events_topics", "topics", postgresql_using="gin"),
+        Index("ix_events_languages", "languages", postgresql_using="gin"),
+        Index("ix_events_search", "search_vector", postgresql_using="gin"),
+    )
+    id = Column(Integer, primary_key=True)
+    slug = Column(String(100), nullable=False, unique=True)
+    title = Column(String(200), nullable=False)
+    summary = Column(String(500), nullable=False)
+    description = Column(Text, nullable=False, default="")
+    type = Column(String(12), nullable=False, default="other")
+    starts_at = Column(DateTime(timezone=True), nullable=False)
+    ends_at = Column(DateTime(timezone=True), nullable=True)
+    deadline = Column(DateTime(timezone=True), nullable=True)
+    timezone = Column(String(100), nullable=False)
+    participation_url = Column(String(2048), nullable=True)
+    origin = Column(String(10), nullable=False, default="native")
+    source_name = Column(String(40), nullable=True)
+    source_external_id = Column(String(200), nullable=True)
+    canonical_url = Column(String(2048), nullable=True)
+    source_url = Column(String(2048), nullable=True)
+    skills = Column(ARRAY(String(50)), nullable=False, default=list)
+    topics = Column(ARRAY(String(50)), nullable=False, default=list)
+    languages = Column(ARRAY(String(20)), nullable=False, default=list)
+    format = Column(String(10), nullable=False, default="online")
+    location = Column(String(160), nullable=True)
+    visibility = Column(String(10), nullable=False, default="draft")
+    status = Column(String(12), nullable=False, default="scheduled")
+    owner_id = Column(Integer, ForeignKey("users.id", ondelete="RESTRICT"), nullable=True, index=True)
+    cover_key = Column(String(40), nullable=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    search_vector = entity_search_column()
+
+    @property
+    def cover_url(self):
+        return f"/events/{self.slug}/cover" if self.cover_key else None
+
+
+class EventEngagement(Base):
+    __tablename__ = "event_engagements"
+    __table_args__ = (UniqueConstraint("event_id", "user_id", name="uq_event_engagement_user"),
+                      Index("ix_event_engagements_user_id", "user_id"),
+                      CheckConstraint("NOT interested_visible OR interested", name="ck_event_engagement_visible_interest"))
+    id = Column(Integer, primary_key=True)
+    event_id = Column(Integer, ForeignKey("events.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    saved = Column(Boolean, nullable=False, default=False)
     interested = Column(Boolean, nullable=False, default=False)
     interested_visible = Column(Boolean, nullable=False, default=False)
     created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))

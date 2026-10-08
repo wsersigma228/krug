@@ -48,6 +48,11 @@ const iconPaths = {
   arrow: '<path d="M5 12h14m-5-5 5 5-5 5"/>',
   heart: '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/>',
   comment: '<path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5H4l-2 2V11.5a9.5 9.5 0 0 1 19 0Z"/>',
+  folder: '<path d="M3 6.5h7l2 2h9v9.8a2.2 2.2 0 0 1-2.2 2.2H5.2A2.2 2.2 0 0 1 3 18.3Z"/><path d="M3 9h18"/>',
+  calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18M8 14h3m2 0h3M8 17h3"/>',
+  community: '<path d="M4 4h16v12H9l-5 4Z"/><path d="M8 8h8M8 12h5"/>',
+  bookmark: '<path d="M6 4h12v17l-6-4-6 4Z"/>',
+  filter: '<path d="M4 5h16M7 12h10m-7 7h4"/>',
 };
 const icon = (name) =>
   html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">${iconPaths[name]}</svg>`;
@@ -175,22 +180,26 @@ function go(route) {
 }
 function shell(route) {
   const wideFeed = ["stories", "feed"].includes(route);
-  const discovery = ["explore", "saved", "projects"].includes(route);
-  const links = [["explore", t("Обзор")], ["explore?kind=people", t("Люди")], ["stories", t("Истории")], [session ? "settings" : "login", session ? t("Аккаунт") : t("Войти")]];
+  const discovery = ["explore", "teams", "communities", "events", "saved", "projects"].includes(route);
+  const links = [["explore", t("Обзор")], ["teams", t("Команды")], ["communities", t("Сообщества")], ["stories", t("Обновления")]];
   app.innerHTML = html`<header class="topbar"><div class="topbar-inner">
-      <div class="brand-block"><a class="brand" href="/app#explore" aria-label="Круг, обзор"><span class="brand-mark"></span>круг</a>
-      <span class="topbar-tagline">Люди. Проекты. Возможности.</span></div>
-      <nav class="nav" aria-label="Основная навигация">${links.map(([id, title]) => { const peopleTab = new URLSearchParams(location.hash.split("?")[1] || "").get("kind") === "people"; const current = id === "explore?kind=people" ? route === "explore" && peopleTab : route === id && !(id === "explore" && peopleTab); return html`<a href="/app#${id}" class="${current ? "active" : ""}" ${current ? 'aria-current="page"' : ""}>${icon({stories:"feed",settings:"settings",login:"settings"}[id] || id.split("?")[0])}<span>${title}</span></a>`; }).join("")}</nav>
+      <div class="brand-block"><a class="brand" href="/app#explore" aria-label="Круг, обзор"><span class="brand-mark"></span>круг</a></div>
+      <nav class="nav" aria-label="Основная навигация">${links.map(([id, title]) => { const current = id === "explore" ? ["explore", "events", "event", "event-new", "event-edit"].includes(route) : id === "teams" ? ["teams", "team", "team-new", "team-edit"].includes(route) : id === "communities" ? ["communities", "community", "community-new", "community-edit"].includes(route) : ["stories", "feed", "posts", "new", "edit"].includes(route); return html`<a href="/app#${id}" class="${current ? "active" : ""}" ${current ? 'aria-current="page"' : ""}>${icon({explore:"explore",teams:"people",communities:"community",stories:"feed"}[id])}<span>${title}</span></a>`; }).join("")}</nav>
       <div class="header-controls"><div class="preferences">
       <button id="ui-language" class="preference-button" aria-label="${language === "ru" ? "Switch to English" : t("Переключить на русский")}" title="Русский / English">${language.toUpperCase()}</button>
       <details class="theme-picker"><summary id="ui-theme" class="preference-button" aria-label="${t("Тема")}" title="${t("Тема")}">${themeIcon(theme)}</summary>
       <div class="theme-options">${["light", "dark", "system"].map((value, index) => html`<button class="theme-option" data-theme-choice="${value}" aria-pressed="${theme === value}">${themeIcon(value)}${t(["Светлая", "Тёмная", "Системная"][index])}</button>`).join("")}</div></details>
-      </div><div class="header-actions">${me ? html`<a class="account-link" href="/app#profile/${me.id}" aria-label="${esc(me.username)}"><span class="avatar">${esc(me.username[0]?.toUpperCase())}</span><span>@${esc(me.username)}</span></a>` : ""}${session ? html`<a class="button compose" href="/app#project-new" aria-label="Создать проект">${icon("plus")}<span>Создать проект</span></a>` : t('<a class="button compose" href="/app#login">Войти в Круг</a>')}</div>
+      </div><div class="header-actions">${me ? html`<a class="account-link" href="/app#settings" aria-label="${esc(me.username)}"><span class="avatar">${me.avatar_url ? html`<img src="${esc(me.avatar_url)}" alt="">` : esc((me.display_name || me.username)[0]?.toUpperCase())}</span><span>@${esc(me.username)}</span></a>` : html`<a class="account-link" href="/app#login" aria-label="${t("Войти")}"><span class="avatar">${icon("people")}</span></a>`}</div>
       </div></div></header><div class="layout ${wideFeed ? "layout-feed" : discovery ? "layout-discovery" : ""}">
       <main class="main" id="main" tabindex="-1">
       <div class="loading" role="status">Загрузка…</div>
       </main>
-      </div>`;
+      </div><nav class="mobile-dock" aria-label="${t("Основная навигация")}">
+        <a href="/app#explore" class="${["explore", "events"].includes(route) ? "active" : ""}">${icon("explore")}<span>${t("Обзор")}</span></a>
+        <a href="/app#teams" class="${["teams", "team", "team-new", "team-edit"].includes(route) ? "active" : ""}">${icon("people")}<span>${t("Команды")}</span></a>
+        <a href="/app#communities" class="${["communities", "community", "community-new", "community-edit"].includes(route) ? "active" : ""}">${icon("community")}<span>${t("Сообщества")}</span></a>
+        <a href="/app#settings" class="${["settings", "profile", "applications", "saved", "projects"].includes(route) ? "active" : ""}" ${["settings", "profile", "applications", "saved", "projects"].includes(route) ? 'aria-current="page"' : ""}>${icon("settings")}<span>${t("Вы")}</span></a>
+      </nav>`;
   document.querySelector("#ui-language").addEventListener("click", async (event) => {
     const control = event.currentTarget;
     const selected = language === "ru" ? "en" : "ru";
@@ -415,8 +424,9 @@ async function paged(root, path, itemHTML, stamp, blank) {
     if (stamp !== generation) return;
     cursor = page.next_cursor;
     list.insertAdjacentHTML("beforeend", page.items.map(itemHTML).join(""));
+    if (typeof hydratePlatformCovers === "function") await hydratePlatformCovers(list, stamp);
     if (!list.childElementCount) list.innerHTML = blank;
-    if (list.querySelector(".project-card")) list.className = "project-grid";
+    if (list.querySelector(".project-card, .platform-card")) list.className = "project-grid";
     if (list.querySelector(".post-card")) {
       list.className = "post-grid";
       // Observe intrinsic card content, never the grid item whose span we change.
@@ -435,6 +445,7 @@ async function paged(root, path, itemHTML, stamp, blank) {
     more.disabled = false;
     hydratePhotos(list, stamp);
     hydrateLikes(list, stamp);
+    if (typeof bindPlatformSaves === "function") bindPlatformSaves(list, stamp);
   }
   actionButton(more, load);
   await load();
@@ -443,7 +454,7 @@ async function authScreen(root, route, stamp) {
   const [currentRoute, currentQuery = ""] = location.hash.slice(1).split("?");
   const currentParams = new URLSearchParams(currentQuery);
   const requestedNext = currentParams.get("next") || currentRoute + (currentRoute === "project-new" && /^[a-z0-9-]+$/.test(currentParams.get("inspired") || "") ? "?inspired=" + currentParams.get("inspired") : "");
-  const next = /^(project\/[a-z0-9-]+|project-new(?:\?inspired=[a-z0-9-]+)?|saved|projects|applications|collaboration-profile|external-submit|project-claim\/[a-z0-9-]+)$/.test(requestedNext) ? requestedNext : "explore";
+  const next = /^(project\/[a-z0-9-]+|project-new(?:\?inspired=[a-z0-9-]+)?|team\/[a-z0-9-]+|team-new(?:\?event=\d+)?|community\/[a-z0-9-]+|community-new|event\/[a-z0-9-]+|event-new|saved|projects|applications|collaboration-profile|external-submit|project-claim\/[a-z0-9-]+)$/.test(requestedNext) ? requestedNext : "explore";
   const register = route === "register",
     reset = route === "recover";
   root.innerHTML = html`<div class="auth">${heading(t("Добро пожаловать"), reset ? t("Вернуться в Круг") : register ? t("Начните свою историю") : t("С возвращением"), reset ? t("Отправим ссылку для нового пароля, если email связан с аккаунтом.") : register ? t("Немного о себе — и вы среди своих.") : t("Войдите, чтобы читать своих людей и делиться мыслями."))}<div class="card">
@@ -615,7 +626,7 @@ async function profileScreen(root, id, stamp) {
   root.innerHTML =
     html`<section class="card">
       <div class="profile-top">
-      <span class="avatar large">${esc(profile.username[0].toUpperCase())}</span>
+      <span class="avatar large">${profile.avatar_url ? html`<img src="${esc(profile.avatar_url)}" alt="">` : esc(profile.username[0].toUpperCase())}</span>
       <div>
       <h1>${esc(profile.display_name || profile.username)}</h1>
       <span class="small">@${esc(profile.username)}</span>
@@ -697,6 +708,8 @@ async function editorScreen(root, id, stamp, query = new URLSearchParams()) {
       </div>`;
   const form = root.querySelector("form");
   const projectId = post?.project_id || (/^\d+$/.test(query.get("project") || "") ? Number(query.get("project")) : null);
+  const communityId = post?.community_id || (/^\d+$/.test(query.get("community_id") || "") ? Number(query.get("community_id")) : null);
+  const communitySlug = query.get("community");
   if (projectId) {
     const title = root.querySelector("h1");
     if (title) title.textContent = t(post ? "Редактировать обновление" : "Новое обновление проекта");
@@ -744,10 +757,10 @@ async function editorScreen(root, id, stamp, query = new URLSearchParams()) {
     if (!post) {
       post = await api("/posts", {
         method: "POST",
-        body: { ...body, ...(projectId ? { project_id: projectId } : {}), is_published: file ? false : published },
+        body: { ...body, ...(projectId ? { project_id: projectId } : {}), ...(communityId ? { community_id: communityId } : {}), is_published: file ? false : published },
       });
       // Keep the saved draft identity if photo upload fails or the UI language changes.
-      history.replaceState(null, "", "/app#edit/" + post.id);
+      history.replaceState(null, "", "/app#edit/" + post.id + (communitySlug ? "?community=" + encodeURIComponent(communitySlug) : ""));
       form.querySelector("#save-status").textContent =
         t("Запись создана. Завершаем сохранение…");
     } else
@@ -772,19 +785,26 @@ async function editorScreen(root, id, stamp, query = new URLSearchParams()) {
         body: { is_published: true },
       });
     toast(t("Пост сохранён."));
-    go("post/" + post.id);
+    go("post/" + post.id + (communitySlug ? "?community=" + encodeURIComponent(communitySlug) : ""));
   });
 }
-async function postScreen(root, id, stamp, projectSlug = null) {
+async function postScreen(root, id, stamp, projectSlug = null, query = new URLSearchParams()) {
   const post = await api("/posts/" + id);
-  const [author, likes] = await Promise.all([
+  const communitySlug = post.community_id ? query.get("community") : null;
+  const [author, likes, communityRole] = await Promise.all([
     api("/authors/" + post.author_id),
     api(html`/posts/${id}/likes`),
+    session && communitySlug ? (async () => { const [community, membership] = await Promise.all([api(`/communities/${encodeURIComponent(communitySlug)}`), api(`/communities/${encodeURIComponent(communitySlug)}/membership`)]); return community.id === post.community_id ? membership : null; })() : Promise.resolve(null),
   ]);
   if (stamp !== generation) return;
   const own = me?.id === post.author_id;
+  const communityOwner = communityRole?.is_owner === true;
+  const communityMember = communityRole?.is_member === true;
+  const canDelete = own || communityOwner;
+  const canComment = Boolean(me && (!post.community_id || communityMember));
   const projectLink = projectSlug ? "/project/" + encodeURIComponent(projectSlug) : "/app#stories";
-  root.innerHTML = html`<a class="back" href="${projectLink}">${projectSlug ? t("К проекту") : t("К историям")}</a>
+  const backLink = communitySlug ? "/app#community/" + encodeURIComponent(communitySlug) : projectLink;
+  root.innerHTML = html`<a class="back" href="${backLink}">${communitySlug ? t("К сообществу") : projectSlug ? t("К проекту") : t("К историям")}</a>
       <article class="card">
       <div class="post-meta">
       <a class="avatar" href="/app#profile/${author.id}">${esc(author.username[0].toUpperCase())}</a>
@@ -794,19 +814,14 @@ async function postScreen(root, id, stamp, projectSlug = null) {
       <div class="toolbar">
       <button id="like" class="${likes.liked ? "liked" : "secondary"}" aria-pressed="${likes.liked}">${icon("heart")} ${likes.count} · ${likes.liked ? t("Нравится") : t("Поддержать")}</button>
       <span class="spacer">
-      </span>${
-        own
-          ? html`<a class="button secondary" href="/app#edit/${id}">Редактировать</a>
-      <button class="danger" id="delete">Удалить</button>`
-          : ""
-      }</div>
+      </span>${own ? html`<a class="button secondary" href="/app#edit/${id}${communitySlug ? "?community=" + encodeURIComponent(communitySlug) : ""}">Редактировать</a>` : ""}${canDelete ? html`<button class="danger" id="delete">Удалить</button>` : ""}</div>
       <section class="comments" id="discussion">
-      <h2>Комментарии</h2>${me ? t('<form class="form"><label class="field">Ваш комментарий<textarea name="content" required maxlength="2000" placeholder="Поделитесь мыслью…"></textarea></label><button>Отправить</button></form>') : t('<p class="intro"><a class="text-button" href="/app#login">Войдите</a>, чтобы присоединиться к разговору.</p>')}<div id="comments">
+      <h2>Комментарии</h2>${canComment ? t('<form class="form"><label class="field">Ваш комментарий<textarea name="content" required maxlength="2000" placeholder="Поделитесь мыслью…"></textarea></label><button>Отправить</button></form>') : post.community_id && me ? `<p class="hint">${t("Присоединитесь к сообществу, чтобы комментировать.")}</p>` : t('<p class="intro"><a class="text-button" href="/app#login">Войдите</a>, чтобы присоединиться к разговору.</p>')}<div id="comments">
       </div>
       </section></article>`;
   const photosReady = hydratePhotos(root, stamp);
   bindLike(root.querySelector("#like"), id, likes);
-  if (own)
+  if (canDelete)
     actionButton(root.querySelector("#delete"), async () => {
       if (
         !confirm(
@@ -816,9 +831,9 @@ async function postScreen(root, id, stamp, projectSlug = null) {
         return;
       await api("/posts/" + id, { method: "DELETE" });
       toast(t("История удалена."));
-      go("posts");
+      go(communityRole ? "community/" + communitySlug : "posts");
     });
-  if (me)
+  if (canComment)
     bindForm(root.querySelector("form"), async (data) => {
       await api(html`/posts/${id}/comments`, {
         method: "POST",
@@ -834,7 +849,7 @@ async function postScreen(root, id, stamp, projectSlug = null) {
       html`<article class="comment" data-comment="${c.id}">
       <div class="post-meta">
       <a class="author" href="/app#profile/${c.user_id}">${esc(c.username)}</a>
-      <span>${date(c.created_at)}</span>${me && (me.id === c.user_id || own) ? html`<button class="text-button" data-delete-comment="${c.id}" aria-label="Удалить комментарий ${esc(c.username)}">Удалить</button>` : ""}</div>
+      <span>${date(c.created_at)}</span>${me && (me.id === c.user_id || own || communityOwner) ? html`<button class="text-button" data-delete-comment="${c.id}" aria-label="Удалить комментарий ${esc(c.username)}">Удалить</button>` : ""}</div>
       <p>${esc(c.content)}</p>
       </article>`,
     stamp,
@@ -869,10 +884,11 @@ async function settingsScreen(root, stamp) {
       t("Настройки"),
       t("Немного о себе и о том, как оставаться на связи."),
     ) +
-    html`<nav class="account-links" aria-label="${t("Мои разделы")}"><a href="/app#projects">${t("Мои проекты")}</a><a href="/app#saved">${t("Сохранённые проекты")}</a><a href="/app#applications">${t("Мои заявки")}</a><a href="/app#collaboration-profile">${t("Профиль для сотрудничества")}</a>${me.role === "admin" ? t('<a href="/app#admin-review">Проверка внешних проектов</a>') : ""}<a href="/app#external-submit">${t("Предложить внешний проект")}</a></nav><div class="settings-grid">
+    html`<nav class="account-links" aria-label="${t("Мои разделы")}"><a href="/app#projects">${t("Мои проекты")}</a><a href="/app#saved">${t("Сохранённое")}</a><a href="/app#applications">${t("Мои заявки")}</a><a href="/app#collaboration-profile">${t("Профиль для сотрудничества")}</a>${me.role === "admin" ? t('<a href="/app#admin-review">Проверка внешних проектов</a>') : ""}<a href="/app#external-submit">${t("Предложить внешний проект")}</a></nav><div class="settings-grid">
       <section class="card">
       <h2>Профиль</h2>
       <p class="small">@${esc(me.username)} · открытый профиль</p>
+      <div class="avatar-settings"><span class="platform-avatar">${me.avatar_url ? html`<img src="${esc(me.avatar_url)}" alt="">` : esc((me.display_name || me.username)[0]?.toUpperCase())}</span><form class="form" id="avatar-form"><label class="field">${t("Фото профиля — JPEG, PNG или WebP до 8 МиБ")}<input name="avatar" type="file" accept="image/jpeg,image/png,image/webp"></label><div class="toolbar"><button>${t("Загрузить фото")}</button>${me.avatar_url ? html`<button type="button" class="secondary" id="remove-avatar">${t("Удалить фото")}</button>` : ""}</div><span class="hint" role="status"></span></form></div>
       <form class="form" id="profile-form">${input("display_name", t("Отображаемое имя"), "text", html`maxlength="100" value="${esc(me.display_name || "")}"`)}
       <label class="field">О себе<textarea name="bio" maxlength="500" placeholder="Что вам интересно?">${esc(me.bio)}</textarea>
       <span class="hint">До 500 символов. Видно всем.</span>
@@ -902,6 +918,17 @@ async function settingsScreen(root, stamp) {
       <button class="danger" id="delete-account">Удалить мой аккаунт</button>
       </section>
       </div>`;
+  bindForm(root.querySelector("#avatar-form"), async data => {
+    const file = data.get("avatar");
+    if (!file?.size) throw new Error(t("Выберите фото профиля."));
+    if (file.size > 8 * 1024 * 1024) throw new Error(t("Фото должно быть не больше 8 МиБ."));
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) throw new Error(t("Выберите изображение JPEG, PNG или WebP."));
+    const result = await api("/me/avatar", { method: "PUT", body: file, headers: { "Content-Type": file.type } });
+    me.avatar_url = result?.avatar_url || me.avatar_url;
+    toast(t("Фото профиля сохранено.")); await render();
+  });
+  const removeAvatar = root.querySelector("#remove-avatar");
+  if (removeAvatar) actionButton(removeAvatar, async () => { await api("/me/avatar", { method: "DELETE" }); me.avatar_url = null; await render(); });
   bindForm(root.querySelector("#profile-form"), async (data) => {
     await api("/me/profile", {
       method: "PATCH",
@@ -987,7 +1014,7 @@ async function render(options = {}) {
   try {
     if (special) await tokenScreen(root, stamp);
     else if (
-    ["feed", "posts", "people", "settings", "new", "edit", "saved", "projects", "project-new", "project-edit", "collaboration-profile", "external-submit", "admin-review", "applications", "project-claim"].includes(route) &&
+    ["feed", "posts", "people", "settings", "new", "edit", "saved", "projects", "project-new", "project-edit", "collaboration-profile", "external-submit", "admin-review", "applications", "project-claim", "team-new", "team-edit", "community-new", "community-edit", "event-new", "event-edit"].includes(route) &&
       !session
     )
       await authScreen(root, "login", stamp);
@@ -996,7 +1023,7 @@ async function render(options = {}) {
     else if (route === "profile" && /^\d+$/.test(id))
       await profileScreen(root, id, stamp);
     else if (route === "post" && /^\d+$/.test(id))
-      await postScreen(root, id, stamp, publicProject);
+      await postScreen(root, id, stamp, publicProject, query);
     else if (route === "new" || (route === "edit" && /^\d+$/.test(id)))
       await editorScreen(root, id, stamp, query);
     else if (route === "project" && /^[a-z0-9-]+$/.test(id)) await projectScreen(root, id, stamp);
@@ -1005,9 +1032,11 @@ async function render(options = {}) {
     else if (route === "collaboration-profile") await collaborationProfileScreen(root, stamp);
     else if (route === "external-submit") await externalSubmissionScreen(root, stamp);
     else if (route === "project-claim" && /^[a-z0-9-]+$/.test(id)) await projectClaimScreen(root, id, stamp);
+    else if (["teams", "team", "team-new", "team-edit", "communities", "community", "community-new", "community-edit", "events", "event", "event-new", "event-edit"].includes(route)) await platformScreen(route, id, query, root, stamp);
     else if (route === "admin-review" && me?.role === "admin") await adminReviewScreen(root, stamp);
     else if (route === "admin-review") root.innerHTML = heading("", t("Доступ закрыт"));
     else if (route === "applications") await applicationsScreen(root, stamp);
+    else if (route === "roles") await openRolesScreen(root, query, stamp);
     else if (route === "saved" || route === "projects") await projectListScreen(root, route === "saved", stamp, query);
     else if (!route || route === "explore") await discoveryScreen(root, query, stamp);
     else if (route === "people") await peopleScreen(root, query, stamp);
@@ -1019,6 +1048,8 @@ async function render(options = {}) {
         query,
         stamp,
       );
+    if (stamp === generation && typeof hydratePlatformCovers === "function")
+      await hydratePlatformCovers(root, stamp);
     if (stamp === generation) {
       for (const saved of fields) {
         const form = root.querySelectorAll("form")[saved.form];

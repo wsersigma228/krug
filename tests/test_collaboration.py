@@ -37,6 +37,8 @@ async def test_profile_discovery_is_opt_in_fresh_and_email_free(client, accounts
     assert len(found) == 1 and found[0]["id"] == person["id"]
     assert found[0]["skills"] == ["python"] and "email" not in found[0]
     assert found[0]["interests"] == ["game development"]
+    assert [person["id"] for person in (await client.get("/people", params={"language": "ru"})).json()["items"]] == [person["id"]]
+    assert (await client.get("/people", params={"language": "fr"})).json()["items"] == []
     for alias in ("game dev", "gamedev", "game development", "game-development"):
         people = (await client.get("/people", params={"search": alias, "wanted_skill": "artist"})).json()["items"]
         assert [item["id"] for item in people] == [person["id"]]

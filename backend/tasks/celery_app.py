@@ -5,7 +5,7 @@ celery_app = Celery(
     "blog_tasks",
     broker=REDIS_URL,
     backend=REDIS_URL,
-    include=["backend.tasks.email_tasks", "backend.tasks.github_tasks"],
+    include=["backend.tasks.email_tasks", "backend.tasks.github_tasks", "backend.tasks.gitlab_tasks"],
 )
 
 celery_app.conf.update(
@@ -17,6 +17,11 @@ celery_app.conf.update(
     beat_schedule={
         "refresh-github-projects": {
             "task": "backend.tasks.github_tasks.import_github",
+            "schedule": 6 * 60 * 60,
+            "options": {"expires": 60 * 60},
+        },
+        "refresh-gitlab-projects": {
+            "task": "backend.tasks.gitlab_tasks.import_gitlab",
             "schedule": 6 * 60 * 60,
             "options": {"expires": 60 * 60},
         },

@@ -282,7 +282,18 @@ async function main() {
       await noOverflow(page);
       await noCardOverlap(page);
       assert(await page.locator('.search').evaluate(search => Math.abs(search.getBoundingClientRect().width - search.closest('.main').getBoundingClientRect().width) < 2), 'Search spans the feed width');
-      assert(await page.locator('.topbar .nav').evaluate(nav => Math.abs((nav.getBoundingClientRect().left + nav.getBoundingClientRect().right) / 2 - innerWidth / 2) < 2), 'Desktop navigation is centered');
+      assert(await page.locator('.topbar-inner').evaluate(header => {
+        const brand = header.querySelector('.brand-block').getBoundingClientRect();
+        const nav = header.querySelector('.nav').getBoundingClientRect();
+        const controls = header.querySelector('.header-controls').getBoundingClientRect();
+        const bounds = header.getBoundingClientRect();
+        const availableCenter = (brand.right + controls.left) / 2;
+        // The compact header centers navigation in the actual gap between brand and controls.
+        // This keeps the contract correct when those side groups differ in width on ultrawide screens.
+        return brand.left >= bounds.left && controls.right <= bounds.right &&
+          nav.left >= brand.right - 1 && nav.right <= controls.left + 1 &&
+          Math.abs((nav.left + nav.right) / 2 - availableCenter) < 2;
+      }), `Desktop navigation fits and centers between brand and controls at ${width}px`);
       const columns = await page.locator('.post-grid').evaluate(grid => getComputedStyle(grid).gridTemplateColumns.split(' ').length);
       assert(columns >= (width === 2560 ? 6 : 8), `The ${width}px feed needs more visible columns`);
       const photoLayout = await page.locator('.post-photo').first().evaluate(image => {

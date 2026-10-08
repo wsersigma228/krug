@@ -35,6 +35,7 @@ def discoverable_profile():
 
 def person_data(user, profile, owned, memberships):
     return {"id": user.id, "username": user.username, "display_name": user.display_name,
+            "avatar_url": user.avatar_url,
             "bio": user.bio, "skills": profile.skills, "interests": profile.interests,
             "wanted_skills": profile.wanted_skills, "intent_kind": profile.intent_kind,
             "intent_text": profile.intent_text, "timezone": profile.timezone,
@@ -95,7 +96,8 @@ async def put_profile(body: CollaborationProfileInput, db: AsyncSession = Depend
 
 @router.get("/people", response_model=Page[PublicPerson])
 async def people(params: Annotated[PeopleParams, Query()], db: AsyncSession = Depends(get_db)):
-    scope = cursor_scope("people", search=params.search, skill=params.skill, wanted_skill=params.wanted_skill, intent_kind=params.intent_kind)
+    scope = cursor_scope("people", search=params.search, skill=params.skill, wanted_skill=params.wanted_skill,
+                         intent_kind=params.intent_kind, language=params.language)
     cursor = decode_cursor(params.cursor, scope)
     query = select(User, CollaborationProfile).join(CollaborationProfile).where(*discoverable_profile())
     if params.skill:
@@ -104,6 +106,8 @@ async def people(params: Annotated[PeopleParams, Query()], db: AsyncSession = De
         query = query.where(CollaborationProfile.wanted_skills.contains([params.wanted_skill.strip().lower()]))
     if params.intent_kind:
         query = query.where(CollaborationProfile.intent_kind == params.intent_kind)
+    if params.language:
+        query = query.where(CollaborationProfile.languages.contains([params.language.strip().lower()]))
     if params.search and params.search.strip():
         term = params.search.strip().lower()
         pattern = f"%{term}%"

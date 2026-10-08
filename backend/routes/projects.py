@@ -70,6 +70,10 @@ async def discovery(params: Annotated[DiscoveryParams, Query()], db: AsyncSessio
         query = query.where(Project.tags.contains([params.tag.strip().lower()]))
     if params.skill:
         query = query.where(Project.skills.contains([params.skill.strip().lower()]))
+    if params.language:
+        query = query.where(Project.languages.contains([params.language.strip().lower()]))
+    if params.format:
+        query = query.where(Project.format == params.format)
     if params.source:
         if params.source in {"native", "external"}:
             query = query.where(Project.origin == params.source)
@@ -257,11 +261,13 @@ async def interested_users(slug: str, params: Annotated[PageParams, Query()], db
     project = await get_project(db, slug)
     scope = cursor_scope("project_interested", project_id=project.id)
     query = select(ProjectEngagement.id, ProjectEngagement.created_at, User.id.label("user_id"),
-                   User.username, User.display_name, User.bio).join(User, User.id == ProjectEngagement.user_id).where(
+                   User.username, User.display_name, User.bio, User.avatar_key).join(User, User.id == ProjectEngagement.user_id).where(
         ProjectEngagement.project_id == project.id, ProjectEngagement.interested.is_(True), ProjectEngagement.interested_visible.is_(True))
     rows = (await db.execute(seek_page(query, ProjectEngagement, decode_cursor(params.cursor, scope), params.limit))).all()
     page = make_page(rows, params.limit, scope)
-    page["items"] = [{"id": row.user_id, "username": row.username, "display_name": row.display_name, "bio": row.bio} for row in page["items"]]
+    page["items"] = [{"id": row.user_id, "username": row.username, "display_name": row.display_name,
+                      "bio": row.bio, "avatar_url": f"/users/{row.user_id}/avatar" if row.avatar_key else None}
+                     for row in page["items"]]
     return page
 
 

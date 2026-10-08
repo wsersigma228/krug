@@ -98,14 +98,14 @@ def fetch_repository(name: str, now: datetime) -> Repository:
     return normalize_repository(data, now)
 
 
-async def store_repository(db, item: Repository, now: datetime) -> bool:
+async def store_repository(db, item: Repository, now: datetime, source_name: str = "github") -> bool:
     existing = await db.scalar(select(Project).where(Project.canonical_url == item.url))
     if existing and existing.origin == "native":
         return False
     values = dict(
         slug=item.slug, title=item.title, summary=item.summary, description=item.summary,
         origin="external", owner_id=None, visibility="public", status=item.status,
-        stage="unknown", tags=item.tags, skills=item.skills, source_name="github",
+        stage="unknown", tags=item.tags, skills=item.skills, source_name=source_name,
         source_url=item.url, canonical_url=item.url, source_external_id=item.external_id,
         last_activity_at=item.activity_at, last_verified_at=now,
     )

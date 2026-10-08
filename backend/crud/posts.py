@@ -1,12 +1,12 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import joinedload
-from backend.models import Post, Subscription, User, EmailDelivery, Project, ProjectMember
+from backend.models import Community, CommunityMember, Post, Subscription, User, EmailDelivery, Project, ProjectMember
 from backend.project_access import public_post
 from fastapi import HTTPException
 from datetime import datetime, timezone
 from backend.schemas import PostCreate, PostUpdate
-from sqlalchemy import func, update
+from sqlalchemy import func, or_, update
 from backend.pagination import Cursor, seek_page
 from uuid import uuid4
 from backend.media import delete_photo
@@ -15,7 +15,7 @@ from backend.media import delete_photo
 async def record_publication_emails(db: AsyncSession, post: Post) -> None:
     """Persist deliveries in the publication transaction, without contacting Redis."""
     # Project updates have no email audience yet; avoid exposing private project content.
-    if post.project_id is not None:
+    if post.project_id is not None or post.community_id is not None:
         return
     # ponytail: fanout loads recipient IDs; use INSERT ... SELECT for large follower counts.
     recipients = await db.scalars(
@@ -98,26 +98,41 @@ async def create_post(
     post_data: PostCreate,
     author_id: int,
 ):
-    if post_data.project_id is not None:
+    if post_data.project_id is not None or post_data.community_id is not None:
         author_exists = await db.scalar(select(User.id).where(User.id == author_id)
                                         .with_for_update(read=True, key_share=True))
         if author_exists is None:
             raise HTTPException(401, "Account no longer exists")
-        project = await db.scalar(select(Project).where(Project.id == post_data.project_id).with_for_update())
-        if project is None:
-            raise HTTPException(404, "Project not found")
-        is_member = await db.scalar(select(ProjectMember.id).where(
-            ProjectMember.project_id == project.id, ProjectMember.user_id == author_id))
-        if project.owner_id != author_id and not is_member:
-            raise HTTPException(404, "Project not found")
-        if post_data.is_published and project.visibility == "public":
-            project.last_activity_at = datetime.now(timezone.utc)
+        if post_data.project_id is not None:
+            project = await db.scalar(select(Project).where(Project.id == post_data.project_id).with_for_update())
+            if project is None:
+                raise HTTPException(404, "Project not found")
+            is_member = await db.scalar(select(ProjectMember.id).where(
+                ProjectMember.project_id == project.id, ProjectMember.user_id == author_id))
+            if project.owner_id != author_id and not is_member:
+                raise HTTPException(404, "Project not found")
+            if post_data.is_published and project.visibility == "public":
+                project.last_activity_at = datetime.now(timezone.utc)
+    if post_data.community_id is not None:
+        community = await db.scalar(select(Community).where(Community.id == post_data.community_id)
+                                    .execution_options(populate_existing=True).with_for_update())
+        if community is None:
+            raise HTTPException(404, "Community not found")
+        member = await db.scalar(select(CommunityMember.id).where(
+            CommunityMember.community_id == community.id, CommunityMember.user_id == author_id))
+        if community.owner_id != author_id and not member:
+            if community.visibility != "public":
+                raise HTTPException(404, "Community not found")
+            raise HTTPException(403, "Join the community before creating posts")
+        if post_data.is_published and (community.visibility != "public" or not member):
+            raise HTTPException(403, "Join the public community before publishing")
     new_post = Post(
         title=post_data.title,
         content=post_data.content,
         is_published=post_data.is_published,
         author_id=author_id,
         project_id=post_data.project_id,
+        community_id=post_data.community_id,
     )
     db.add(new_post)
     if new_post.is_published:
@@ -134,7 +149,19 @@ async def update_post(
     user_id: int,
     post_data: PostUpdate,
 ):
-    """Lock the post so concurrent publications don't both send notifications."""
+    """Lock a community first, then the post, so membership edits are serialized."""
+    update_dict = post_data.model_dump(exclude_unset=True)
+    actor = await db.scalar(select(User.id).where(User.id == user_id)
+                             .with_for_update(read=True, key_share=True))
+    if actor is None:
+        raise HTTPException(401, "Account no longer exists")
+    current_community_id = await db.scalar(select(Post.community_id).where(
+        Post.id == post_id, Post.author_id == user_id))
+    if current_community_id is not None:
+        community = await db.scalar(select(Community).where(Community.id == current_community_id)
+                                    .execution_options(populate_existing=True).with_for_update())
+        if community is None:
+            raise HTTPException(404, "Community not found")
     result = await db.execute(
         select(Post).where(Post.id == post_id, Post.author_id == user_id)
         .execution_options(populate_existing=True).with_for_update()
@@ -145,7 +172,15 @@ async def update_post(
 
     was_published = post.is_published
 
-    update_dict = post_data.model_dump(exclude_unset=True)
+    if post.community_id != current_community_id:
+        raise HTTPException(409, "Post entity changed; reload and retry")
+    if current_community_id is not None:
+        member = await db.scalar(select(CommunityMember.id).where(
+            CommunityMember.community_id == community.id, CommunityMember.user_id == user_id))
+        if not member:
+            raise HTTPException(403, "Join the community before editing its posts")
+        if update_dict.get("is_published", post.is_published) and community.visibility != "public":
+            raise HTTPException(403, "Only public communities can have published posts")
     for key, value in update_dict.items():
         setattr(post, key, value)
 
@@ -167,8 +202,19 @@ async def update_post(
 
 
 async def delete_post(db: AsyncSession, post_id: int, user_id: int):
-    """Delete an owned post; return False if it doesn't exist."""
-    post = await db.scalar(select(Post).where(Post.id == post_id, Post.author_id == user_id)
+    """Delete an owned post or one moderated by its community owner."""
+    actor = await db.scalar(select(User.id).where(User.id == user_id)
+                            .with_for_update(read=True, key_share=True))
+    if actor is None:
+        raise HTTPException(401, "Account no longer exists")
+    community_id = await db.scalar(select(Post.community_id).where(Post.id == post_id, or_(
+        Post.author_id == user_id,
+        Post.community_id.in_(select(Community.id).where(Community.owner_id == user_id)))))
+    if community_id is not None:
+        await db.scalar(select(Community.id).where(Community.id == community_id).with_for_update())
+    post = await db.scalar(select(Post).where(Post.id == post_id, or_(
+        Post.author_id == user_id,
+        Post.community_id.in_(select(Community.id).where(Community.owner_id == user_id))))
                            .execution_options(populate_existing=True).with_for_update())
     if not post:
         return False

@@ -4,8 +4,8 @@
 
 **People, projects, possibilities.**
 
-A web-first collaboration network to discover opted-in people, native projects,
-externally sourced projects and open roles, with project updates and applications.
+A web platform to find what and whom to create with: projects, independent teams,
+events, communities and opted-in people, with roles and progress publications.
 
 ![Python 3.14](https://img.shields.io/badge/Python-3.14-3776AB?logo=python&logoColor=white)
 [![License: MIT](https://img.shields.io/badge/License-MIT-181818)](LICENSE)
@@ -25,7 +25,7 @@ externally sourced projects and open roles, with project updates and application
 
 Discover people, native and external projects, and open roles without an account.
 Create projects, apply to roles and share public text/photo updates. GitHub metadata
-refreshes automatically through the existing worker. Profiles are discoverable only
+refreshes through the worker; an optional bounded GitLab allowlist adds another source. Profiles are discoverable only
 by consent; private contact links are shared with a project owner and accepted
 applicants. Russian/English and light/dark/system themes remain available. Standalone
 stories and author feeds are preserved under Stories. See [import policy](docs/discovery.md).
@@ -33,7 +33,8 @@ stories and author feeds are preserved under Stories. See [import policy](docs/d
 | Area | Included |
 | --- | --- |
 | Projects | Native/external project discovery, public pages, OpenGraph and project updates |
-| Collaboration | Opt-in people profiles, openings, applications, owner decisions and accepted-member updates |
+| Collaboration | Opt-in people, independent teams, roles, owner-reviewed applications and team-to-project transfer |
+| Communities and events | Join/leave membership, member posts and moderation; hackathons, game jams and participant teams |
 | Privacy | Saves/follows stay private; interest is visible only through explicit per-project consent; contacts are shared only after acceptance |
 | Writing | Private drafts, optional titles, editing, publication and one photo per post |
 | Reading | Public discovery, full-text search and a feed of followed authors |

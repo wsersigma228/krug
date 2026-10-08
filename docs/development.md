@@ -230,3 +230,22 @@ The WIP has no automatic backup/restore workflow; test your own restore procedur
 Коралловое оформление discovery: поиск над выдачей, отдельная форма фильтров с кнопкой применения, смешанная сетка реальных результатов во вкладке «Всё». Переключение темы использует native View Transition с круговым раскрытием 400ms от переключателя; при reduced-motion или недоступном API тема применяется сразу. Быстрые смены выбора отменяют прежнюю анимацию, сохраняя последний выбор.
 
 `frontend/og-default.svg` — редактируемый источник общего OpenGraph изображения; `frontend/og-default.png` — экспорт 1200×630. PNG проверяется визуально после экспорта, SVG не заменяет PNG в OpenGraph.
+### Platform preview
+
+The additive platform migration is `db71e945ac30` after `c4e8d1a9b210`.
+It adds independent teams, events, communities and media associations while
+preserving existing projects, posts and accounts. Back up database and photo
+storage before deployment; do not reset data to introduce these records.
+
+`browser_platform.cjs` deliberately accepts only the isolated loopback preview
+at port 18103. Set `BROWSER_ART_DIR` to an outside-repository folder containing
+synthetic `project.png`, `team.png`, `event.png`, and `BROWSER_OUTPUT` for captures.
+It creates disposable accounts/records and leaves them for visual inspection;
+remove the verified isolated stack afterward. Never run it against production.
+It exercises profile photos, event creation/attribution, team applications,
+acceptance, team-to-project transfer, covers, community join/posts/moderation and
+mixed saved content. Use the existing locale, collaboration and viewport scripts
+for regression checks; compare screenshots with `docs/design/coral-concept.png`
+separately. Functional success alone is not visual acceptance.
+
+App CSS/JS URLs in index.html carry the coordinated release query 20261008-platform. Bump that value when shipping changed app assets: the HTML is no-store, while persistent browser caches can otherwise retain an earlier script after a deployment. This is a native cache key, not a frontend build step. Draft covers use authenticated blob requests in the app and join existing object-URL cleanup; never make draft media public to fix an image request.

@@ -1,6 +1,6 @@
 """Shared visibility predicate for every existing public post surface."""
 from sqlalchemy import or_, select
-from backend.models import Post, Project
+from backend.models import Community, Post, Project
 
 
 def canonical_project_url(url):
@@ -18,7 +18,10 @@ def canonical_project_url(url):
 
 
 def public_post():
-    return Post.is_published.is_(True) & or_(
+    return (Post.is_published.is_(True) & or_(
         Post.project_id.is_(None),
         Post.project_id.in_(select(Project.id).where(Project.visibility == "public")),
-    )
+    ) & or_(
+        Post.community_id.is_(None),
+        Post.community_id.in_(select(Community.id).where(Community.visibility == "public")),
+    ))

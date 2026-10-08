@@ -38,7 +38,7 @@ async function login(page, user) {
   await page.getByLabel('Имя пользователя').fill(user.username);
   await page.getByLabel('Пароль', { exact: true }).fill(password);
   await page.getByRole('button', { name: 'Войти', exact: true }).click();
-  await page.getByRole('heading', { name: 'Найдите людей и проекты для совместной работы.' }).waitFor();
+  await page.getByRole('heading', { name: 'Найдите, с кем создавать дальше' }).waitFor();
 }
 
 async function capture(page, name) {
@@ -101,18 +101,27 @@ async function run() {
       await capture(ownerPage, `opening-create-${width}.png`);
     }
     await ownerPage.setViewportSize({ width: 1440, height: 1000 });
-    await ownerPage.locator('#opening-create input[name=role]').fill('Preview gameplay designer');
+    const openingTitle = `Preview gameplay designer ${key}`;
+    await ownerPage.locator('#opening-create input[name=role]').fill(openingTitle);
     await ownerPage.locator('#opening-create input[name=skills]').fill('Godot, game design');
     await ownerPage.locator('#opening-create input[name=commitment]').fill('3 hours weekly');
     await ownerPage.locator('#opening-create input[name=timezone]').fill('Asia/Tashkent');
     await ownerPage.locator('#opening-create input[name=experience_level]').fill('Any level');
     await ownerPage.locator('#opening-create textarea[name=description]').fill('Help shape the prototype.');
     await ownerPage.locator('#opening-create button').click();
-    await ownerPage.getByText('Preview gameplay designer', { exact: true }).waitFor();
+    await ownerPage.getByText(openingTitle, { exact: true }).waitFor();
     const openings = await api(`/projects/${projectSlug}/openings?limit=24`, { token: owner.token });
     openingId = openings.items[0].id;
     assert.equal(openings.items[0].timezone, 'Asia/Tashkent');
     assert.equal(openings.items[0].experience_level, 'Any level');
+    await ownerPage.goto(base + '/app#roles');
+    const discoverableRole = ownerPage.locator('.platform-card-opening h3 a').filter({ hasText: openingTitle });
+    await discoverableRole.waitFor();
+    assert.equal(await discoverableRole.getAttribute('href'), `/project/${projectSlug}`, 'Open role links to its actual project page');
+    await discoverableRole.click();
+    await ownerPage.waitForURL(`**/project/${projectSlug}`);
+    await ownerPage.getByRole('heading', { name: `Preview collaboration ${key}` }).waitFor();
+    await ownerPage.goto(base + `/app#project/${projectSlug}`);
     await ownerPage.waitForFunction(() => { const main = document.querySelector('main'); return main && !main.inert && main.getAttribute('aria-busy') !== 'true'; });
     await ownerPage.locator('#owner-contact input[name=owner_contact_url]').fill('https://example.invalid/team-contact');
     const contactResponse = ownerPage.waitForResponse(response => response.url().includes(`/projects/${projectSlug}/contact-settings`) && response.request().method() === 'PUT');
@@ -251,7 +260,7 @@ async function run() {
     assert.equal(project.published_updates_count, 1);
     await applicantPage.goto(base + '/app#explore');
     await applicantPage.getByRole('heading', { name: 'Все результаты' }).waitFor();
-    await applicantPage.locator('.project-card h2 a').filter({ hasText: `Preview collaboration ${key}` }).waitFor();
+    await applicantPage.locator('.platform-card h3 a').filter({ hasText: `Preview collaboration ${key}` }).waitFor();
     for (const [width, height] of [[390, 844], [1440, 1000], [2560, 1440], [3840, 2160]]) {
       await applicantPage.setViewportSize({ width, height });
       await capture(applicantPage, `discovery-${width}.png`);
@@ -331,17 +340,20 @@ async function run() {
 
       await applicantPage.goto(base + `/app#project/${externalProject.slug}`);
       await applicantPage.getByRole('link', { name: 'Я представляю этот проект' }).click();
-      await applicantPage.locator('textarea[name=evidence_text]').fill('Synthetic preview claim used to test the admin queue.');
+      const claimEvidence = `Synthetic preview claim ${key} used to test the admin queue.`;
+      await applicantPage.locator('textarea[name=evidence_text]').fill(claimEvidence);
       await applicantPage.getByRole('button', { name: 'Отправить на проверку' }).click();
       await applicantPage.waitForURL(`**/app#project/${externalProject.slug}`);
       await adminPage.goto(base + '/app#admin-review');
       await adminPage.reload();
       await adminPage.getByRole('heading', { name: externalTitle }).waitFor();
-      await adminPage.getByText('Synthetic preview claim used to test the admin queue.').waitFor();
-      const claimReview = adminPage.locator('.review-item').filter({ hasText: 'Synthetic preview claim used to test the admin queue.' });
+      await adminPage.getByText(claimEvidence, { exact: true }).waitFor();
+      const claimReview = adminPage.locator('.review-item').filter({ hasText: claimEvidence });
       await claimReview.locator('[data-review=approved][data-type=claim]').click();
-      await adminPage.getByText('Synthetic preview claim used to test the admin queue.', { exact: true }).waitFor({ state: 'detached' });
+      await adminPage.getByText(claimEvidence, { exact: true }).waitFor({ state: 'detached' });
       await applicantPage.goto(base + `/app#project/${externalProject.slug}`);
+      // Approval changed ownership in another session; the hash is unchanged from claim submission.
+      await applicantPage.reload();
       await applicantPage.getByRole('link', { name: 'Редактировать проект' }).waitFor();
       await applicantPage.goto(base + `/app#project-edit/${externalProject.slug}`);
       await applicantPage.locator('input[name=source_url]').waitFor({ state: 'detached' });

@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.database import get_db
 from backend.project_access import public_post
-from backend.models import Comment, Like, Post, Subscription, User
+from backend.models import Comment, Community, Like, Post, Subscription, User
 from backend.pagination import cursor_scope, decode_cursor, make_page, seek_page
 from backend.schemas import Page, PageParams
 from backend.security import get_current_user, get_optional_user
@@ -38,6 +38,7 @@ class ProfileResponse(BaseModel):
     posts_count: int
     subscribers_count: int
     subscriptions_count: int
+    avatar_url: str | None = None
 
 
 class LikesResponse(BaseModel):
@@ -67,14 +68,26 @@ class CommentResponse(BaseModel):
     created_at: datetime
 
 
-async def visible_post(db, post_id, user, *, lock=False):
-    query = select(Post).where(Post.id == post_id, (public_post() | (Post.author_id == user.id)) if user else public_post()).execution_options(populate_existing=True)
+async def visible_post(db, post_id, user, *, lock=False, allow_community_moderator=False):
+    moderator_community_id = None
     if lock:
         # Match account deletion's User -> Post order; FK writes also need this user.
         actor = await db.scalar(select(User.id).where(User.id == user.id)
                                 .with_for_update(read=True, key_share=True))
         if actor is None:
             raise HTTPException(401, "Account no longer exists")
+        if allow_community_moderator:
+            moderator_community_id = await db.scalar(select(Post.community_id).join(
+                Community, Community.id == Post.community_id).where(
+                    Post.id == post_id, Community.owner_id == user.id))
+            if moderator_community_id is not None:
+                await db.scalar(select(Community.id).where(
+                    Community.id == moderator_community_id).with_for_update())
+    allowed = public_post() | (Post.author_id == user.id) if user else public_post()
+    if moderator_community_id is not None:
+        allowed = allowed | (Post.community_id == moderator_community_id)
+    query = select(Post).where(Post.id == post_id, allowed).execution_options(populate_existing=True)
+    if lock:
         # Serialize interactions with hiding/deleting the post, then check fresh visibility.
         query = query.with_for_update()
     post = await db.scalar(query)
@@ -95,6 +108,7 @@ async def profile(db, author_id):
             Subscription.author_id == author.id)),
         "subscriptions_count": await db.scalar(select(func.count()).select_from(Subscription).where(
             Subscription.subscriber_id == author.id)),
+        "avatar_url": author.avatar_url,
     }
 
 
@@ -180,11 +194,13 @@ async def create_comment(post_id: int, body: CommentCreate,
 async def delete_comment(post_id: int, comment_id: int,
                          db: AsyncSession = Depends(get_db),
                          user: User = Depends(get_current_user)):
-    post = await visible_post(db, post_id, user, lock=True)
+    post = await visible_post(db, post_id, user, lock=True, allow_community_moderator=True)
     comment = await db.scalar(select(Comment).where(Comment.id == comment_id, Comment.post_id == post_id))
     if comment is None:
         raise HTTPException(status_code=404, detail="Comment not found")
-    if user.id not in (comment.user_id, post.author_id):
+    community_owner = post.community_id is not None and await db.scalar(select(Community.id).where(
+        Community.id == post.community_id, Community.owner_id == user.id)) is not None
+    if user.id not in (comment.user_id, post.author_id) and not community_owner:
         raise HTTPException(status_code=403, detail="Cannot delete this comment")
     await db.delete(comment)
     await db.commit()

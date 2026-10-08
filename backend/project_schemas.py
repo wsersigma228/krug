@@ -27,6 +27,9 @@ class ProjectCreate(BaseModel):
     visibility: Literal["draft", "public"] = "draft"
     tags: list[str] = Field(default_factory=list, max_length=20)
     skills: list[str] = Field(default_factory=list, max_length=20)
+    languages: list[str] = Field(default_factory=list, max_length=10)
+    format: Literal["unspecified", "online", "local", "hybrid"] = "unspecified"
+    location: str | None = Field(default=None, max_length=160)
     recruitment_status: Literal["unknown", "open", "closed"] = "unknown"
     commitment: str | None = Field(default=None, max_length=100)
     experience_level: str | None = Field(default=None, max_length=50)
@@ -53,6 +56,14 @@ class ProjectCreate(BaseModel):
             raise ValueError("Labels must contain 1 to 50 characters")
         return normalized
 
+    @field_validator("languages")
+    @classmethod
+    def clean_languages(cls, values):
+        normalized = list(dict.fromkeys(value.strip().lower() for value in values))
+        if any(not value or len(value) > 20 for value in normalized):
+            raise ValueError("Languages must contain 1 to 20 characters")
+        return normalized
+
 
 class ProjectPatch(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -64,18 +75,22 @@ class ProjectPatch(BaseModel):
     visibility: Literal["draft", "public"] | None = None
     tags: list[str] | None = Field(default=None, max_length=20)
     skills: list[str] | None = Field(default=None, max_length=20)
+    languages: list[str] | None = Field(default=None, max_length=10)
+    format: Literal["unspecified", "online", "local", "hybrid"] | None = None
+    location: str | None = Field(default=None, max_length=160)
     recruitment_status: Literal["unknown", "open", "closed"] | None = None
     commitment: str | None = Field(default=None, max_length=100)
     experience_level: str | None = Field(default=None, max_length=50)
     source_url: str | None = Field(default=None, max_length=2048)
     text_not_blank = field_validator("title", "summary")(ProjectCreate.text_not_blank.__func__)
     labels = field_validator("tags", "skills")(ProjectCreate.labels.__func__)
+    languages = field_validator("languages")(ProjectCreate.clean_languages.__func__)
     safe_url = field_validator("source_url")(ProjectCreate.safe_url.__func__)
 
     @model_validator(mode="before")
     @classmethod
     def reject_null(cls, values):
-        if isinstance(values, dict) and any(value is None for key, value in values.items() if key not in {"commitment", "experience_level", "source_url"}):
+        if isinstance(values, dict) and any(value is None for key, value in values.items() if key not in {"commitment", "experience_level", "source_url", "location"}):
             raise ValueError("Omit unchanged fields; fields cannot be null")
         return values
 
@@ -89,6 +104,7 @@ class ProjectResponse(ProjectCreate):
     source_url: str | None
     source_external_id: str | None
     canonical_url: str | None
+    cover_url: str | None = None
     created_at: datetime
     updated_at: datetime
     last_activity_at: datetime | None
@@ -103,6 +119,8 @@ class DiscoveryParams(PageParams):
     status: Status | None = None
     active: bool | None = None
     recruitment_status: Literal["unknown", "open", "closed"] | None = None
+    language: str | None = Field(default=None, max_length=20)
+    format: Literal["unspecified", "online", "local", "hybrid"] | None = None
 
 
 class EngagementPatch(BaseModel):
@@ -127,6 +145,7 @@ class InterestedUser(BaseModel):
     username: str
     display_name: str
     bio: str
+    avatar_url: str | None = None
 
 
 IntentKind = Literal["looking_for_teammates", "looking_for_project", "open_to_collaboration", "interested_in_event"]
@@ -188,6 +207,7 @@ class CollaborationProfileResponse(CollaborationProfileInput):
 class PublicPerson(BaseModel):
     id: int
     username: str
+    avatar_url: str | None = None
     display_name: str
     bio: str
     skills: list[str]
@@ -209,6 +229,7 @@ class PeopleParams(PageParams):
     skill: str | None = Field(default=None, max_length=50)
     wanted_skill: str | None = Field(default=None, max_length=50)
     intent_kind: IntentKind | None = None
+    language: str | None = Field(default=None, max_length=20)
 
 
 class DiscoveryProjectResponse(ProjectResponse):

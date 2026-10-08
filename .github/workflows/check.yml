@@ -48,6 +48,7 @@ jobs:
       - run: python -m pytest -q
       - run: node --check frontend/app.js
       - run: node --check frontend/projects.js
+      - run: node --check frontend/platform.js
       - run: node --check frontend/i18n.js
       - run: node scripts/check_i18n.cjs
       - run: node scripts/check_header.cjs

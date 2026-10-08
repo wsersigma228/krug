@@ -1,6 +1,6 @@
 ---
 name: Krug
-description: Coral and graphite collaboration discovery for real people, projects, open roles and public project updates.
+description: Coral and graphite collaboration discovery for people, projects, teams, events, communities and public updates.
 colors:
   canvas-light: "#f5f6f8"
   paper-light: "#ffffff"
@@ -23,42 +23,62 @@ colors:
   viewer-backdrop: "#080c12e6"
 typography:
   headline:
-    fontFamily: 'ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif'
-    fontSize: "clamp(34px, 4vw, 54px)"
+    fontFamily: '"Krug Inter", Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif'
+    fontSize: "clamp(32px, 3vw, 46px)"
     fontWeight: 650
     lineHeight: 1.15
     letterSpacing: "-0.02em"
   title:
-    fontFamily: 'ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif'
+    fontFamily: '"Krug Inter", Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif'
     fontSize: "22px"
     fontWeight: 600
     lineHeight: 1.3
     letterSpacing: "-0.02em"
   section:
-    fontFamily: 'ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif'
+    fontFamily: '"Krug Inter", Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif'
     fontSize: "21px"
     fontWeight: 650
     lineHeight: 1.3
     letterSpacing: "-0.02em"
   body:
-    fontFamily: 'ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif'
+    fontFamily: '"Krug Inter", Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif'
     fontSize: "18px"
     fontWeight: 400
     lineHeight: 1.75
   excerpt:
-    fontFamily: 'ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif'
+    fontFamily: '"Krug Inter", Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif'
     fontSize: "16px"
     fontWeight: 400
     lineHeight: 1.65
-  label:
+  share-headline:
     fontFamily: 'ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif'
+    fontSize: "clamp(36px, 6vw, 52px)"
+    fontWeight: 650
+    lineHeight: 1.15
+  discovery-headline:
+    fontFamily: '"Krug Inter", Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif'
+    fontSize: "clamp(24px, 2vw, 31px)"
+    fontWeight: 650
+    lineHeight: 1.1
+  discovery-card-title:
+    fontFamily: '"Krug Inter", Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif'
+    fontSize: "17px"
+    fontWeight: 700
+    lineHeight: 1.25
+  discovery-card-summary:
+    fontFamily: '"Krug Inter", Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif'
+    fontSize: "14px"
+    fontWeight: 400
+    lineHeight: 1.35
+  label:
+    fontFamily: '"Krug Inter", Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif'
     fontSize: "14px"
     fontWeight: 600
   metadata:
-    fontFamily: 'ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif'
+    fontFamily: '"Krug Inter", Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif'
     fontSize: "12px"
   author:
-    fontFamily: 'ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif'
+    fontFamily: '"Krug Inter", Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif'
     fontSize: "14px"
     fontWeight: 600
 rounded:
@@ -148,15 +168,17 @@ components:
 
 **Creative North Star: "A practical place to find collaborators"**
 
-Krug makes people, native projects and open roles easy to discover while keeping imported work clearly attributed. Coral actions distinguish active choices against graphite or light neutral surfaces. Stories retain their responsive masonry grid, proportional photos, optional titles and readable text.
+Krug helps people find collaborators through projects, teams, events, communities and opt-in profiles. Coral actions distinguish active choices against graphite or light neutral surfaces. Stories retain their responsive masonry grid, proportional photos, optional titles and readable text.
 
 Dark is the initial theme; saved Light, Dark and System choices remain effective. Both themes share their geometry. The sticky header keeps the top-left wordmark, labelled navigation, language/theme preferences and account/write actions available while it compacts on downward scrolling and expands upward. Russian and English interface copy changes independently of user stories, names and biographies.
+
+The shipped themes are coral light and coral dark; a standalone monochrome theme remains deferred.
 
 **Key Characteristics:**
 
 - Graphite and light neutral surfaces with accessible coral actions.
-- Native sans-serif titles, reading text and controls.
-- Distinct, actionable cards for people, projects and roles; factual counts only.
+- Self-hosted Inter typography with a native sans-serif fallback.
+- Distinct cards for people, projects, teams, events and communities; factual counts only.
 - Responsive masonry cards with proportional photographs for Stories.
 - Persistent preferences and a smoothly compacting sticky header.
 
@@ -184,16 +206,16 @@ The live CSS variables `--canvas`, `--paper`, `--text`, `--muted`, `--line`, `--
 
 ## Typography
 
-**Font throughout:** the native sans-serif stack in the frontmatter. Page and section headings use weight 650; story titles and authors use 600. Font synthesis is disabled. No font download is required.
+**Interactive app font:** the locally hosted Inter variable font with a native sans-serif fallback. It is served from the app and includes its license in `frontend/INTER-LICENSE.txt`; there is no third-party font request. Font synthesis is disabled. Static public share pages use the system sans-serif stack declared in `frontend/share.css`.
 
 ### Hierarchy
 
-- **Headline:** native sans-serif page heading, balanced wrapping and negative tracking; mobile overrides size to (34px). Route headings identify Feed or Discover instead of repeating the wordmark.
-- **Title:** native sans-serif story links; maximum line length (45ch), with mobile size (23px).
-- **Section:** native sans-serif section headings; mobile size (20px).
-- **Body:** full story copy preserves newlines, wraps long strings and stays within (70ch); mobile size is (17px).
-- **Excerpt:** feed previews use Text rather than Muted, preserve newlines and cap at (75ch); mobile size is (16px).
-- **Label:** compact action controls; field labels use weight (550). Introductions use (16px), line-height (1.6) and maximum width (65ch), reducing to (15px) on mobile.
+- **App headline:** regular route headings use `clamp(32px, 3vw, 46px)` and become (34px) on narrow screens. Public share headlines use `clamp(36px, 6vw, 52px)`.
+- **Story title and excerpt:** story links use (22px), increasing to (23px) on mobile; excerpts use (16px), preserve newlines and cap at (75ch). Full story copy uses (18px), reducing to (17px) on mobile, preserves newlines and stays within (70ch).
+- **Discovery hierarchy:** the compact discovery heading uses `clamp(24px, 2vw, 31px)` on desktop, (22–29px) through tablet widths and (21–27px) on phones. Card titles use (17px) with (14px) summaries. These compact discovery sizes are separate from the story scale.
+- **Section:** app section headings use (21px), reducing to (20px) on mobile. Public share section headings use (24px).
+- **Label:** compact action controls; field labels use weight (550). General introductions use (16px), line-height (1.6) and maximum width (65ch), reducing to (15px) on mobile. Discovery introductions use (15px) desktop and (12px) on narrow screens.
+- **Metadata:** dates use tabular numerals and sit below the author beside a two-row avatar; size is (12px). Author names retain (14px) and weight (600), separating identity from the quieter date. Hints use (13px) and line-height (1.55).
 - **Metadata:** dates use tabular numerals and sit below the author beside a two-row avatar; size is (12px). Author names retain (14px) and weight (600), separating identity from the quieter date. Hints use (13px) and line-height (1.55).
 
 The native sans-serif wordmark uses (26px), weight (750) and tracking (-0.03em), reducing to (22px) on mobile and (20px) at the narrowest breakpoint. It is an identity treatment, not the page heading.
@@ -202,17 +224,17 @@ The native sans-serif wordmark uses (26px), weight (750) and tracking (-0.03em),
 
 ## Layout
 
-The desktop shell uses a centered width `min(calc(100% - 64px), 3600px)`. Discovery caps at (1800px), expanding fluidly to (2200px) above 2200px viewports; project detail and updates cap at (1800px). Story/feed pages retain the broad shell. Page vertical padding is (44px) above and (96px) below.
+The desktop shell uses a centered width `min(calc(100% - 64px), 3600px)`. Discovery caps at (2060px) on ordinary desktop widths and up to (2200px) on ultrawide screens; project detail and updates remain capped at (1800px). Story/feed pages retain the broad shell. Page vertical padding is (44px) above and (96px) below.
 
 Post listings use CSS Grid with `repeat(auto-fill, minmax(min(100%, 350px), 1fr))`, (8px) automatic rows, default row flow and (24px) gaps. Card heights follow their intrinsic contents, including photo loading, wrapping text and changing reaction controls. Native ResizeObserver measures each inner card and updates its outer grid span; the observer is disconnected before each screen render. Cards keep DOM and keyboard order from the paginated response. Default row flow places cards in that sequence, while differing card heights prevent a uniform visual row rhythm. The first request loads up to (24) items; Load more appends the next page. Scrolling alone does not fetch another page.
 
 Listing photos appear after the author and before the optional title and text. Full posts retain heading, optional photo and full text order; an untitled full post has a visually hidden Post heading rather than an invented visible title. Text-only cards retain the same controls and reading path.
 
-At (1700px) and above, the header uses three columns with equal flexible sides: the brand stays left, navigation occupies the center and grouped preferences/account actions stay right. Tablet and mobile retain their existing row layouts. Search spans the available feed container instead of a separate narrow cap.
+At (1700px) and above, the header uses three columns with equal flexible sides: the brand stays left, navigation occupies the center and grouped preferences/account actions stay right. Tablet and mobile retain their compact navigation patterns. Search spans the available feed container instead of a separate narrow cap.
 
-The sticky header reserves its expanded height in the layout while its inner surface compacts; controls and focused elements remain in the same DOM. Desktop expanded/compact minimum heights are (92px / 72px). From (651px) through (1399px), navigation occupies a second header row and heights become (128px / 112px). Between (651px) and (1000px), the account becomes an avatar and the signed-in compose action becomes a (44px) icon control; accessible names remain present, and navigation uses (12px) labels. Header padding and minimum height transition with (280ms) using `cubic-bezier(.16, 1, .3, 1)`; tagline max-height uses the same motion and opacity uses (180ms ease-out). Below scroll position (80px) the header expands; direction changes of at least (12px) determine compact state beyond that point.
+The sticky header keeps controls and focused elements in the same DOM. The current compact shell uses a (64px) desktop header and a (62px) header at widths up to (850px); narrow layouts move the four primary destinations to the fixed bottom navigation. Header and tagline transitions use `cubic-bezier(.16, 1, .3, 1)`; reduced motion disables them.
 
-At (650px) and below, the header uses two compact rows with expanded/compact heights (100px / 88px), and the tagline is hidden. Navigation becomes a fixed labelled bottom bar. Main content uses full width, top padding (20px), side padding (20px) and bottom clearance `calc(100px + env(safe-area-inset-bottom))`. Search moves the language select to a second full-width row; ordinary fields use (16px) text while this select uses (13px). Search labels remain accessible while visually hidden. Toasts clear the bottom navigation and safe area. At (360px) and below, header side padding becomes (10px).
+At (650px) and below, the header stays one row and the fixed bottom navigation carries the four primary destinations. General content uses the full width, (20px) side padding and bottom clearance `calc(100px + env(safe-area-inset-bottom))`; discovery overrides its top and side spacing to stay compact. Story search moves the language select to a second full-width row; ordinary fields use (16px) text while this select uses (13px). Search labels remain accessible while visually hidden. Toasts clear the bottom navigation and safe area. At (360px) and below, header side padding becomes (9px).
 
 At mobile widths, project, person and role cards become one column with (16px) gaps; the Stories masonry grid also becomes one column. Authentication forms cap at (490px). Tabs, statistics and action controls wrap.
 
@@ -297,19 +319,21 @@ Documentation is derived from the current frontend source. Temporary synthetic r
 ## Project discovery and sharing
 
 Collaboration discovery uses coral and graphite, with light and dark accent/text
-pairs. Its result tabs are All, Projects, People and Open roles. All interleaves up
-to three real records per existing source in one grid: native projects, open roles,
-opt-in people and external projects. Empty sources do not leave blank sections;
-source failures keep their own error messages. Compact copy and search sit above
-the result tabs. Desktop places filters in a
-sticky left rail and uses a balanced grid with a 360px minimum card column; mobile
-stacks results and starts filters collapsed. The discovery shell caps at 1800px,
-then grows fluidly to 2200px on ultrawide displays. Project details and updates
-stay within 1800px; the four real mobile destinations remain reachable.
+pairs. Its tabs are All, Projects, Teams, Events, Communities and People. All
+interleaves real records from native and external projects, teams, events,
+communities and opt-in people in a shared card grid. Empty sources do not leave
+blank sections; source failures keep their own error messages. Compact copy and
+prominent search sit above the tabs. Desktop places filters in a left rail and
+upcoming real events at right; the center grid stays balanced. Intermediate
+viewports collapse the right rail before the filters. Mobile keeps search and tabs
+near the top, collapses filters by default and uses four real destinations in the
+bottom navigation. The discovery shell grows fluidly from narrow phones through
+ultrawide displays.
 
-Project and person records currently have no cover-image field. Their discovery
-cards therefore stay typographic; generated sample artwork is not shipped or shown
-as project content.
+Projects, teams, communities and events may have owner-uploaded cover images.
+Cards without a cover use a type-specific neutral fallback; profile cards use a
+real uploaded avatar or initials. Generated preview art is not shipped as user
+content.
 
 Native project counts reflect real opt-in interest, membership, open openings and
 published updates. An external source card explains that its source does not

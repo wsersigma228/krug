@@ -24,7 +24,9 @@ async def test_public_profile_counts_and_private_fields(client, accounts):
     assert response.status_code == 200, response.text
     profile = (await client.get(f"/authors/{author['id']}")).json()
     assert profile == {"id": author["id"], "username": author["username"], "bio": "Hello", "display_name": "",
-                       "posts_count": 1, "subscribers_count": 1, "subscriptions_count": 0}
+                       "posts_count": 1, "subscribers_count": 1, "subscriptions_count": 0,
+                       "avatar_url": None}
+    assert "avatar_key" not in profile
     assert (await client.patch("/me/profile", headers=author["headers"],
                               json={"bio": "x" * 501})).status_code == 422
     assert (await client.patch("/me/profile", headers=author["headers"],

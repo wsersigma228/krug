@@ -158,7 +158,7 @@ socket IP plus account identifier where available. A duplicate/self follow is 40
 Redis availability; it is not a test of SMTP, background processing or UI behavior.
 Use actual worker logs and smoke checks for those paths.
 
-# Project discovery v0.1
+# Projects and collaboration
 
 Public endpoints: `GET /discovery`, `GET /projects/{slug}`,
 `GET /projects/{slug}/updates`, `GET /projects/{slug}/interested`.
@@ -220,3 +220,50 @@ modify the source. Accepted members can publish updates. Owners and members see
 their own drafts; other viewers see published updates only. The public HTML project
 page includes counts, open roles, public member names and discovery links, without
 showing private contact URLs.
+
+## Teams, communities and events
+
+These are independent records, not project labels. `GET /teams`, `/communities`
+and `/events` return signed cursor pages. They support full-text and skill/topic
+label `search`, `skill`,
+`topic`, `language`, `format` and authenticated `saved=true`. Public records are
+readable without an account; drafts are visible only to their owner. CRUD uses
+`POST /{kind}`, `GET/PATCH/DELETE /{kind}/{slug}`. Creation requires an account.
+
+| Scenario | Endpoint / behavior |
+| --- | --- |
+| Team recruitment | `/teams/{slug}/openings` GET/POST; `/team-openings/{id}` PATCH |
+| Application | `/team-openings/{id}/applications` POST `{message}`; `/team-applications` GET; `/team-applications/{id}` PATCH `{status}` |
+| Owner decisions | `/teams/{slug}/applications` GET; acceptance creates a real team member |
+| Team members | `/teams/{slug}/members` GET |
+| Create project from team | `/teams/{slug}/project` POST project body; copies members atomically and retains the project link; owner only |
+| Community members | `/communities/{slug}/members` GET; `/membership` GET `{is_member,is_owner}`, PUT join, DELETE leave |
+| Community posts | `/communities/{slug}/posts` GET; create through `POST /posts` with `community_id`; membership required even for drafts |
+| Community moderation | Community owner can delete member posts/comments; authors retain their own controls |
+| Event participation | `/events/{slug}` carries registration URL, dates, timezone and optional deadline; `/teams?event_id={id}` finds participating teams |
+| Upcoming events | `/events?upcoming=true`; start-time ordering, excludes cancelled and past events; optional `starts_after`/`starts_before` |
+| Saves and interest | `/teams/{slug}/engagement`, `/events/{slug}/engagement` GET/PATCH `{saved?,interested?,interested_visible?}`; public interest requires explicit consent |
+| Community save | `/communities/{slug}/engagement` GET/PATCH `{saved}` |
+
+Event type is `hackathon`, `game_jam`, `meetup` or `other`. Dates include a UTC
+offset; timezone is a valid IANA name. End cannot precede start. A registration
+deadline may occur during the event, but cannot exceed a supplied end. Native
+ events can be created directly; manually attributed external events require
+ source name and URL and remain owned by their creator. Collector IDs are not
+ accepted from users. Canonical URL is derived on the server.
+
+Posts can belong to one project or one community, never both; their association
+cannot be changed by editing. Public feeds, search, images and interactions all
+respect the visibility of the parent. Account deletion is blocked while the
+account owns a project, team, community or event; explicitly handle those records
+first.
+
+### Covers and profile photos
+
+`PUT /projects/{slug}/cover`, `/teams/{slug}/cover`, `/communities/{slug}/cover`
+and `/events/{slug}/cover` accept raw JPEG/PNG/WebP bytes, up to 8 MiB, from the
+owner. GET reads the converted photo subject to record visibility; DELETE removes
+it. Responses expose a URL, not an internal storage key. Failed replacement keeps
+the previous photo. `PUT/DELETE /me/avatar` manages an explicitly public profile
+photo; `GET /users/{id}/avatar` reads it. Public `/team/{slug}`, `/community/{slug}`
+and `/event/{slug}` pages provide escaped metadata and OpenGraph links.

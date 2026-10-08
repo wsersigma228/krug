@@ -1,6 +1,6 @@
-# Project discovery (v0.1)
+# Discovery and collaboration
 
-Krug connects developers with native projects and public GitHub projects.
+Krug connects people through native and external projects, independent teams, events, communities and opted-in collaboration profiles. GitHub and GitLab supply bounded public project metadata.
 Anonymous visitors can search, filter, read project pages and published updates,
 and open external sources. Accounts are required to create/edit projects, apply
 for roles, publish updates, save, follow or express interest.
@@ -12,7 +12,7 @@ Native projects and imported repositories share `Project`. A nullable
 post IDs, photos, likes or comments. Existing standalone stories and author follows
 remain supported. Project owners alone edit project metadata; owners and accepted
 members can publish updates. Only an update's author can edit or delete it.
-Account removal is refused while the user owns a project; deleting an account
+Account removal is refused while the user owns a project, team, community or event; deleting an account
 must not silently erase project history. Ownership transfer is not implemented.
 
 Applications and membership now connect people to roles on owned projects. An
@@ -114,3 +114,33 @@ authentication return and failed network requests with the browser scripts.
 Search is PostgreSQL-based. A large GitHub project's presence proves catalog
 supply, not teammate availability or successful collaboration. Validate actual
 discovery utility with people using real queries before widening import scope.
+
+## Independent teams, events and communities
+
+Teams can recruit before a project exists. Owners publish openings, review
+applications and accept members; creating a native project transfers current
+membership atomically while keeping the team record linked. Events describe a
+hackathon, game jam, meetup or other opportunity and can have multiple participant
+teams. Communities already include join/leave membership, member publications and
+owner moderation. Stories remain independent. Saves remain private; visible
+interest requires explicit consent on each team/event/project.
+
+Native creation and manually attributed external events accept any supported safe
+HTTP(S) source URL. The source list is open. GitHub and GitLab are the current
+project collectors; neither metadata nor popularity implies recruitment. GitLab
+uses its documented [Projects API](https://docs.gitlab.com/api/projects/) for an
+explicit `GITLAB_PROJECTS` list of up to ten public namespace/project paths, with
+subgroups allowed. The default list is empty; configure it to enable real supply.
+The existing worker refreshes it every six hours, preserves claimed/native
+records, bounds response sizes and handles API failures. No credentials are needed
+for public GitLab.com projects. Events from other sources can be attributed
+manually; automatic jam/event collection is not implemented.
+
+Covers and public profile photos are uploaded by their owners. Missing covers
+have neutral fallbacks; production never receives artificial members or fixture
+activity. Preview fixtures and generated illustration art are disposable test
+content, separate from the deployment database and repository assets.
+
+People support language filtering as well as skills/interests search. Participation
+format applies to projects, teams, events and communities; it is not inferred
+for people. Project formats include unspecified, online, local and hybrid.
