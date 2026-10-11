@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="400" viewBox="0 0 1280 400" role="img" aria-label="Krug — People, projects, possibilities.">
+<defs><radialGradient id="g" cx="73%" cy="50%" r="45%"><stop offset="0" stop-color="#ff786f" stop-opacity=".16"/><stop offset="1" stop-color="#ff786f" stop-opacity="0"/></radialGradient><pattern id="d" width="24" height="24" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.2" fill="#a4afbc" fill-opacity=".18"/></pattern></defs>
+<rect width="1280" height="400" rx="24" fill="#181c22"/><rect width="1280" height="400" rx="24" fill="url(#d)"/><rect width="1280" height="400" rx="24" fill="url(#g)"/>
+<circle cx="104" cy="118" r="26" fill="none" stroke="#ff786f" stroke-width="13"/>
+<text x="80" y="246" fill="#eff2f6" font-family="Inter, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="96" font-weight="600" letter-spacing="-2">Krug</text>
+<text x="82" y="300" fill="#eff2f6" font-family="Inter, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="30" font-weight="500">People, projects, possibilities.</text>
+<text x="82" y="342" fill="#a4afbc" font-family="Inter, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="22">Find what and whom to create with.</text>
+<line x1="930" y1="200" x2="760" y2="92" stroke="#a4afbc" stroke-opacity=".35" stroke-width="1.5" stroke-dasharray="0"/>
+<line x1="930" y1="200" x2="1100" y2="84" stroke="#a4afbc" stroke-opacity=".35" stroke-width="1.5" stroke-dasharray="4 6"/>
+<line x1="930" y1="200" x2="1148" y2="232" stroke="#a4afbc" stroke-opacity=".35" stroke-width="1.5" stroke-dasharray="0"/>
+<line x1="930" y1="200" x2="1060" y2="330" stroke="#a4afbc" stroke-opacity=".35" stroke-width="1.5" stroke-dasharray="4 6"/>
+<line x1="930" y1="200" x2="790" y2="318" stroke="#a4afbc" stroke-opacity=".35" stroke-width="1.5" stroke-dasharray="0"/>
+<line x1="930" y1="200" x2="700" y2="206" stroke="#a4afbc" stroke-opacity=".35" stroke-width="1.5" stroke-dasharray="4 6"/>
+<line x1="760" y1="92" x2="700" y2="206" stroke="#ff786f" stroke-opacity=".35" stroke-width="1.5"/>
+<line x1="1100" y1="84" x2="1148" y2="232" stroke="#ff786f" stroke-opacity=".35" stroke-width="1.5"/>
+<line x1="1060" y1="330" x2="790" y2="318" stroke="#ff786f" stroke-opacity=".35" stroke-width="1.5"/>
+<circle cx="930" cy="200" r="58" fill="#22272f" stroke="#3e3a3b"/>
+<circle cx="930" cy="200" r="24" fill="none" stroke="#ff786f" stroke-width="12"/>
+<g><rect x="696" y="72" width="128" height="40" rx="20" fill="#ff786f" stroke="#ff786f"/><circle cx="716" cy="92" r="5" fill="#241111"/><text x="728" y="98" fill="#241111" font-family="Inter, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="17" font-weight="500">Projects</text></g>
+<g><rect x="1052" y="64" width="95" height="40" rx="20" fill="#22272f" stroke="#3e3a3b"/><circle cx="1072" cy="84" r="5" fill="#ff786f"/><text x="1084" y="90" fill="#eff2f6" font-family="Inter, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="17" font-weight="500">Teams</text></g>
+<g><rect x="1095" y="212" width="106" height="40" rx="20" fill="#22272f" stroke="#3e3a3b"/><circle cx="1115" cy="232" r="5" fill="#ff786f"/><text x="1127" y="238" fill="#eff2f6" font-family="Inter, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="17" font-weight="500">Events</text></g>
+<g><rect x="980" y="310" width="161" height="40" rx="20" fill="#22272f" stroke="#3e3a3b"/><circle cx="1000" cy="330" r="5" fill="#ff786f"/><text x="1012" y="336" fill="#eff2f6" font-family="Inter, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="17" font-weight="500">Communities</text></g>
+<g><rect x="737" y="298" width="106" height="40" rx="20" fill="#ff786f" stroke="#ff786f"/><circle cx="757" cy="318" r="5" fill="#241111"/><text x="769" y="324" fill="#241111" font-family="Inter, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="17" font-weight="500">People</text></g>
+<g><rect x="625" y="186" width="150" height="40" rx="20" fill="#22272f" stroke="#3e3a3b"/><circle cx="645" cy="206" r="5" fill="#ff786f"/><text x="657" y="212" fill="#eff2f6" font-family="Inter, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="17" font-weight="500">Open roles</text></g>
+</svg>

@@ -230,6 +230,8 @@ The WIP has no automatic backup/restore workflow; test your own restore procedur
 Коралловое оформление discovery: поиск над выдачей, отдельная форма фильтров с кнопкой применения, смешанная сетка реальных результатов во вкладке «Всё». Переключение темы использует native View Transition с круговым раскрытием 400ms от переключателя; при reduced-motion или недоступном API тема применяется сразу. Быстрые смены выбора отменяют прежнюю анимацию, сохраняя последний выбор.
 
 `frontend/og-default.svg` — редактируемый источник общего OpenGraph изображения; `frontend/og-default.png` — экспорт 1200×630. PNG проверяется визуально после экспорта, SVG не заменяет PNG в OpenGraph.
+
+README assets: `docs/readme/hero-{light,dark}-{en,ru}.svg` are hand-editable banners in the DESIGN.md palette, switched by `prefers-color-scheme`. Screenshots in `docs/images/*.webp` come from the isolated preview on port 18103 with invented accounts and procedurally generated abstract covers (no people or third-party art); never capture the main instance or real user content for the README.
 ### Platform preview
 
 The additive platform migration is `db71e945ac30` after `c4e8d1a9b210`.
