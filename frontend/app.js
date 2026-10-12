@@ -45,6 +45,7 @@ const iconPaths = {
   community: '<path d="M4 4h16v12H9l-5 4Z"/><path d="M8 8h8M8 12h5"/>',
   bookmark: '<path d="M6 4h12v17l-6-4-6 4Z"/>',
   filter: '<path d="M4 5h16M7 12h10m-7 7h4"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
 };
 const icon = (name) =>
   html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">${raw(iconPaths[name])}</svg>`;
@@ -179,13 +180,14 @@ function shell(route) {
   const discovery = ["explore", "teams", "communities", "events", "saved", "projects"].includes(route);
   const links = [["explore", t("Обзор")], ["teams", t("Команды")], ["communities", t("Сообщества")], ["stories", t("Обновления")]];
   app.innerHTML = html`<header class="topbar"><div class="topbar-inner">
-      <div class="brand-block"><a class="brand" href="/app#explore" aria-label="Круг, обзор"><span class="brand-mark"></span>круг</a></div>
+      <a class="brand" href="/app#explore" aria-label="Круг, обзор"><span class="brand-mark" aria-hidden="true"></span>krug</a>
       <nav class="nav" aria-label="Основная навигация">${links.map(([id, title]) => { const current = id === "explore" ? ["explore", "events", "event", "event-new", "event-edit"].includes(route) : id === "teams" ? ["teams", "team", "team-new", "team-edit"].includes(route) : id === "communities" ? ["communities", "community", "community-new", "community-edit"].includes(route) : ["stories", "feed", "posts", "new", "edit"].includes(route); return html`<a href="/app#${id}" class="${current ? "active" : ""}" ${current ? html`aria-current="page"` : ""}>${icon({explore:"explore",teams:"people",communities:"community",stories:"feed"}[id])}<span>${title}</span></a>`; })}</nav>
+      <form class="hsearch" role="search">${icon("explore")}<input name="search" type="search" maxlength="100" aria-label="${t("Поиск по Кругу")}" placeholder="${t("Навык, проект, событие, человек")}" value="${esc(route === "explore" ? new URLSearchParams(location.hash.split("?")[1] || "").get("search") || "" : "")}"></form>
       <div class="header-controls"><div class="preferences">
       <button id="ui-language" class="preference-button" aria-label="${language === "ru" ? "Switch to English" : t("Переключить на русский")}" title="Русский / English">${language.toUpperCase()}</button>
       <details class="theme-picker"><summary id="ui-theme" class="preference-button" aria-label="${t("Тема")}" title="${t("Тема")}">${themeIcon(theme)}</summary>
       <div class="theme-options">${["light", "dark", "system"].map((value, index) => html`<button class="theme-option" data-theme-choice="${value}" aria-pressed="${String(theme === value)}">${themeIcon(value)}${t(["Светлая", "Тёмная", "Системная"][index])}</button>`)}</div></details>
-      </div><div class="header-actions">${me ? html`<a class="account-link" href="/app#settings" aria-label="${esc(me.username)}"><span class="avatar">${me.avatar_url ? html`<img src="${esc(me.avatar_url)}" alt="">` : esc((me.display_name || me.username)[0]?.toUpperCase())}</span><span>@${esc(me.username)}</span></a>` : html`<a class="account-link" href="/app#login" aria-label="${t("Войти")}"><span class="avatar">${icon("people")}</span></a>`}</div>
+      </div><div class="header-actions">${me ? html`<a class="account-link" href="/app#settings" aria-label="${esc(me.username)}"><span class="avatar">${me.avatar_url ? html`<img src="${esc(me.avatar_url)}" alt="">` : esc((me.display_name || me.username)[0]?.toUpperCase())}</span><span>@${esc(me.username)}</span></a><a class="button compose" href="/app#new">${icon("plus")}<span>${t("Создать")}</span></a>` : html`<a class="account-link" href="/app#login" aria-label="${t("Войти")}"><span class="avatar">${icon("people")}</span></a>`}</div>
       </div></div></header><div class="layout ${wideFeed ? "layout-feed" : discovery ? "layout-discovery" : ""}">
       <main class="main" id="main" tabindex="-1">
       <div class="loading" role="status">Загрузка…</div>
@@ -196,6 +198,12 @@ function shell(route) {
         <a href="/app#communities" class="${["communities", "community", "community-new", "community-edit"].includes(route) ? "active" : ""}">${icon("community")}<span>${t("Сообщества")}</span></a>
         <a href="/app#settings" class="${["settings", "profile", "applications", "saved", "projects"].includes(route) ? "active" : ""}" ${["settings", "profile", "applications", "saved", "projects"].includes(route) ? html`aria-current="page"` : ""}>${icon("settings")}<span>${t("Вы")}</span></a>
       </nav>`;
+  document.querySelector(".hsearch").addEventListener("submit", (event) => {
+    event.preventDefault();
+    const params = new URLSearchParams({ kind: "all" }), value = new FormData(event.currentTarget).get("search").trim();
+    if (value) params.set("search", value);
+    go("explore?" + params);
+  });
   document.querySelector("#ui-language").addEventListener("click", async (event) => {
     const control = event.currentTarget;
     const selected = language === "ru" ? "en" : "ru";
