@@ -218,7 +218,7 @@ See [discovery contracts and operational limits](discovery.md).
 | `GET /people/{id}/projects` | Public | Public project ownership and accepted memberships, independent of intent visibility |
 | `GET /profile/{username}` | Public HTML | Share page with public identity, public projects and only currently discoverable intent |
 | `GET /openings` | Public | Paginated open roles on public projects; optional search/skill filters |
-| `GET /team-openings` | Public | Paginated open roles of public non-archived teams, newest first; optional search/skill filters; each item embeds `team {slug,title,summary}` |
+| `GET /team-openings` | Public | Paginated open roles of public teams that are recruiting, newest first; optional search/skill filters; each item embeds `team {slug,title,summary}` |
 | `GET /projects/{slug}/openings` | Public; owner sees closed roles | Project roles with a compact public project card |
 | `POST /projects/{slug}/openings` | Project owner | Create a role on an owned public project |
 | `PATCH|DELETE /projects/{slug}/openings/{id}` | Project owner | Edit or remove a role; removal is rejected once applications exist, so close it instead |
