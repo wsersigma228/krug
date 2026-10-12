@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Krug — направление A+C, вариант 5</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400..800&family=Golos+Text:wght@400..800&family=Geologica:slnt,wght,CRSV,SHRP@-12..0,300..800,0..1,0..100&family=Onest:wght@400..800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="krug-proto.css">
+</head>
+<body>
+
+<header><div class="wrap bar">
+  <a class="mark" href="#"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.6"><circle cx="12" cy="12" r="8.5" stroke="currentColor"/></svg>krug</a>
+  <nav class="primary" aria-label="Основная навигация">
+    <a aria-current="page" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Поиск</a>
+    <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="9" r="3.5"/><path d="M3 20c.8-3.5 3.2-5 6-5s5.2 1.5 6 5M16 5.5a3.5 3.5 0 0 1 0 7M18 15c1.6.6 2.6 2.2 3 5"/></svg>Команды</a>
+    <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>События</a>
+    <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 5h14v10H9l-4 4z"/></svg>Сообщества</a>
+    <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Обновления</a>
+  </nav>
+  <label class="hsearch"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input placeholder="Поиск: навык, проект, событие, человек" aria-label="Поиск"><kbd>/</kbd></label>
+  <div class="tools">
+    <button class="icon-btn" aria-label="Switch to English">EN</button>
+    <button class="icon-btn" aria-label="Тема"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z"/></svg></button>
+    <a class="icon-btn" href="#" aria-label="Профиль: Вера Соколова" style="border-radius:50%;background:#e2a40033;color:#ffd36b;border-color:#e2a40066">ВС</a>
+    <button class="btn light"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg><span>Создать</span></button>
+  </div>
+</div></header>
+
+<section class="hero">
+  <div class="wrap stage daily">
+    <div class="daily-top">
+      <h1 class="hello">Привет, Вера<span><b>1 заявка принята</b> · 3 события на неделе</span></h1>
+      <form class="search msearch" onsubmit="return false"><label><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input placeholder="Навык, проект, событие или человек" aria-label="Поиск"></label><button class="btn">Найти</button></form>
+    </div>
+    <div class="strip" aria-label="Сейчас и скоро">
+      <a class="tile" href="#"><div class="row"><span class="tag-s live">идёт</span><span class="t-kind">Game jam · онлайн</span></div><h3>Godot Wild Jam #92</h3><span class="t-kind">23 команды · 4 ищут людей</span><div class="row"><span class="big num">4<small>д</small>02<small>ч</small></span><span class="t-kind">до конца</span></div><div class="phase"><i style="grid-column:1/13;background:var(--accent)"></i><i style="grid-column:13/21;border:1.5px solid var(--hero-muted)"></i><i class="tick" style="left:42%"></i></div></a>
+      <a class="tile" href="#"><div class="row"><span class="tag-s soon">дедлайн</span><span class="t-kind">Game jam · онлайн</span></div><h3>Осенний пиксель-джем</h3><div class="row"><span class="big num">3<small>д</small>14<small>ч</small></span><span class="t-kind">регистрация</span></div><div class="phase"><i style="grid-column:1/8;border:1.5px solid var(--accent)"></i><i style="grid-column:8/12;background:var(--accent)"></i><i style="grid-column:12/21;border:1.5px solid var(--hero-muted)"></i><i class="tick" style="left:22%"></i></div></a>
+      <a class="tile" href="#"><div class="row"><span class="tag-s reg">регистрация</span><span class="t-kind">Хакатон · Казань</span></div><h3>Хакатон «Городские данные»</h3><div class="row"><span class="big num">9<small>д</small>02<small>ч</small></span><span class="t-kind">до старта</span></div><div class="phase"><i style="grid-column:1/17;border:1.5px solid var(--accent)"></i><i style="grid-column:17/21;background:var(--accent)"></i><i class="tick" style="left:9%"></i></div></a>
+    </div>
+  </div>
+</section>
+
+<div class="types-wrap"><div class="wrap"><nav class="types" role="tablist" aria-label="Тип результатов"><a aria-selected="true" href="#">Всё</a><a href="#"><i style="background:var(--c-project)"></i>Проекты <span class="num">48</span></a><a href="#"><i style="background:var(--c-team)"></i>Команды <span class="num">12</span></a><a href="#"><i style="background:var(--c-event)"></i>События <span class="num">9</span></a><a href="#"><i style="background:var(--c-community)"></i>Сообщества <span class="num">6</span></a><a href="#"><i style="background:var(--c-person)"></i>Люди <span class="num">31</span></a></nav></div></div>
+
+<div class="wrap daily-layout" style="padding-block:clamp(24px,2.4vw,48px) 7rem"><main>
+  <section aria-labelledby="w-h">
+    <div class="sec-head"><div><h2 id="w-h">Ищут людей</h2></div><a href="#">Все роли · 17</a></div>
+    <div class="feature">
+      <article class="f-card" style="--c:var(--c-team)"><div class="cover"><span class="mono" aria-hidden="true">Т</span><span class="kind">Команда · на джем</span></div><div class="in">
+        <h3>Тихая станция</h3><p>Нарративный хоррор на Godot для пиксель-джема. Есть программист и сценарист.</p>
+        <div class="slots"><span class="slot"><i>АК</i>Godot</span><span class="slot"><i>ЛМ</i>сценарий</span><span class="slot open"><i></i>2D-художник</span><span class="slot open"><i></i>звук</span></div>
+        <div class="foot"><span>2 из 4 мест · UTC+3</span><a class="btn soft" href="#">Откликнуться</a></div></div></article>
+      <article class="f-card" style="--c:var(--c-project)"><div class="cover"><span class="mono" aria-hidden="true">Б</span><span class="kind">Проект</span></div><div class="in">
+        <h3>Бродячий маяк</h3><p>Кооперативная головоломка о свете и тенях. Демо готово, нужен левел-дизайн.</p>
+        <div class="slots"><span class="slot"><i>5</i>участников</span><span class="slot open"><i></i>левел-дизайнер</span></div>
+        <div class="foot"><span>Unity · обновлён 2 дня назад</span><a class="btn soft" href="#">Откликнуться</a></div></div></article>
+      <article class="f-card" style="--c:var(--c-project)"><div class="cover"><span class="mono" aria-hidden="true">К</span><span class="kind">Проект · на хакатон</span></div><div class="in">
+        <h3>Карта шумов</h3><p>Open-source визуализатор городского шума для хакатона «Городские данные».</p>
+        <div class="slots"><span class="slot"><i>3</i>участника</span><span class="slot open"><i></i>frontend</span><span class="slot open"><i></i>дизайн</span></div>
+        <div class="foot"><span>TypeScript · Python</span><a class="btn soft" href="#">Откликнуться</a></div></div></article>
+    </div>
+  </section>
+
+  <section aria-labelledby="c-h">
+    <div class="sec-head"><div><h2 id="c-h">Календарь событий</h2></div><a href="#">Все события · 9</a></div>
+    <div class="calendar">
+            <div class="tl">
+        <div></div><div class="axis"><span>9 окт</span><span></span><span></span><span></span><span></span><span></span><span></span><span>16</span><span></span><span></span><span></span><span></span><span></span><span></span><span>23</span><span></span><span></span><span></span><span></span><span></span><span></span><span>30</span><span></span><span></span><span></span><span></span><span></span><span></span></div><div></div>
+        <a class="r" href="#"><div class="name"><b>Осенний пиксель-джем</b><span>онлайн · 41 участник</span></div><div class="track"><i class="seg p-reg" style="grid-column:1/8"></i><i class="seg p-run" style="grid-column:8/11"></i><i class="seg p-vote" style="grid-column:11/15"></i></div><div class="cd"><span class="count num">3<small>д</small>14<small>ч</small></span><span class="status reg">регистрация</span></div></a>
+        <a class="r" href="#"><div class="name"><b>Godot Wild Jam #92</b><span>онлайн · 23 команды</span></div><div class="track"><i class="seg p-run" style="grid-column:1/9"></i><i class="seg p-vote" style="grid-column:9/13"></i></div><div class="cd"><span class="count num">4<small>д</small>02<small>ч</small></span><span class="status live">идёт</span></div></a>
+        <a class="r" href="#"><div class="name"><b>Хакатон «Городские данные»</b><span>Казань · команды 3–5</span></div><div class="track"><i class="seg p-reg" style="grid-column:2/14"></i><i class="seg p-run" style="grid-column:14/16"></i></div><div class="cd"><span class="count num">9<small>д</small>02<small>ч</small></span><span class="status reg">регистрация</span></div></a>
+        <i class="now" aria-hidden="true"></i>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="p-h">
+    <div class="sec-head"><div><h2 id="p-h">Проекты, сообщества и люди</h2></div><a href="#">Смотреть всё</a></div>
+    <div class="grid">
+      <article class="card" style="--c:var(--c-project)"><div class="cover"><span class="mono" aria-hidden="true">B</span><span class="kind">Проект · GitHub</span></div><div class="in"><h3>Bevy</h3><p>Игровой движок на Rust с ECS.</p><div class="foot"><span>внешний источник</span><span>сегодня</span></div></div></article>
+      <article class="card" style="--c:var(--c-community)"><div class="cover"><span class="mono" aria-hidden="true">И</span><span class="kind">Сообщество</span></div><div class="in"><h3>Инди-звук по-русски</h3><p>Разборы звука в играх и поиск композиторов.</p><div class="foot"><span>214 участников</span><span>28 публикаций</span></div></div></article>
+      <article class="card" style="--c:var(--c-person)"><div class="cover"><span class="mono" aria-hidden="true">В</span><span class="kind">Человек</span></div><div class="in"><span class="person-ava">ВС</span><h3>Вера Соколова</h3><p>Саунд-дизайнер, FMOD и Reaper</p><div class="foot"><span class="open-tag">открыта к работе</span><span>UTC+3</span></div></div></article>
+    </div>
+  </section>
+  <p class="synthetic">Синтетические данные для макета направления.</p>
+</main>
+  <aside class="side" aria-label="Моё">
+    <section class="panel"><h2>Ваши заявки <a href="#">Все</a></h2>
+      <div class="p-row"><b>Карта шумов</b><span class="status live">принята</span><span>frontend · контакт открыт</span></div>
+      <div class="p-row"><b>Тихая станция</b><span class="status reg">на рассмотрении</span><span>2D-художник · 1 день</span></div>
+      <div class="p-row"><b>Pixel Forge</b><span class="status wait">отклонена</span><span>звук · 5 дней</span></div>
+    </section>
+  </aside>
+</div>
+
+<nav class="dock" aria-label="Основная навигация"><a aria-current="page" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Поиск</a><a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="9" r="3.5"/><path d="M3 20c.8-3.5 3.2-5 6-5s5.2 1.5 6 5"/></svg>Команды</a><a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17"/></svg>События</a><a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg>Вы</a></nav>
+<script>{const q=new URLSearchParams(location.search);document.documentElement.dataset.theme=q.get("theme")||"light";document.documentElement.dataset.font=q.get("font")||"c"}</script>
+<script src="proto-en.js"></script>
+</body>
+</html>
