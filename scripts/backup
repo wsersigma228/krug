@@ -41,7 +41,8 @@ fi
 # Variables are expanded inside the db container, where the credentials are set.
 ./scripts/compose "${compose[@]}" exec -T db sh -c \
     'exec pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc' >"$target/db.dump"
-./scripts/compose "${compose[@]}" exec -T web tar -C /app/media -czf - . >"$target/media.tar.gz"
+# A one-off container reads the photo volume even while web is stopped.
+./scripts/compose "${compose[@]}" run -T --rm --no-deps web tar -C /app/media -czf - . >"$target/media.tar.gz"
 ./scripts/compose "${compose[@]}" exec -T db pg_restore --list <"$target/db.dump" >/dev/null
 tar -tzf "$target/media.tar.gz" >/dev/null
 trap - ERR
