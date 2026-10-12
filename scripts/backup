@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# Run on the execution host. Writes a private PostgreSQL dump and photo archive; never prints secrets.
+# Without --consistent, the dump and archive can capture writes made during the backup.
+set -euo pipefail
+umask 077
+exec </dev/null
+cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.."
+usage() {
+    echo "Usage: ./scripts/backup [--consistent] [DIR]" >&2
+    exit 2
+}
+consistent=false
+if [[ "${1:-}" == "--consistent" ]]; then
+    consistent=true
+    shift
+fi
+if [[ "$#" -gt 1 || "${1:-}" == -* ]]; then
+    usage
+fi
+base="${1:-backups}"
+compose=(-f docker-compose.yml)
+stopped=false
+restart_services() {
+    if [[ "$stopped" == true ]]; then
+        stopped=false
+        ./scripts/compose "${compose[@]}" start web worker beat
+    fi
+}
+trap restart_services EXIT
+stamp="$(date -u +%Y%m%dT%H%M%SZ)"
+target="$base/$stamp"
+mkdir -p -- "$base"
+# mkdir fails if this second's backup already exists, so earlier files are never overwritten.
+mkdir -m 700 -- "$target"
+trap 'echo "Backup incomplete: $target; do not restore from it." >&2' ERR
+if [[ "$consistent" == true ]]; then
+    # Stop writers so the dump and photo archive describe one point in time.
+    stopped=true
+    ./scripts/compose "${compose[@]}" stop web worker beat
+fi
+# Variables are expanded inside the db container, where the credentials are set.
+./scripts/compose "${compose[@]}" exec -T db sh -c \
+    'exec pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc' >"$target/db.dump"
+./scripts/compose "${compose[@]}" exec -T web tar -C /app/media -czf - . >"$target/media.tar.gz"
+./scripts/compose "${compose[@]}" exec -T db pg_restore --list <"$target/db.dump" >/dev/null
+tar -tzf "$target/media.tar.gz" >/dev/null
+trap - ERR
+echo "Backup verified: $target"
+ls -lh -- "$target"
