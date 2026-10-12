@@ -174,10 +174,12 @@ function homeCalendar(data, now) {
       <div class="hm-track">${homePhaseText(event, stages)}${segments.map(stage => html`<i class="hm-seg ${stage.kind}" aria-hidden="true" data-col="${columns(stage.from, stage.to)}"></i>`)}</div>
       <div class="hm-cd">${clock.target ? homeCount(clock.target, now) : ""}<span class="hm-status ${clock.chip}">${t(clock.text)}</span></div></a>`;
   };
-  const axis = Array.from({ length: days }, (_, index) => html`<span>${index % 7 === 0 ? homeShortDate(first + index * HOME_DAY) : ""}</span>`);
+  // A date label that sits under the "today" line would be crossed by it, so that label is left out.
+  const today = (now - first) / (days * HOME_DAY);
+  const axis = Array.from({ length: days }, (_, index) => html`<span>${index % 7 === 0 && Math.abs(index / days - today) >= 0.06 ? homeShortDate(first + index * HOME_DAY) : ""}</span>`);
   return html`<section class="type-event" aria-labelledby="hm-cal-h">${homeSectionHead("hm-cal-h", "Календарь событий", "/app#explore?kind=events", "Все события")}
     <div class="hm-calendar"><div class="hm-legend"><span><i class="hm-sw reg"></i>${t("регистрация")}</span><span><i class="hm-sw run"></i>${t("событие")}</span></div>
-      <div class="hm-tl"><div></div><div class="hm-axis" aria-hidden="true">${axis}</div><div></div>${events.map(row)}<i class="hm-now" aria-hidden="true" data-k="${(now - first) / (days * HOME_DAY)}"><b>${t("сегодня")}</b></i></div></div></section>`;
+      <div class="hm-tl"><div></div><div class="hm-axis" aria-hidden="true">${axis}</div><div></div>${events.map(row)}<i class="hm-now" aria-hidden="true" data-k="${today}"><b>${t("сегодня")}</b></i></div></div></section>`;
 }
 
 // A few compact cards from the existing project, community and people lists.
