@@ -8,8 +8,8 @@ from backend.config import PUBLIC_APP_URL
 from backend.database import get_db
 from backend.models import Community, Event, Team
 from backend.routes.communities import community_responses
-from backend.routes.platform import team_responses
 from backend.routes.platform_common import visible
+from backend.routes.teams import team_responses
 
 
 router = APIRouter()

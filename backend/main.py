@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.database import get_db
 from backend.config import REDIS_URL
 from redis.asyncio import Redis
-from backend.routes import posts, users, media, social, projects, collaboration, communities, events, share, platform
+from backend.routes import posts, users, media, social, projects, collaboration, communities, events, share, teams
 
 api = FastAPI()
 
@@ -15,7 +15,7 @@ api.include_router(collaboration.router)
 api.include_router(communities.router)
 api.include_router(events.router)
 api.include_router(share.router)
-api.include_router(platform.router)
+api.include_router(teams.router)
 api.include_router(posts.router)
 api.include_router(users.router)
 api.include_router(media.router)
