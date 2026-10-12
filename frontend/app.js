@@ -47,7 +47,7 @@ const iconPaths = {
   filter: '<path d="M4 5h16M7 12h10m-7 7h4"/>',
 };
 const icon = (name) =>
-  html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">${iconPaths[name]}</svg>`;
+  html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">${raw(iconPaths[name])}</svg>`;
 
 function saveSession(value) {
   // The refresh token lives only in an HttpOnly cookie; never keep it in script-readable storage.
@@ -159,7 +159,7 @@ async function api(path, options = {}, retry = true) {
         409: t("Такие данные уже используются."),
         413: t("Фото должно быть не больше 8 МиБ."),
         422: t("Проверьте заполненные поля и срок действия ссылки."),
-        429: html`Слишком много запросов. Повторите через ${response.headers.get("Retry-After") || 60} сек.`,
+        429: `${t("Слишком много запросов. Повторите через")} ${response.headers.get("Retry-After") || 60} ${t("сек.")}`,
       }[response.status] ||
       t("Не удалось выполнить действие. Попробуйте снова.");
     if (response.status === 401 && path !== "/login") saveSession(null);
@@ -180,11 +180,11 @@ function shell(route) {
   const links = [["explore", t("Обзор")], ["teams", t("Команды")], ["communities", t("Сообщества")], ["stories", t("Обновления")]];
   app.innerHTML = html`<header class="topbar"><div class="topbar-inner">
       <div class="brand-block"><a class="brand" href="/app#explore" aria-label="Круг, обзор"><span class="brand-mark"></span>круг</a></div>
-      <nav class="nav" aria-label="Основная навигация">${links.map(([id, title]) => { const current = id === "explore" ? ["explore", "events", "event", "event-new", "event-edit"].includes(route) : id === "teams" ? ["teams", "team", "team-new", "team-edit"].includes(route) : id === "communities" ? ["communities", "community", "community-new", "community-edit"].includes(route) : ["stories", "feed", "posts", "new", "edit"].includes(route); return html`<a href="/app#${id}" class="${current ? "active" : ""}" ${current ? 'aria-current="page"' : ""}>${icon({explore:"explore",teams:"people",communities:"community",stories:"feed"}[id])}<span>${title}</span></a>`; }).join("")}</nav>
+      <nav class="nav" aria-label="Основная навигация">${links.map(([id, title]) => { const current = id === "explore" ? ["explore", "events", "event", "event-new", "event-edit"].includes(route) : id === "teams" ? ["teams", "team", "team-new", "team-edit"].includes(route) : id === "communities" ? ["communities", "community", "community-new", "community-edit"].includes(route) : ["stories", "feed", "posts", "new", "edit"].includes(route); return html`<a href="/app#${id}" class="${current ? "active" : ""}" ${current ? html`aria-current="page"` : ""}>${icon({explore:"explore",teams:"people",communities:"community",stories:"feed"}[id])}<span>${title}</span></a>`; })}</nav>
       <div class="header-controls"><div class="preferences">
       <button id="ui-language" class="preference-button" aria-label="${language === "ru" ? "Switch to English" : t("Переключить на русский")}" title="Русский / English">${language.toUpperCase()}</button>
       <details class="theme-picker"><summary id="ui-theme" class="preference-button" aria-label="${t("Тема")}" title="${t("Тема")}">${themeIcon(theme)}</summary>
-      <div class="theme-options">${["light", "dark", "system"].map((value, index) => html`<button class="theme-option" data-theme-choice="${value}" aria-pressed="${theme === value}">${themeIcon(value)}${t(["Светлая", "Тёмная", "Системная"][index])}</button>`).join("")}</div></details>
+      <div class="theme-options">${["light", "dark", "system"].map((value, index) => html`<button class="theme-option" data-theme-choice="${value}" aria-pressed="${String(theme === value)}">${themeIcon(value)}${t(["Светлая", "Тёмная", "Системная"][index])}</button>`)}</div></details>
       </div><div class="header-actions">${me ? html`<a class="account-link" href="/app#settings" aria-label="${esc(me.username)}"><span class="avatar">${me.avatar_url ? html`<img src="${esc(me.avatar_url)}" alt="">` : esc((me.display_name || me.username)[0]?.toUpperCase())}</span><span>@${esc(me.username)}</span></a>` : html`<a class="account-link" href="/app#login" aria-label="${t("Войти")}"><span class="avatar">${icon("people")}</span></a>`}</div>
       </div></div></header><div class="layout ${wideFeed ? "layout-feed" : discovery ? "layout-discovery" : ""}">
       <main class="main" id="main" tabindex="-1">
@@ -194,7 +194,7 @@ function shell(route) {
         <a href="/app#explore" class="${["explore", "events"].includes(route) ? "active" : ""}">${icon("explore")}<span>${t("Обзор")}</span></a>
         <a href="/app#teams" class="${["teams", "team", "team-new", "team-edit"].includes(route) ? "active" : ""}">${icon("people")}<span>${t("Команды")}</span></a>
         <a href="/app#communities" class="${["communities", "community", "community-new", "community-edit"].includes(route) ? "active" : ""}">${icon("community")}<span>${t("Сообщества")}</span></a>
-        <a href="/app#settings" class="${["settings", "profile", "applications", "saved", "projects"].includes(route) ? "active" : ""}" ${["settings", "profile", "applications", "saved", "projects"].includes(route) ? 'aria-current="page"' : ""}>${icon("settings")}<span>${t("Вы")}</span></a>
+        <a href="/app#settings" class="${["settings", "profile", "applications", "saved", "projects"].includes(route) ? "active" : ""}" ${["settings", "profile", "applications", "saved", "projects"].includes(route) ? html`aria-current="page"` : ""}>${icon("settings")}<span>${t("Вы")}</span></a>
       </nav>`;
   document.querySelector("#ui-language").addEventListener("click", async (event) => {
     const control = event.currentTarget;
@@ -245,7 +245,7 @@ function themeIcon(value) {
     dark: '<path d="M20 15.5A8.5 8.5 0 0 1 8.5 4 8.5 8.5 0 1 0 20 15.5Z"/>',
     system: '<rect x="3" y="4" width="18" height="13" rx="2"/><path d="M12 17v4m-4 0h8"/>',
   };
-  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[value]}</svg>`;
+  return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${raw(paths[value])}</svg>`;
 }
 function heading(label, title, subtitle = "") {
   return html`<h1>${title}</h1>${subtitle ? html`<p class="intro">${subtitle}</p>` : ""}`;
@@ -287,12 +287,13 @@ function actionButton(button, action) {
   });
 }
 function input(name, label, type = "text", attrs = "") {
-  return html`<label class="field">${label}<input name="${name}" type="${type}" ${attrs}>
+  // attrs is developer-written attribute markup (for example 'maxlength="80"'), never user data.
+  return html`<label class="field">${label}<input name="${name}" type="${type}" ${raw(attrs)}>
       </label>`;
 }
 function photoMarkup(post, cls = "") {
   return post.image_url
-    ? html`<button class="post-media" type="button" aria-label="Открыть фото" disabled><img class="post-photo ${cls}" data-photo="${post.id}" alt="${post.title ? t("Фото к публикации «") + esc(post.title) + "»" : t("Фото к публикации")}" loading="lazy"></button>`
+    ? html`<button class="post-media" type="button" aria-label="Открыть фото" disabled><img class="post-photo ${cls}" data-photo="${post.id}" alt="${post.title ? t("Фото к публикации «") + post.title + "»" : t("Фото к публикации")}" loading="lazy"></button>`
     : "";
 }
 function closePhotoViewer() {
@@ -339,7 +340,7 @@ async function hydratePhotos(root, stamp) {
     img.addEventListener("load", () => { img.closest(".post-media").disabled = false; }, { once: true });
     img.addEventListener("error", unavailable, { once: true });
     try {
-      const blob = await api(html`/posts/${img.dataset.photo}/image`, {
+      const blob = await api(`/posts/${img.dataset.photo}/image`, {
         blob: true,
       });
       if (stamp !== generation || !img.isConnected) continue;
@@ -357,7 +358,7 @@ function postCard(post, author) {
       <div class="post-meta">
       <a class="avatar" href="/app#profile/${post.author_id}" aria-label="Профиль ${esc(username)}">${esc(username[0]?.toUpperCase())}</a>
       <a class="author" href="/app#profile/${post.author_id}">${esc(username)}</a>
-      <span>· ${date(post.created_at)}</span>${!post.is_published ? t('<span class="badge">Черновик</span>') : ""}</div>
+      <span>· ${date(post.created_at)}</span>${!post.is_published ? html`<span class="badge">Черновик</span>` : ""}</div>
       <div class="post-content">${photoMarkup(post)}<div class="post-copy">${post.title ? html`<a class="post-title" href="/app#post/${post.id}">${esc(post.title)}</a>` : ""}
       <a class="post-excerpt" href="/app#post/${post.id}">${esc(post.content.slice(0, 260))}${post.content.length > 260 ? "…" : ""}</a></div></div><div class="toolbar">
       <button class="reaction" data-like="${post.id}" disabled>${icon("heart")} ${t("Загрузка…")}</button><a class="discussion-link" href="/app#post/${post.id}?comments=1">${icon("comment")} Комментарии</a>${post.content.length > 260 ? html`<a class="text-button read-story" href="/app#post/${post.id}">Читать дальше${icon("arrow")}</a>` : ""}${me?.id === post.author_id ? html`<a class="text-button" href="/app#edit/${post.id}">Редактировать</a>` : ""}</div>
@@ -454,9 +455,9 @@ async function authScreen(root, route, stamp) {
   const register = route === "register",
     reset = route === "recover";
   root.innerHTML = html`<div class="auth">${heading(t("Добро пожаловать"), reset ? t("Вернуться в Круг") : register ? t("Начните свою историю") : t("С возвращением"), reset ? t("Отправим ссылку для нового пароля, если email связан с аккаунтом.") : register ? t("Немного о себе — и вы среди своих.") : t("Войдите, чтобы читать своих людей и делиться мыслями."))}<div class="card">
-      <form class="form">${reset ? input("email", "Email", "email", 'required maxlength="100" autocomplete="email"') : input("username", t("Имя пользователя"), "text", html`required ${register ? 'minlength="3"' : ""} maxlength="50" autocomplete="username"`) + (register ? input("email", t("Email · необязательно"), "email", 'maxlength="100" autocomplete="email"') + t('<span class="hint">Нужен для восстановления пароля и писем. Без email восстановить доступ не получится.</span>') : "") + input("password", t("Пароль"), "password", html`required ${register ? 'minlength="8"' : ""} maxlength="100" autocomplete="${register ? "new-password" : "current-password"}"`)}<button>${reset ? t("Отправить ссылку") : register ? t("Создать аккаунт") : t("Войти")}</button>
+      <form class="form">${reset ? input("email", "Email", "email", 'required maxlength="100" autocomplete="email"') : [input("username", t("Имя пользователя"), "text", html`required ${register ? html`minlength="3"` : ""} maxlength="50" autocomplete="username"`), register ? [input("email", t("Email · необязательно"), "email", 'maxlength="100" autocomplete="email"'), html`<span class="hint">Нужен для восстановления пароля и писем. Без email восстановить доступ не получится.</span>`] : "", input("password", t("Пароль"), "password", html`required ${register ? html`minlength="8"` : ""} maxlength="100" autocomplete="${register ? "new-password" : "current-password"}"`)]}<button>${reset ? t("Отправить ссылку") : register ? t("Создать аккаунт") : t("Войти")}</button>
       </form>
-      <div class="auth-switch">${register || reset ? t('<a href="/app#login">Уже есть аккаунт? Войти</a>') : t('<span>Первый раз здесь?</span><a href="/app#register">Регистрация</a>')}</div>${!register && !reset ? t('<a class="text-button small" href="/app#recover">Забыли пароль?</a>') : ""}</div>
+      <div class="auth-switch">${register || reset ? html`<a href="/app#login">Уже есть аккаунт? Войти</a>` : html`<span>Первый раз здесь?</span><a href="/app#register">Регистрация</a>`}</div>${!register && !reset ? html`<a class="text-button small" href="/app#recover">Забыли пароль?</a>` : ""}</div>
       </div>`;
   root.querySelectorAll('.auth-switch a').forEach(link => {
     if (next !== "explore") link.href += "?next=" + encodeURIComponent(next);
@@ -469,7 +470,7 @@ async function authScreen(root, route, stamp) {
       });
       if (stamp === generation)
         root.querySelector("form").innerHTML =
-          t('<p class="success" role="status">Если аккаунт существует, письмо скоро придёт. Проверьте также папку «Спам».</p>');
+          html`<p class="success" role="status">Если аккаунт существует, письмо скоро придёт. Проверьте также папку «Спам».</p>`;
       return;
     }
     const body = {
@@ -500,9 +501,7 @@ async function tokenScreen(root, stamp) {
     token
       ? html`<form class="form">${reset ? input("password", t("Новый пароль"), "password", 'required minlength="8" maxlength="100" autocomplete="new-password"') : ""}<button>${reset ? t("Сохранить пароль") : t("Подтвердить email")}</button>
       </form>`
-      : t('<div class="error" role="alert">В ссылке нет токена. Запросите новое письмо.</div><a class="button" href="/app#') +
-        (reset ? "recover" : "settings") +
-        t('">Запросить письмо</a>')
+      : html`<div class="error" role="alert">В ссылке нет токена. Запросите новое письмо.</div><a class="button" href="/app#${reset ? "recover" : "settings"}">Запросить письмо</a>`
   }</div>
       </div>`;
   const completedMarkup = () => html`<p class="success" role="status">${reset ? t("Пароль сохранён. Войдите с новым паролем.") : t("Email подтверждён. Теперь можно включить уведомления.")}</p><a class="button" href="/app#${reset ? "login" : "settings"}">${reset ? t("Войти") : t("К настройкам")}</a>`;
@@ -560,8 +559,8 @@ async function listing(root, route, query, stamp) {
       <span class="hint">Язык поиска</span>
       <select name="language" aria-label="Язык поиска">
       <option value="simple">Любой</option>
-      <option value="russian" ${language === "russian" ? "selected" : ""}>Русский</option>
-      <option value="english" ${language === "english" ? "selected" : ""}>English</option>
+      <option value="russian" ${language === "russian" ? html`selected` : ""}>Русский</option>
+      <option value="english" ${language === "english" ? html`selected` : ""}>English</option>
       </select>
       </label>
       <button>Найти</button>
@@ -628,9 +627,9 @@ async function profileScreen(root, id, stamp) {
       <span class="small">@${esc(profile.username)}</span>
       </div>
       </div>
-      <p class="bio">${esc(profile.bio) || t("Пока без описания. Истории расскажут больше.")}</p>
-      <div class="toolbar">${own ? t('<a class="button secondary" href="/app#settings">Редактировать профиль</a><a class="text-button" href="/app#posts">Мои истории</a>') : me ? html`<button id="follow" class="${follow.subscribed ? "secondary" : ""}">${follow.subscribed ? t("Вы подписаны · отписаться") : t("Подписаться")}</button>` : t('<a class="button" href="/app#login">Войти и подписаться</a>')}</div>
-      </section><section id="collaboration-profile" class="collaboration-profile"></section>${own && me?.role === "admin" ? t('<a class="text-button" href="/app#admin-review">Очередь проверки</a>') : ""}<h2>${t("Истории")}</h2><div class="stats"><span><strong>${profile.posts_count}</strong>${t("публикаций")}</span><span><strong>${profile.subscribers_count}</strong>${t("подписчиков")}</span><span><strong>${profile.subscriptions_count}</strong>${t("подписок")}</span></div>`;
+      <p class="bio">${profile.bio || t("Пока без описания. Истории расскажут больше.")}</p>
+      <div class="toolbar">${own ? html`<a class="button secondary" href="/app#settings">Редактировать профиль</a><a class="text-button" href="/app#posts">Мои истории</a>` : me ? html`<button id="follow" class="${follow.subscribed ? "secondary" : ""}">${follow.subscribed ? t("Вы подписаны · отписаться") : t("Подписаться")}</button>` : html`<a class="button" href="/app#login">Войти и подписаться</a>`}</div>
+      </section><section id="collaboration-profile" class="collaboration-profile"></section>${own && me?.role === "admin" ? html`<a class="text-button" href="/app#admin-review">Очередь проверки</a>` : ""}<h2>${t("Истории")}</h2><div class="stats"><span><strong>${profile.posts_count}</strong>${t("публикаций")}</span><span><strong>${profile.subscribers_count}</strong>${t("подписчиков")}</span><span><strong>${profile.subscriptions_count}</strong>${t("подписок")}</span></div>`;
   await collaborationProfileBlock(root, id, own, stamp);
   if (follow)
     actionButton(root.querySelector("#follow"), async () => {
@@ -642,7 +641,7 @@ async function profileScreen(root, id, stamp) {
     });
   await paged(
     root,
-    html`/authors/${id}/posts`,
+    `/authors/${id}/posts`,
     (p) => postCard(p, profile.username),
     stamp,
     empty(
@@ -678,7 +677,7 @@ async function peopleScreen(root, query, stamp) {
     empty(
       t("Пока никого"),
       t("Ваш Круг постепенно станет больше."),
-      t('<a class="button" href="/app#explore">Открыть обзор</a>'),
+      html`<a class="button" href="/app#explore">Открыть обзор</a>`,
     ),
   );
 }
@@ -694,8 +693,8 @@ async function editorScreen(root, id, stamp, query = new URLSearchParams()) {
       <label class="field">Одно фото · необязательно<input name="image" type="file" accept="image/jpeg,image/png,image/webp">
       <span class="hint">JPEG, PNG или WebP, не больше 8 МиБ. Фото будет сохранено с публикацией.</span>
       </label>
-      <div id="preview">${post ? photoMarkup(post) : ""}</div>${post?.image_url ? t('<label class="checkbox"><input type="checkbox" name="remove_image">Удалить текущее фото</label>') : ""}<label class="checkbox">
-      <input type="checkbox" name="published" ${post?.is_published ? "checked" : ""}>Опубликовать для всех</label>
+      <div id="preview">${post ? photoMarkup(post) : ""}</div>${post?.image_url ? html`<label class="checkbox"><input type="checkbox" name="remove_image">Удалить текущее фото</label>` : ""}<label class="checkbox">
+      <input type="checkbox" name="published" ${post?.is_published ? html`checked` : ""}>Опубликовать для всех</label>
       <span class="hint">Если не отмечено, запись остаётся личным черновиком.</span>
       <button>${post ? t("Сохранить изменения") : t("Сохранить пост")}</button>
       <span class="hint" id="save-status" role="status">
@@ -768,13 +767,13 @@ async function editorScreen(root, id, stamp, query = new URLSearchParams()) {
         },
       });
     if (file)
-      await api(html`/posts/${post.id}/image`, {
+      await api(`/posts/${post.id}/image`, {
         method: "PUT",
         headers: { "Content-Type": file.type },
         body: file,
       });
     else if (data.has("remove_image"))
-      await api(html`/posts/${post.id}/image`, { method: "DELETE" });
+      await api(`/posts/${post.id}/image`, { method: "DELETE" });
     if (file && published)
       await api("/posts/" + post.id, {
         method: "PUT",
@@ -789,7 +788,7 @@ async function postScreen(root, id, stamp, projectSlug = null, query = new URLSe
   const communitySlug = post.community_id ? query.get("community") : null;
   const [author, likes, communityRole] = await Promise.all([
     api("/authors/" + post.author_id),
-    api(html`/posts/${id}/likes`),
+    api(`/posts/${id}/likes`),
     session && communitySlug ? (async () => { const [community, membership] = await Promise.all([api(`/communities/${encodeURIComponent(communitySlug)}`), api(`/communities/${encodeURIComponent(communitySlug)}/membership`)]); return community.id === post.community_id ? membership : null; })() : Promise.resolve(null),
   ]);
   if (stamp !== generation) return;
@@ -805,14 +804,14 @@ async function postScreen(root, id, stamp, projectSlug = null, query = new URLSe
       <div class="post-meta">
       <a class="avatar" href="/app#profile/${author.id}">${esc(author.username[0].toUpperCase())}</a>
       <a class="author" href="/app#profile/${author.id}">${esc(author.username)}</a>
-      <span>· ${date(post.created_at)}</span>${!post.is_published ? t('<span class="badge">Личный черновик</span>') : ""}</div>
+      <span>· ${date(post.created_at)}</span>${!post.is_published ? html`<span class="badge">Личный черновик</span>` : ""}</div>
       <h1 class="${post.title ? "article-title" : "sr-only"}">${post.title ? esc(post.title) : t("Публикация")}</h1>${photoMarkup(post, "article-photo")}<div class="article-body">${esc(post.content)}</div>
       <div class="toolbar">
-      <button id="like" class="${likes.liked ? "liked" : "secondary"}" aria-pressed="${likes.liked}">${icon("heart")} ${likes.count} · ${likes.liked ? t("Нравится") : t("Поддержать")}</button>
+      <button id="like" class="${likes.liked ? "liked" : "secondary"}" aria-pressed="${String(likes.liked)}">${icon("heart")} ${likes.count} · ${likes.liked ? t("Нравится") : t("Поддержать")}</button>
       <span class="spacer">
       </span>${own ? html`<a class="button secondary" href="/app#edit/${id}${communitySlug ? "?community=" + encodeURIComponent(communitySlug) : ""}">Редактировать</a>` : ""}${canDelete ? html`<button class="danger" id="delete">Удалить</button>` : ""}</div>
       <section class="comments" id="discussion">
-      <h2>Комментарии</h2>${canComment ? t('<form class="form"><label class="field">Ваш комментарий<textarea name="content" required maxlength="2000" placeholder="Поделитесь мыслью…"></textarea></label><button>Отправить</button></form>') : post.community_id && me ? `<p class="hint">${t("Присоединитесь к сообществу, чтобы комментировать.")}</p>` : t('<p class="intro"><a class="text-button" href="/app#login">Войдите</a>, чтобы присоединиться к разговору.</p>')}<div id="comments">
+      <h2>Комментарии</h2>${canComment ? html`<form class="form"><label class="field">Ваш комментарий<textarea name="content" required maxlength="2000" placeholder="Поделитесь мыслью…"></textarea></label><button>Отправить</button></form>` : post.community_id && me ? html`<p class="hint">${t("Присоединитесь к сообществу, чтобы комментировать.")}</p>` : html`<p class="intro"><a class="text-button" href="/app#login">Войдите</a>, чтобы присоединиться к разговору.</p>`}<div id="comments">
       </div>
       </section></article>`;
   const photosReady = hydratePhotos(root, stamp);
@@ -831,7 +830,7 @@ async function postScreen(root, id, stamp, projectSlug = null, query = new URLSe
     });
   if (canComment)
     bindForm(root.querySelector("form"), async (data) => {
-      await api(html`/posts/${id}/comments`, {
+      await api(`/posts/${id}/comments`, {
         method: "POST",
         body: { content: data.get("content") },
       });
@@ -840,7 +839,7 @@ async function postScreen(root, id, stamp, projectSlug = null, query = new URLSe
     });
   await paged(
     root.querySelector("#comments"),
-    html`/posts/${id}/comments`,
+    `/posts/${id}/comments`,
     (c) =>
       html`<article class="comment" data-comment="${c.id}">
       <div class="post-meta">
@@ -857,7 +856,7 @@ async function postScreen(root, id, stamp, projectSlug = null, query = new URLSe
     if (!confirm(t("Удалить комментарий?"))) return;
     button.disabled = true;
     try {
-      await api(html`/posts/${id}/comments/${button.dataset.deleteComment}`, {
+      await api(`/posts/${id}/comments/${button.dataset.deleteComment}`, {
         method: "DELETE",
       });
       button.closest(".comment").remove();
@@ -880,7 +879,7 @@ async function settingsScreen(root, stamp) {
       t("Настройки"),
       t("Немного о себе и о том, как оставаться на связи."),
     ) +
-    html`<nav class="account-links" aria-label="${t("Мои разделы")}"><a href="/app#projects">${t("Мои проекты")}</a><a href="/app#saved">${t("Сохранённое")}</a><a href="/app#applications">${t("Мои заявки")}</a><a href="/app#collaboration-profile">${t("Профиль для сотрудничества")}</a>${me.role === "admin" ? t('<a href="/app#admin-review">Проверка внешних проектов</a>') : ""}<a href="/app#external-submit">${t("Предложить внешний проект")}</a></nav><div class="settings-grid">
+    html`<nav class="account-links" aria-label="${t("Мои разделы")}"><a href="/app#projects">${t("Мои проекты")}</a><a href="/app#saved">${t("Сохранённое")}</a><a href="/app#applications">${t("Мои заявки")}</a><a href="/app#collaboration-profile">${t("Профиль для сотрудничества")}</a>${me.role === "admin" ? html`<a href="/app#admin-review">Проверка внешних проектов</a>` : ""}<a href="/app#external-submit">${t("Предложить внешний проект")}</a></nav><div class="settings-grid">
       <section class="card">
       <h2>Профиль</h2>
       <p class="small">@${esc(me.username)} · открытый профиль</p>
@@ -894,11 +893,11 @@ async function settingsScreen(root, stamp) {
       </section>
       <section class="card">
       <h2>Email и уведомления</h2>
-      <p>${esc(me.email) || t("Email не указан при регистрации.")}</p>
-      <p class="hint">${me.email_verified ? t("✓ Email подтверждён.") : me.email ? t("Email ещё не подтверждён.") : t("В этой версии добавить email после регистрации нельзя.")}</p>${me.email && !me.email_verified ? t('<button class="secondary" id="verify">Отправить письмо для подтверждения</button>') : ""}<hr class="divider">
+      <p>${me.email || t("Email не указан при регистрации.")}</p>
+      <p class="hint">${me.email_verified ? t("✓ Email подтверждён.") : me.email ? t("Email ещё не подтверждён.") : t("В этой версии добавить email после регистрации нельзя.")}</p>${me.email && !me.email_verified ? html`<button class="secondary" id="verify">Отправить письмо для подтверждения</button>` : ""}<hr class="divider">
       <form class="form" id="notifications">
       <label class="checkbox">
-      <input type="checkbox" name="enabled" ${settings.email_publications ? "checked" : ""} ${!me.email_verified || !me.email ? "disabled" : ""}>Новые истории подписок по email</label>
+      <input type="checkbox" name="enabled" ${settings.email_publications ? html`checked` : ""} ${!me.email_verified || !me.email ? html`disabled` : ""}>Новые истории подписок по email</label>
       <span class="hint">Лента работает независимо от писем. Уведомления доступны после подтверждения email.</span>
       <button>Сохранить уведомления</button>
       </form>
@@ -907,7 +906,7 @@ async function settingsScreen(root, stamp) {
       <h2>Доступ к аккаунту</h2>
       <p class="hint">Выход завершит все сессии на всех устройствах.</p>
       <div class="toolbar">
-      <button class="secondary" id="logout">Выйти на всех устройствах</button>${me.email ? t('<a class="text-button" href="/app#recover">Изменить пароль</a>') : ""}</div>
+      <button class="secondary" id="logout">Выйти на всех устройствах</button>${me.email ? html`<a class="text-button" href="/app#recover">Изменить пароль</a>` : ""}</div>
       <hr class="divider">
       <h3>Удалить аккаунт</h3>
       <p class="hint">Все ваши истории, фото, подписки и комментарии будут удалены навсегда.</p>
