@@ -10,11 +10,11 @@ Dates include timezone information. Send access tokens as
 | Method and path | Access | Body / result |
 | --- | --- | --- |
 | `POST /users` | Public | `{username,password,email?,language?}` → 201 account |
-| `POST /login` | Public | `{username,password}` → access/refresh tokens |
-| `POST /refresh` | Refresh token in body | `{refresh_token}` → new access token |
+| `POST /login` | Public | `{username,password}` → access/refresh tokens; also sets the `krug_refresh` cookie |
+| `POST /refresh` | Refresh cookie or body token | Cookie mode: no body → `{access_token,token_type}` and a rotated cookie. Body mode: `{refresh_token}` → also returns a new `refresh_token` |
 | `GET /me` | Signed in | Your account, including email/verification status and nullable language |
 | `PATCH /me/language` | Signed in | `{language:"ru"}` or `{language:"en"}` → saved `{language}` |
-| `POST /logout` | Signed in | 204; revokes all sessions for your account |
+| `POST /logout` | Signed in | 204; revokes all sessions and refresh tokens, clears the cookie |
 | `DELETE /users/{id}` | Account owner or admin | 204; removes account and its content |
 | `POST /auth/email-verification/request` | Signed in | 202; queues verification if needed |
 | `POST /auth/email-verification/confirm` | Public | `{token}` → 204 |
@@ -23,6 +23,26 @@ Dates include timezone information. Send access tokens as
 | `GET /me/notifications` | Signed in | `{email_publications}` |
 | `PATCH /me/notifications` | Signed in | `{email_publications: true/false}`; enabling requires verified email |
 | `GET /users/get`, `GET /admin/panel` | Admin | Administrative account list / access check |
+
+### Refresh tokens
+
+Login sets cookie `krug_refresh` (HttpOnly, SameSite=Strict, Path=`/refresh`,
+Max-Age = `REFRESH_TOKEN_EXPIRE_DAYS`, Secure when `PUBLIC_APP_URL` starts with
+`https`) and still returns `refresh_token` in the body for API clients. Every
+refresh token carries a `jti` stored server-side in `refresh_tokens`, grouped by
+login into a family.
+
+`POST /refresh` rotates: the presented token is marked used and a new one of the
+same family is issued. A body `refresh_token` takes precedence over the cookie
+(body mode: response includes the new `refresh_token`, no cookie is set); with no
+body the cookie is used (response has no `refresh_token`, a new cookie is set).
+Unknown, expired or foreign tokens return 401.
+
+Reuse detection: presenting an already-used token more than 30 seconds after its
+use is treated as theft; the whole family is deleted and the request returns 401.
+Within 30 seconds (concurrent tabs) it returns 200 with an access token only and
+no new refresh token or cookie. Logout and password reset delete all of the
+user's refresh rows; login deletes that user's expired rows.
 
 Username is 3–50 characters at registration. New passwords are 8–100 characters.
 Email is optional. Verification links expire after 60 minutes; reset links after
