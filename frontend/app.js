@@ -179,11 +179,11 @@ let closeCreateOnOutside = null;
 function shell(route) {
   const wideFeed = ["stories", "feed"].includes(route);
   const discovery = ["explore", "teams", "communities", "events", "saved", "projects"].includes(route);
-  const links = [["explore", t("Обзор")], ["teams", t("Команды")], ["communities", t("Сообщества")], ["stories", t("Обновления")]];
+  const links = [["explore", t("Обзор")], ["teams", t("Команды")], ["events", t("События")], ["communities", t("Сообщества")], ["stories", t("Обновления")]];
   const createOptions = [["project", "project-new", t("Проект"), t("Ищете людей в свой проект")], ["team", "team-new", t("Команда"), t("Соберите людей под общую задачу")], ["event", "event-new", t("Событие"), t("Встреча, джем или мероприятие")], ["community", "community-new", t("Сообщество"), t("Место для обсуждений и знаний")], ["post", "new", t("Пост"), t("Короткая публикация в ленте")]];
   app.innerHTML = html`<header class="topbar"><div class="topbar-inner">
       <a class="brand" href="/app#explore" aria-label="Круг, обзор"><span class="brand-mark" aria-hidden="true"></span>krug</a>
-      <nav class="nav" aria-label="Основная навигация">${links.map(([id, title]) => { const current = id === "explore" ? ["explore", "events", "event", "event-new", "event-edit"].includes(route) : id === "teams" ? ["teams", "team", "team-new", "team-edit"].includes(route) : id === "communities" ? ["communities", "community", "community-new", "community-edit"].includes(route) : ["stories", "feed", "posts", "new", "edit"].includes(route); return html`<a href="/app#${id}" class="${current ? "active" : ""}" ${current ? html`aria-current="page"` : ""}>${icon({explore:"explore",teams:"people",communities:"community",stories:"feed"}[id])}<span>${title}</span></a>`; })}</nav>
+      <nav class="nav" aria-label="Основная навигация">${links.map(([id, title]) => { const current = id === "explore" ? route === "explore" : id === "events" ? ["events", "event", "event-new", "event-edit"].includes(route) : id === "teams" ? ["teams", "team", "team-new", "team-edit"].includes(route) : id === "communities" ? ["communities", "community", "community-new", "community-edit"].includes(route) : ["stories", "feed", "posts", "new", "edit"].includes(route); return html`<a href="/app#${id}" class="${current ? "active" : ""}" ${current ? html`aria-current="page"` : ""}>${icon({explore:"explore",teams:"people",events:"calendar",communities:"community",stories:"feed"}[id])}<span>${title}</span></a>`; })}</nav>
       <form class="hsearch" role="search">${icon("explore")}<input name="search" type="search" maxlength="100" aria-label="${t("Поиск по Кругу")}" placeholder="${t("Навык, проект, событие, человек")}" value="${esc(route === "explore" ? new URLSearchParams(location.hash.split("?")[1] || "").get("search") || "" : "")}"></form>
       <div class="header-controls"><div class="preferences">
       <button id="ui-language" class="preference-button" aria-label="${language === "ru" ? "Switch to English" : t("Переключить на русский")}" title="Русский / English">${language.toUpperCase()}</button>
@@ -195,9 +195,9 @@ function shell(route) {
       <div class="loading" role="status">Загрузка…</div>
       </main>
       </div><nav class="mobile-dock" aria-label="${t("Основная навигация")}">
-        <a href="/app#explore" class="${["explore", "events"].includes(route) ? "active" : ""}">${icon("explore")}<span>${t("Обзор")}</span></a>
+        <a href="/app#explore" class="${route === "explore" ? "active" : ""}">${icon("explore")}<span>${t("Обзор")}</span></a>
         <a href="/app#teams" class="${["teams", "team", "team-new", "team-edit"].includes(route) ? "active" : ""}">${icon("people")}<span>${t("Команды")}</span></a>
-        <a href="/app#communities" class="${["communities", "community", "community-new", "community-edit"].includes(route) ? "active" : ""}">${icon("community")}<span>${t("Сообщества")}</span></a>
+        <a href="/app#events" class="${["events", "event", "event-new", "event-edit"].includes(route) ? "active" : ""}">${icon("calendar")}<span>${t("События")}</span></a>
         <a href="/app#settings" class="${["settings", "profile", "applications", "saved", "projects"].includes(route) ? "active" : ""}" ${["settings", "profile", "applications", "saved", "projects"].includes(route) ? html`aria-current="page"` : ""}>${icon("settings")}<span>${t("Вы")}</span></a>
       </nav>`;
   document.querySelector(".hsearch").addEventListener("submit", (event) => {
