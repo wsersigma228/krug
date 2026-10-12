@@ -14,9 +14,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.config import PUBLIC_APP_URL
 from backend.database import get_db
 from backend.models import (
-    Community, CommunityEngagement, CommunityMember, Comment, Event, EventEngagement,
-    Post, Project, ProjectMember, Team, TeamApplication,
-    TeamEngagement, TeamMember, TeamOpening, User,
+    Community, CommunityEngagement, CommunityMember, Event, EventEngagement, Post, Project,
+    ProjectMember, Team, TeamApplication, TeamEngagement, TeamMember, TeamOpening, User,
 )
 from backend.pagination import cursor_scope, decode_cursor, encode_cursor, make_page, seek_page
 from backend.platform_schemas import (
@@ -28,50 +27,17 @@ from backend.platform_schemas import (
 from backend.project_access import canonical_project_url, public_post
 from backend.project_schemas import InterestedUser, ProjectCreate, ProjectResponse
 from backend.rate_limit import check_rate_limit
+from backend.routes.platform_common import (
+    _search_labels, joined_page, lock_actor, owned, page_response, visible,
+)
 from backend.schemas import Page, PageParams, PostResponse
 from backend.security import get_current_user, get_optional_user
+
 
 router = APIRouter()
 
 
-def _search_labels(search: str) -> list[str]:
-    value = search.strip().lower()
-    if value in {"game dev", "gamedev", "game development", "game-development"}:
-        return ["game dev", "gamedev", "game development", "game-development"]
-    return [value]
 DatabaseId = Annotated[int, Path(gt=0, le=2_147_483_647)]
-
-
-async def lock_actor(db, user_id):
-    actor = await db.scalar(select(User.id).where(User.id == user_id)
-                            .with_for_update(read=True, key_share=True))
-    if actor is None:
-        raise HTTPException(401, "Account no longer exists")
-
-
-async def owned(db, model, slug, user_id, *, lock=False):
-    query = select(model).where(model.slug == slug)
-    if lock:
-        query = query.execution_options(populate_existing=True).with_for_update()
-    entity = await db.scalar(query)
-    if entity is None or entity.owner_id != user_id:
-        raise HTTPException(404, "Not found")
-    return entity
-
-
-async def visible(db, model, slug, user=None, *, lock=False):
-    query = select(model).where(model.slug == slug)
-    if lock:
-        query = query.execution_options(populate_existing=True).with_for_update()
-    entity = await db.scalar(query)
-    if entity is None or (entity.visibility != "public" and (user is None or entity.owner_id != user.id)):
-        raise HTTPException(404, "Not found")
-    return entity
-
-
-def page_response(items, more, last, scope):
-    return {"items": items, "has_more": more,
-            "next_cursor": encode_cursor(last.created_at, last.id, scope) if more else None}
 
 
 def canonical_event_url(url):
@@ -79,14 +45,6 @@ def canonical_event_url(url):
         return None
     parts = urlsplit(url)
     return urlunsplit((parts.scheme.lower(), parts.netloc.lower(), parts.path.rstrip("/"), parts.query, ""))
-
-
-def joined_page(rows, limit, scope):
-    items = rows[:limit]
-    more = len(rows) > limit
-    last = items[-1][0] if more else None
-    return {"items": items, "has_more": more,
-            "next_cursor": encode_cursor(last.created_at, last.id, scope) if more else None}
 
 
 async def team_responses(db, rows, user_id=None):
