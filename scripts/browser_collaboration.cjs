@@ -38,7 +38,7 @@ async function login(page, user) {
   await page.getByLabel('Имя пользователя').fill(user.username);
   await page.getByLabel('Пароль', { exact: true }).fill(password);
   await page.getByRole('button', { name: 'Войти', exact: true }).click();
-  await page.getByRole('heading', { name: 'Найдите, с кем создавать дальше' }).waitFor();
+  await page.getByRole('heading', { name: /^Привет,/ }).waitFor();
 }
 
 async function capture(page, name) {

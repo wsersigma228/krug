@@ -75,8 +75,8 @@ async function login(page, user) {
   await page.locator('.auth input[name=username]').fill(user.username);
   await page.locator('.auth input[name=password]').fill(password);
   await page.locator('.auth form button').click();
-  await page.getByRole('heading', { name: 'Найдите, с кем создавать дальше' }).waitFor();
-  await waitReady(page, '#discovery-results');
+  await page.getByRole('heading', { name: /^Привет,/ }).waitFor();
+  await waitReady(page, '.hm-body');
 }
 
 function localDate(hoursFromNow) {

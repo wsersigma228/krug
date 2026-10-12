@@ -28,7 +28,7 @@ async function main() {
   page.on('pageerror', error => errors.push(error.message));
   try {
     await page.goto(base + '/app#explore', { waitUntil: 'networkidle' });
-    await page.locator('.discovery-intro h1').waitFor();
+    await page.locator('.hm-band h1').waitFor();
     await page.locator('.discovery-tabs').waitFor();
     await page.locator('.discovery-search input[name=search]').fill('game dev');
     await page.locator('.discovery-search button').click();
@@ -84,9 +84,9 @@ async function main() {
     await page.locator('.discovery-intro h1').waitFor();
     await page.locator('#ui-language').click();
     await page.goto(base + "/app#explore");
-    await page.locator(".platform-card").first().waitFor();
+    await page.locator(".hm-tile, .hm-fcard, .hm-card").first().waitFor();
     await page.waitForFunction(() => { const main = document.querySelector("main"); return main && !main.inert && !main.hasAttribute("aria-busy"); });
-    const firstCardTop = await page.locator(".platform-card").first().evaluate(node => node.getBoundingClientRect().top);
+    const firstCardTop = await page.locator(".hm-tile, .hm-fcard, .hm-card").first().evaluate(node => node.getBoundingClientRect().top);
     const viewportHeight = await page.evaluate(() => innerHeight);
     assert(firstCardTop < viewportHeight - 96, "A real discovery card appears above the mobile bottom navigation in the first viewport");
     await page.locator(".discovery-search input[name=search]").focus();
@@ -132,9 +132,9 @@ async function main() {
     const failedPeopleRequest = page.waitForResponse(response => response.url().includes("/people?") && response.status() === 503);
     await page.reload({ waitUntil: "networkidle" });
     assert.equal((await failedPeopleRequest).status(), 503, "The people source failure was requested and intercepted");
-    await page.locator(".platform-card").first().waitFor();
-    await page.locator("#discovery-results .error[role=alert]").first().waitFor();
-    assert(await page.locator("#discovery-results .platform-card").count(), "Other source cards remain visible when one source fails");
+    await page.locator(".hm-tile, .hm-fcard, .hm-card").first().waitFor();
+    assert.equal(await page.locator(".hm-body .error").count(), 0, "The home leaves out a failed block instead of showing an error");
+    assert.equal(await page.locator(".hm-band").count(), 1, "The home still renders when the people source fails");
     await page.goto(base + "/app#explore?kind=people&search=error-check");
     await page.getByRole("alert").waitFor();
     await page.unroute("**/people?*");
