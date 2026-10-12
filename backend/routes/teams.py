@@ -195,9 +195,9 @@ async def search_team_openings(params: Annotated[OpeningSearchParams, Query()],
                                db: AsyncSession = Depends(get_db)):
     scope = cursor_scope("team_openings_public", search=params.search, skill=params.skill)
     cursor = decode_cursor(params.cursor, scope)
-    # Same team rules as GET /teams: public and not archived.
+    # Only roles you can apply to: public teams that are recruiting (apply_to_team requires it).
     query = select(TeamOpening).join(Team, Team.id == TeamOpening.team_id).where(
-        TeamOpening.status == "open", Team.visibility == "public", Team.status != "archived")
+        TeamOpening.status == "open", Team.visibility == "public", Team.status == "recruiting")
     if params.skill:
         query = query.where(TeamOpening.skills.contains([params.skill.strip().lower()]))
     if params.search and params.search.strip():

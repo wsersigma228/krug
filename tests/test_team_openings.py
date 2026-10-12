@@ -38,14 +38,19 @@ async def test_team_openings_feed_filters_visibility_and_status(client, accounts
                                json={"status": "closed"})).status_code == 200
     hidden_role = await make_opening(client, owner["headers"], draft["slug"], skills=[skill])
     archived_role = await make_opening(client, owner["headers"], archived["slug"], skills=[skill])
+    active = await make_team(client, owner["headers"])
+    active_role = await make_opening(client, owner["headers"], active["slug"], skills=[skill])
+    assert (await client.patch(f"/teams/{active['slug']}", headers=owner["headers"],
+                               json={"status": "active"})).status_code == 200
 
-    # Anonymous readers see only open roles of public, non-archived teams.
+    # Anonymous readers see only open roles of public teams that are recruiting.
     items = (await client.get("/team-openings", params={"skill": skill})).json()["items"]
     assert [row["id"] for row in items] == [open_role["id"]]
     assert items[0]["team"] == {"slug": public["slug"], "title": public["title"], "summary": public["summary"]}
     assert items[0]["team_id"] == public["id"]
     ids = {row["id"] for row in (await client.get("/team-openings", params={"skill": skill})).json()["items"]}
     assert closed_role["id"] not in ids and hidden_role["id"] not in ids and archived_role["id"] not in ids
+    assert active_role["id"] not in ids
 
     by_search = (await client.get("/team-openings", params={"search": tag.upper()})).json()["items"]
     assert [row["id"] for row in by_search] == [open_role["id"]]
