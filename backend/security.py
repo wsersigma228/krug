@@ -1,3 +1,4 @@
+import secrets
 from datetime import datetime, timedelta, timezone
 from fastapi import Depends, Header, HTTPException, Security
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -6,11 +7,12 @@ from pwdlib import PasswordHash
 from pwdlib.hashers.argon2 import Argon2Hasher
 from pwdlib.hashers.bcrypt import BcryptHasher
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import delete
 from sqlalchemy.future import select
 
 from backend.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES, REFRESH_TOKEN_EXPIRE_DAYS
 from backend.database import get_db
-from backend.models import User
+from backend.models import RefreshToken, User
 
 security = HTTPBearer()
 optional_security = HTTPBearer(auto_error=False)
@@ -43,8 +45,25 @@ def create_refresh_token(data: dict):
     """Issue a token accepted only by /refresh."""
     to_encode = data.copy()
     expire = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    to_encode.setdefault("jti", secrets.token_urlsafe(24))
     to_encode.update({"exp": expire, "token_type": "refresh"})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+
+def issue_refresh_token(db: AsyncSession, data: dict, family_id: str) -> str:
+    """Create a refresh token and stage its server-side record; caller commits."""
+    jti = secrets.token_urlsafe(24)
+    now = datetime.now(timezone.utc)
+    db.add(RefreshToken(
+        jti=jti, user_id=data["user_id"], family_id=family_id, created_at=now,
+        expires_at=now + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS),
+    ))
+    return create_refresh_token({**data, "jti": jti})
+
+
+async def revoke_refresh_tokens(db: AsyncSession, user_id: int) -> None:
+    """Drop every refresh record of a user; caller commits."""
+    await db.execute(delete(RefreshToken).where(RefreshToken.user_id == user_id))
 
 
 async def get_current_user(

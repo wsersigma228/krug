@@ -1,15 +1,18 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
+from datetime import datetime, timedelta, timezone
+from secrets import token_urlsafe
+
+from fastapi import APIRouter, Body, Depends, HTTPException, Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import update
+from sqlalchemy import delete, update
 from sqlalchemy.exc import IntegrityError
 from jose import jwt, ExpiredSignatureError, JWTError
 
-from backend.config import SECRET_KEY, ALGORITHM
+from backend.config import SECRET_KEY, ALGORITHM, PUBLIC_APP_URL, REFRESH_TOKEN_EXPIRE_DAYS
 from backend.database import get_db
-from backend.models import User, EmailDelivery
+from backend.models import User, EmailDelivery, RefreshToken
 from backend.schemas import AccessTokenResponse, UserCreate, UserResponse, UserLogin, Token, TokenRefreshRequest
-from backend.security import create_access_token, create_refresh_token, get_current_user, get_current_admin, verify_password, DUMMY_PASSWORD_HASH
+from backend.security import create_access_token, issue_refresh_token, revoke_refresh_tokens, get_current_user, get_current_admin, verify_password, DUMMY_PASSWORD_HASH
 from backend.crud import users as crud_users
 from backend.rate_limit import check_rate_limit
 from backend.account_tokens import issue_token, consume_token
@@ -17,6 +20,25 @@ from backend.schemas import EmailRequest, AccountTokenRequest, PasswordResetConf
 from backend.security import get_password_hash
 
 router = APIRouter()
+
+REFRESH_COOKIE = "krug_refresh"
+# shortcut: a token reused within this window is treated as a concurrent tab, not theft;
+# a thief replaying inside it gets one access token. Shrink if tabs coordinate refreshes.
+REFRESH_REUSE_GRACE = timedelta(seconds=30)
+
+
+def set_refresh_cookie(response: Response, token: str) -> None:
+    response.set_cookie(
+        REFRESH_COOKIE, token, max_age=REFRESH_TOKEN_EXPIRE_DAYS * 86400, path="/refresh",
+        httponly=True, samesite="strict", secure=PUBLIC_APP_URL.startswith("https"),
+    )
+
+
+def clear_refresh_cookie(response: Response) -> None:
+    response.delete_cookie(
+        REFRESH_COOKIE, path="/refresh", httponly=True, samesite="strict",
+        secure=PUBLIC_APP_URL.startswith("https"),
+    )
 
 
 @router.get("/verify-email", include_in_schema=False)
@@ -48,7 +70,7 @@ async def create_user(user: UserCreate, request: Request, db: AsyncSession = Dep
 
 
 @router.post("/login", response_model=Token)
-async def login(user: UserLogin, request: Request, db: AsyncSession = Depends(get_db)):
+async def login(user: UserLogin, request: Request, response: Response, db: AsyncSession = Depends(get_db)):
     """Exchange credentials for access and refresh tokens."""
     await check_rate_limit(db, request, "login", user.username)
     db_user = await db.scalar(select(User).where(User.username == user.username).execution_options(populate_existing=True).with_for_update())
@@ -67,21 +89,35 @@ async def login(user: UserLogin, request: Request, db: AsyncSession = Depends(ge
         "version": db_user.token_version,
     }
     access_token = create_access_token(data=token_data)
-    refresh_token = create_refresh_token(data=token_data)
+    await db.execute(delete(RefreshToken).where(
+        RefreshToken.user_id == db_user.id, RefreshToken.expires_at < datetime.now(timezone.utc)))
+    refresh_token = issue_refresh_token(db, token_data, token_urlsafe(16))
+    await db.commit()
+    set_refresh_cookie(response, refresh_token)
     return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}
 
 
-@router.post("/refresh", response_model=AccessTokenResponse)
-async def refresh_token(body: TokenRefreshRequest, request: Request, db: AsyncSession = Depends(get_db)):
-    """Exchange a refresh token for a new access token."""
+@router.post("/refresh", response_model=AccessTokenResponse, response_model_exclude_none=True)
+async def refresh_token(
+    request: Request, response: Response,
+    body: TokenRefreshRequest | None = Body(default=None),
+    db: AsyncSession = Depends(get_db),
+):
+    """Rotate a refresh token (cookie or body) and issue a new access token."""
     await check_rate_limit(db, request, "refresh")
     credentials_exception = HTTPException(
         status_code=401,
         detail="Invalid refresh token",
         headers={"WWW-Authenticate": "Bearer"}
     )
+    # An explicit body token wins over the cookie: API clients that share a cookie jar
+    # (and tests) must be able to refresh a specific token. Browsers send no body.
+    body_token = body.refresh_token if body else None
+    raw_token = body_token or request.cookies.get(REFRESH_COOKIE)
+    if not raw_token:
+        raise credentials_exception
     try:
-        payload = jwt.decode(body.refresh_token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(raw_token, SECRET_KEY, algorithms=[ALGORITHM])
         if payload.get("token_type") != "refresh":
             raise credentials_exception
         user_id = payload.get("user_id")
@@ -101,17 +137,35 @@ async def refresh_token(body: TokenRefreshRequest, request: Request, db: AsyncSe
     if db_user is None or type(payload.get("version")) is not int or payload["version"] != db_user.token_version:
         raise credentials_exception
 
+    jti = payload.get("jti")
+    record = await db.scalar(select(RefreshToken).where(RefreshToken.jti == jti).with_for_update()) if isinstance(jti, str) else None
+    now = datetime.now(timezone.utc)
+    if record is None or record.user_id != db_user.id or record.expires_at <= now:
+        raise credentials_exception
+
     token_data = {
         "sub": db_user.username,
         "user_id": db_user.id,
         "version": db_user.token_version,
     }
     new_access_token = create_access_token(data=token_data)
+    result = {"access_token": new_access_token, "token_type": "bearer"}
 
-    return {
-        "access_token": new_access_token,
-        "token_type": "bearer"
-    }
+    if record.used_at is not None:
+        if now - record.used_at <= REFRESH_REUSE_GRACE:
+            return result  # concurrent tab: access token only, no new refresh
+        await db.execute(delete(RefreshToken).where(RefreshToken.family_id == record.family_id))
+        await db.commit()
+        raise credentials_exception
+
+    record.used_at = now
+    new_refresh = issue_refresh_token(db, token_data, record.family_id)
+    await db.commit()
+    if body_token:
+        result["refresh_token"] = new_refresh
+    else:
+        set_refresh_cookie(response, new_refresh)
+    return result
 
 
 @router.get("/users/get", response_model=list[UserResponse])
@@ -190,18 +244,21 @@ async def confirm_reset(body: PasswordResetConfirm, request: Request, db: AsyncS
     user = await consume_token(db, body.token, "reset")
     user.hashed_password = get_password_hash(body.password)
     user.token_version += 1
+    await revoke_refresh_tokens(db, user.id)
     await db.commit()
 
 
 @router.post("/logout", status_code=204)
-async def logout(request: Request, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
+async def logout(request: Request, response: Response, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
     version = current_user.token_version
     await check_rate_limit(db, request, "logout", str(current_user.id))
     user = await db.scalar(select(User).where(User.id == current_user.id).execution_options(populate_existing=True).with_for_update())
     if not user or user.token_version != version:
         raise HTTPException(401, "Session revoked")
     user.token_version += 1
+    await revoke_refresh_tokens(db, user.id)
     await db.commit()
+    clear_refresh_cookie(response)
 
 
 @router.get("/me/notifications", response_model=NotificationSettings)
