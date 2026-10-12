@@ -346,6 +346,19 @@ Object.assign(english, {
 });
 Object.assign(english, { "Хакатон": "Hackathon", "Джейм-игра": "Game jam", "Встреча": "Meetup", "Другое": "Other", "В архиве": "Archived" });
 Object.assign(english, { "Роли в проектах": "Roles in projects", "Просматривайте актуальные роли и откликайтесь на странице проекта.": "Browse current roles and apply from the project page.", "Название роли или навык": "Role title or skill", "О проекте": "About the project", "Пока нет открытых ролей": "No open roles yet", "Открытые роли появятся здесь, когда проекты начнут набор.": "Open roles will appear here when projects start recruiting.", "Найти проекты": "Find projects" });
+// Discovery home. "д", "ч", "м" are countdown unit labels (days, hours, minutes).
+Object.assign(english, {
+  "идёт": "live", "Идёт": "Runs", "до конца": "left", "дедлайн": "deadline", "до дедлайна": "to deadline", "регистрация": "registration", "до старта": "to start", "скоро": "soon",
+  "д": "d", "ч": "h", "м": "m", "событие": "event", "сегодня": "today",
+  "заявка принята": "application accepted", "заявки приняты": "applications accepted", "заявок принято": "applications accepted",
+  "событие на неделе": "event this week", "события на неделе": "events this week", "событий на неделе": "events this week",
+  "участник": "member", "участника": "members", "роль": "role", "роли": "roles", "ролей": "roles", "публикация": "post", "публикации": "posts",
+  "Привет,": "Hi,", "Сейчас и скоро": "Now and soon", "Найди, с кем и что делать": "Find who to build with and what to do",
+  "Проекты, команды, события и сообщества: найдите, где нужны ваши навыки.": "Projects, teams, events and communities: find where your skills are needed.",
+  "Часто ищут": "Popular searches", "Откликнуться": "Apply", "Ищут людей": "Looking for people", "Все роли": "All roles", "Календарь событий": "Event calendar",
+  "Проекты, сообщества и люди": "Projects, communities and people", "Смотреть всё": "See all",
+  "на рассмотрении": "under review", "принята": "accepted", "отклонена": "declined", "отозвана": "withdrawn", "Ваши заявки": "Your applications",
+});
 const validLanguage = (value) => ["ru", "en"].includes(value);
 function storedPreference(key) {
   try { return localStorage.getItem(key); } catch { return null; }
