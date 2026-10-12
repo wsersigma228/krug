@@ -304,4 +304,4 @@ mixed saved content. Use the existing locale, collaboration and viewport scripts
 for regression checks; compare screenshots with `docs/design/coral-concept.png`
 separately. Functional success alone is not visual acceptance.
 
-App CSS/JS URLs in index.html carry the coordinated release query 20261008-platform. Bump that value when shipping changed app assets: the HTML is no-store, while persistent browser caches can otherwise retain an earlier script after a deployment. This is a native cache key, not a frontend build step. Draft covers use authenticated blob requests in the app and join existing object-URL cleanup; never make draft media public to fix an image request.
+App CSS/JS URLs in index.html carry the coordinated release query 20261012-hardening. Bump that value when shipping changed app assets: the HTML is no-store, while persistent browser caches can otherwise retain an earlier script after a deployment. This is a native cache key, not a frontend build step. Draft covers use authenticated blob requests in the app and join existing object-URL cleanup; never make draft media public to fix an image request.
