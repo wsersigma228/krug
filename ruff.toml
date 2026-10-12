@@ -1,0 +1,10 @@
+[lint]
+select = ["E4", "E7", "E9", "F", "B"]
+# B008: FastAPI Depends()/Security() defaults in signatures are the framework idiom.
+ignore = ["B008"]
+
+[lint.per-file-ignores]
+# Test env vars must be set before backend modules are imported.
+"tests/conftest.py" = ["E402"]
+# Applied migrations are not rewritten.
+"alembic/versions/*" = ["F401"]

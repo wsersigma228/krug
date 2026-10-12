@@ -288,7 +288,6 @@ async def test_event_validation_visibility_engagement_and_saved_filters(client, 
     owner, viewer = accounts
     body = event_body()
     # The submission deadline may fall during a multi-day event.
-    from backend.platform_schemas import EventInput
     parsed = EventInput.model_validate(body)
     assert parsed.deadline > parsed.starts_at
     with pytest.raises(ValidationError):

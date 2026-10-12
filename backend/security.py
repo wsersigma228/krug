@@ -90,9 +90,9 @@ async def get_current_user(
             status_code=401,
             detail="Token expired",
             headers={"WWW-Authenticate": "Bearer"}
-        )
+        ) from None
     except (jwt.InvalidTokenError, ValueError, TypeError, OverflowError):
-        raise credentials_exception
+        raise credentials_exception from None
 
     result = await db.execute(select(User).filter(User.id == user_id))
     user = result.scalars().first()

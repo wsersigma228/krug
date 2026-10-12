@@ -66,7 +66,7 @@ async def create_user(user: UserCreate, request: Request, db: AsyncSession = Dep
         return await crud_users.create_user(db=db, user_schemas=user)
     except IntegrityError:
         await db.rollback()
-        raise HTTPException(status_code=409, detail="Username or email already exists")
+        raise HTTPException(status_code=409, detail="Username or email already exists") from None
 
 
 @router.post("/login", response_model=Token)
@@ -128,9 +128,9 @@ async def refresh_token(
             status_code=401,
             detail="Refresh token expired",
             headers={"WWW-Authenticate": "Bearer"}
-            )
+            ) from None
     except (jwt.InvalidTokenError, ValueError, TypeError, OverflowError):
-        raise credentials_exception
+        raise credentials_exception from None
 
     result = await db.execute(select(User).filter(User.id == user_id).execution_options(populate_existing=True).with_for_update())
     db_user = result.scalars().first()

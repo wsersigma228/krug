@@ -1,6 +1,6 @@
 from backend.config import DATABASE_URL
 from backend.database import Base
-from backend import models  # Register tables in Base.metadata.
+from backend import models  # noqa: F401  # Register tables in Base.metadata (import side effect).
 
 from logging.config import fileConfig
 

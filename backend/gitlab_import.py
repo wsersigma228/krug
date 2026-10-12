@@ -91,7 +91,7 @@ def fetch_project(path: str, now: datetime) -> Repository:
                     retry_at = retry_at.replace(tzinfo=timezone.utc)
                 delay = max(0, int((retry_at - datetime.now(timezone.utc)).total_seconds()))
             except (TypeError, ValueError, OverflowError):
-                raise error
+                raise error from None
         if delay > MAX_RETRY_AFTER_SECONDS:
             raise error
         sleep(delay)
