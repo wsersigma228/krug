@@ -34,6 +34,9 @@ if [[ "$ready" != true ]]; then
     echo "Database or Redis did not become ready; app services remain stopped." >&2
     exit 1
 fi
+# Photos written before the non-root image are root-owned; chown is idempotent and
+# lets the app uid (10001) write them. Runs before migrations, as root.
+./scripts/compose "${compose[@]}" run -T --rm --no-deps --user 0 web chown -R 10001:10001 /app/media </dev/null
 ./scripts/compose "${compose[@]}" run -T --rm --no-deps web alembic upgrade head </dev/null
 ./scripts/compose "${compose[@]}" up -d --no-deps --force-recreate web worker beat
 for attempt in {1..30}; do
