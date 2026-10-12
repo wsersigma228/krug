@@ -267,7 +267,7 @@ async function main() {
       await noOverflow(page);
       await noCardOverlap(page);
       assert(await page.locator('.topbar-inner').evaluate(header => {
-        const children = [...header.querySelectorAll('.brand-block, .nav, .preferences, .header-actions')].map(el => el.getBoundingClientRect());
+        const children = [...header.querySelectorAll('.brand, .nav, .hsearch, .preferences, .header-actions')].filter(el => el.offsetWidth).map(el => el.getBoundingClientRect());
         const bounds = header.getBoundingClientRect();
         return children.every(rect => rect.left >= bounds.left && rect.right <= bounds.right + 1) &&
           children.every((a, i) => children.slice(i + 1).every(b =>
@@ -283,17 +283,14 @@ async function main() {
       await noCardOverlap(page);
       assert(await page.locator('.search').evaluate(search => Math.abs(search.getBoundingClientRect().width - search.closest('.main').getBoundingClientRect().width) < 2), 'Search spans the feed width');
       assert(await page.locator('.topbar-inner').evaluate(header => {
-        const brand = header.querySelector('.brand-block').getBoundingClientRect();
+        const brand = header.querySelector('.brand').getBoundingClientRect();
         const nav = header.querySelector('.nav').getBoundingClientRect();
         const controls = header.querySelector('.header-controls').getBoundingClientRect();
         const bounds = header.getBoundingClientRect();
-        const availableCenter = (brand.right + controls.left) / 2;
-        // The compact header centers navigation in the actual gap between brand and controls.
-        // This keeps the contract correct when those side groups differ in width on ultrawide screens.
-        return brand.left >= bounds.left && controls.right <= bounds.right &&
-          nav.left >= brand.right - 1 && nav.right <= controls.left + 1 &&
-          Math.abs((nav.left + nav.right) / 2 - availableCenter) < 2;
-      }), `Desktop navigation fits and centers between brand and controls at ${width}px`);
+        // The graphite header is a row inside a container capped at 2400px: brand, navigation, search, controls.
+        return bounds.width <= 2401 && brand.left >= bounds.left && controls.right <= bounds.right + 1 &&
+          nav.left >= brand.right - 1 && nav.right <= controls.left + 1;
+      }), `Desktop header row fits inside the capped container at ${width}px`);
       const columns = await page.locator('.post-grid').evaluate(grid => getComputedStyle(grid).gridTemplateColumns.split(' ').length);
       assert(columns >= (width === 2560 ? 6 : 8), `The ${width}px feed needs more visible columns`);
       const photoLayout = await page.locator('.post-photo').first().evaluate(image => {
