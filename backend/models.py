@@ -119,6 +119,18 @@ class EmailDelivery(Base):
     last_error = Column(String(100), nullable=True)
 
 
+class RefreshToken(Base):
+    """Server-side record of an issued refresh token; one family per login."""
+    __tablename__ = "refresh_tokens"
+
+    jti = Column(String, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    family_id = Column(String, nullable=False, index=True)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    used_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+
+
 class User(Base):
     __tablename__ = "users"
     __table_args__ = (CheckConstraint("language IN ('ru', 'en')", name="ck_users_language"),)
