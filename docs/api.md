@@ -41,8 +41,16 @@ Unknown, expired or foreign tokens return 401.
 Reuse detection: presenting an already-used token more than 30 seconds after its
 use is treated as theft; the whole family is deleted and the request returns 401.
 Within 30 seconds (concurrent tabs) it returns 200 with an access token only and
-no new refresh token or cookie. Logout and password reset delete all of the
-user's refresh rows; login deletes that user's expired rows.
+no new refresh token or cookie. Reuse detection also bumps the account's token
+version and deletes all its refresh rows: every session on every device, including
+already-issued access tokens, ends and must sign in again. Trade-off: one stolen
+or replayed token logs the owner out everywhere, in exchange for killing the
+thief's access token too. Logout and password reset delete all of the user's
+refresh rows; login deletes that user's expired rows, and a daily Celery beat task
+(`purge-expired-refresh-tokens`) deletes expired rows of all users.
+
+Deploy note: refresh tokens issued before this change carry no `jti` and are
+rejected, so every existing session needs one re-login after the deploy.
 
 Username is 3–50 characters at registration. New passwords are 8–100 characters.
 Email is optional. Verification links expire after 60 minutes; reset links after

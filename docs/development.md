@@ -63,6 +63,7 @@ db/redis (and optional Mailpit) and waits for PostgreSQL TCP and Redis readiness
 runs `alembic upgrade head` using the new image, then
 recreates the app services and waits for health. A migration error must be fixed
 before starting services that need the new schema. Data volumes are preserved.
+The refresh-token rotation release invalidates old refresh tokens: users sign in once again.
 
 For manual development on Linux, start db/redis, migrate with
 `.venv/bin/alembic upgrade head`, then run

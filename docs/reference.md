@@ -113,7 +113,9 @@ Resending invalidates previous links of the same kind and cancels their pending 
 `POST /logout` signs out **all sessions**; reset also revokes all existing access
 and refresh tokens. JWTs issued before migration must be replaced by signing in.
 Tokens no longer contain email. This is account-wide revocation, not individual
-session management or refresh-token rotation.
+session management. Refresh tokens rotate on every `/refresh`, live in an HttpOnly
+cookie and are tracked server-side; reuse of a rotated token revokes all sessions
+(see `docs/api.md`). Sessions from before this change need one re-login.
 
 Account links open the included `/verify-email` and `/reset-password` forms.
 Set `PUBLIC_APP_URL` to the application origin (HTTPS for public deployment).

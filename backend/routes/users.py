@@ -154,7 +154,9 @@ async def refresh_token(
     if record.used_at is not None:
         if now - record.used_at <= REFRESH_REUSE_GRACE:
             return result  # concurrent tab: access token only, no new refresh
-        await db.execute(delete(RefreshToken).where(RefreshToken.family_id == record.family_id))
+        # Theft suspected: end every session, including already-issued access tokens.
+        db_user.token_version += 1
+        await revoke_refresh_tokens(db, db_user.id)
         await db.commit()
         raise credentials_exception
 

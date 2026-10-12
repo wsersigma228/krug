@@ -93,7 +93,7 @@ async def test_reuse_within_grace_returns_access_only(client, accounts, db):
     assert len(await family_rows(db, tokens["refresh_token"])) == 2
 
 
-async def test_other_family_survives_reuse_revocation(client, accounts, db):
+async def test_reuse_detection_ends_all_sessions(client, accounts, db):
     other = (await login(client, accounts[0])).json()
     victim = (await login(client, accounts[0])).json()
     client.cookies.clear()
@@ -101,7 +101,48 @@ async def test_other_family_survives_reuse_revocation(client, accounts, db):
     await db.execute(age_use(db, jti(victim["refresh_token"]), 120))
     await db.commit()
     assert (await client.post("/refresh", json={"refresh_token": victim["refresh_token"]})).status_code == 401
-    assert (await client.post("/refresh", json={"refresh_token": other["refresh_token"]})).status_code == 200
+    assert (await client.post("/refresh", json={"refresh_token": other["refresh_token"]})).status_code == 401
+    assert (await client.get("/me", headers={"Authorization": f"Bearer {other['access_token']}"})).status_code == 401
+
+
+async def test_cookie_refresh_twice_past_grace(client, accounts, db):
+    await login(client, accounts[0])
+    for _ in range(2):
+        used = jti(client.cookies.get("krug_refresh"))
+        assert (await client.post("/refresh")).status_code == 200
+        await db.execute(age_use(db, used, 120))
+        await db.commit()
+
+
+async def test_password_reset_revokes_refresh_rows(client, accounts, db):
+    from backend.account_tokens import decrypt_secret, issue_token
+    from backend.models import AccountToken, User
+    await login(client, accounts[0])
+    user = await db.get(User, accounts[0]["id"])
+    await issue_token(db, user, "reset")
+    row = await db.scalar(select(AccountToken).where(AccountToken.user_id == user.id, AccountToken.purpose == "reset", AccountToken.consumed.is_(False)))
+    token = decrypt_secret(row.encrypted_secret)
+    await db.commit()
+    response = await client.post("/auth/password-reset/confirm", json={"token": token, "password": "another-password"})
+    assert response.status_code == 204
+    assert await db.scalar(select(func.count()).select_from(RefreshToken).where(RefreshToken.user_id == user.id)) == 0
+
+
+async def test_cookie_secure_when_public_url_is_https(client, accounts, monkeypatch):
+    monkeypatch.setattr("backend.routes.users.PUBLIC_APP_URL", "https://krug.example")
+    response = await login(client, accounts[0])
+    assert "secure" in response.headers["set-cookie"].lower()
+
+
+async def test_purge_expired_refresh_tokens(client, accounts, db):
+    from backend.tasks.auth_tasks import purge_expired
+    stale = (await login(client, accounts[0])).json()["refresh_token"]
+    live = (await login(client, accounts[0])).json()["refresh_token"]
+    await db.execute(update(RefreshToken).where(RefreshToken.jti == jti(stale)).values(
+        expires_at=datetime.now(timezone.utc) - timedelta(seconds=1)))
+    assert await purge_expired(db) >= 1
+    assert await db.get(RefreshToken, jti(stale)) is None
+    assert await db.get(RefreshToken, jti(live)) is not None
 
 
 async def test_logout_revokes_tokens_and_clears_cookie(client, accounts, db):

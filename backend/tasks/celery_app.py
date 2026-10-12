@@ -5,7 +5,7 @@ celery_app = Celery(
     "blog_tasks",
     broker=REDIS_URL,
     backend=REDIS_URL,
-    include=["backend.tasks.email_tasks", "backend.tasks.github_tasks", "backend.tasks.gitlab_tasks"],
+    include=["backend.tasks.email_tasks", "backend.tasks.github_tasks", "backend.tasks.gitlab_tasks", "backend.tasks.auth_tasks"],
 )
 
 celery_app.conf.update(
@@ -29,6 +29,11 @@ celery_app.conf.update(
             "task": "backend.tasks.email_tasks.deliver_pending_emails",
             "schedule": 30.0,
             "options": {"expires": 30},
+        },
+        "purge-expired-refresh-tokens": {
+            "task": "backend.tasks.auth_tasks.purge_expired_refresh_tokens",
+            "schedule": 24 * 60 * 60,
+            "options": {"expires": 60 * 60},
         },
     },
 )
