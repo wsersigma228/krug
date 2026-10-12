@@ -1,3 +1,6 @@
+# Design mockup generators are documentation, not application code.
+extend-exclude = ["docs"]
+
 [lint]
 select = ["E4", "E7", "E9", "F", "B"]
 # B008: FastAPI Depends()/Security() defaults in signatures are the framework idiom.
