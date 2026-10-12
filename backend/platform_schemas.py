@@ -375,6 +375,17 @@ class OpeningResponse(BaseModel):
     updated_at: datetime
 
 
+class OpeningTeam(BaseModel):
+    slug: str
+    title: str
+    summary: str
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TeamOpeningResponse(OpeningResponse):
+    team: OpeningTeam | None = None
+
+
 class ApplicationResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int

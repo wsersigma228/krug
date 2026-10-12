@@ -6,6 +6,7 @@ from sqlalchemy import func, or_, select, tuple_
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from backend.database import get_db
 from backend.models import (
@@ -15,10 +16,11 @@ from backend.models import (
 from backend.pagination import cursor_scope, decode_cursor, encode_cursor, make_page, seek_page
 from backend.platform_schemas import (
     ApplicationInput, ApplicationResponse, ApplicationStatus, EngagementPatch, MemberResponse,
-    OpeningInput, OpeningPatch, OpeningResponse, TeamInput, TeamParams, TeamPatch, TeamResponse,
+    OpeningInput, OpeningPatch, OpeningResponse, TeamInput, TeamOpeningResponse, TeamParams, TeamPatch,
+    TeamResponse,
 )
 from backend.project_access import canonical_project_url
-from backend.project_schemas import InterestedUser, ProjectCreate, ProjectResponse
+from backend.project_schemas import InterestedUser, OpeningSearchParams, ProjectCreate, ProjectResponse
 from backend.rate_limit import check_rate_limit
 from backend.routes.platform_common import (
     _search_labels, joined_page, lock_actor, owned, page_response, visible,
@@ -186,6 +188,25 @@ async def team_members(slug: str, params: Annotated[PageParams, Query()],
                        "avatar_url": f"/users/{row.user_id}/avatar" if row.avatar_key else None}
                       for row in selected], "has_more": more,
             "next_cursor": encode_cursor(selected[-1].joined_at, selected[-1].id, scope) if more else None}
+
+
+@router.get("/team-openings", response_model=Page[TeamOpeningResponse])
+async def search_team_openings(params: Annotated[OpeningSearchParams, Query()],
+                               db: AsyncSession = Depends(get_db)):
+    scope = cursor_scope("team_openings_public", search=params.search, skill=params.skill)
+    cursor = decode_cursor(params.cursor, scope)
+    # Same team rules as GET /teams: public and not archived.
+    query = select(TeamOpening).join(Team, Team.id == TeamOpening.team_id).where(
+        TeamOpening.status == "open", Team.visibility == "public", Team.status != "archived")
+    if params.skill:
+        query = query.where(TeamOpening.skills.contains([params.skill.strip().lower()]))
+    if params.search and params.search.strip():
+        pattern = f"%{params.search.strip()}%"
+        query = query.where(or_(TeamOpening.title.ilike(pattern), TeamOpening.role.ilike(pattern),
+                                TeamOpening.description.ilike(pattern)))
+    query = query.options(selectinload(TeamOpening.team))
+    rows = (await db.scalars(seek_page(query, TeamOpening, cursor, params.limit))).all()
+    return make_page(rows, params.limit, scope)
 
 
 @router.get("/teams/{slug}/openings", response_model=Page[OpeningResponse])
