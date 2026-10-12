@@ -1,6 +1,14 @@
 # Krug: продолжение в новом чате
 
-Обновлено 8 октября 2026. Перед правками читать `AGENTS.md`, этот файл и нужные разделы [discovery.md](discovery.md), [development.md](development.md). Текущие данные и проверки важнее исторических отчётов. Заметка Obsidian: `Проекты/Круг проект/Продолжение работы`.
+Обновлено 12 октября 2026. Перед правками читать `AGENTS.md`, этот файл и нужные разделы [discovery.md](discovery.md), [development.md](development.md). Текущие данные и проверки важнее исторических отчётов. Заметка Obsidian: `Проекты/Круг проект/Продолжение работы`.
+
+## Обновление 12 октября 2026
+
+Код `a7d52f8` (main, CI зелёный): refresh-токен только в HttpOnly cookie `krug_refresh` с ротацией и отзывом при повторе (схема `e7a1c3b95d24`, все сессии требуют одного повторного входа), `html` экранирует значения по умолчанию (`SafeHtml`), PyJWT вместо python-jose, non-root образ `python:3.14.8-slim`, обязательные `DB_PASSWORD`/`REDIS_PASSWORD`, `scripts/backup [--consistent]`, ruff + pip-audit в CI, `backend/routes/platform.py` разделён на `platform_common`/`teams`/`communities`/`events`/`share`. 307 Python-тестов.
+
+Fedora `krug-release-check` обновлён до `a7d52f8` через push по SSH (GitHub с сервера недоступен), миграция применена, health/worker/Redis-auth/browser smoke проверены, затем экземпляр остановлен — он был остановлен до задачи. Бэкап перед обновлением: `/home/wser/Documents/krug-backups/20261012T133943Z/`. Публичный деплой и домен пользователь отложил.
+
+Следующие планы пользователя: редизайн и автоматические collectors — game jams, хакатоны, ивенты и проекты, активно набирающие участников/работников, с разных сайтов. Подробности решений — Obsidian `Проекты/Круг проект/Решения и версии`.
 
 ## Задача и визуальный ориентир
 
