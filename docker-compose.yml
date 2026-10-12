@@ -5,8 +5,8 @@ x-app: &app
   env_file:
     - .env
   environment:
-    DATABASE_URL: postgresql+psycopg_async://${DB_USER:-myuser}:${DB_PASSWORD:-1234}@db:5432/${DB_NAME:-mydb}
-    REDIS_URL: redis://redis:6379/0
+    DATABASE_URL: postgresql+psycopg_async://${DB_USER:-myuser}:${DB_PASSWORD:?Set DB_PASSWORD in .env}@db:5432/${DB_NAME:-mydb}
+    REDIS_URL: redis://:${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}@redis:6379/0
   depends_on:
     db:
       condition: service_healthy
@@ -19,7 +19,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${DB_USER:-myuser}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-1234}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
       POSTGRES_DB: ${DB_NAME:-mydb}
     ports:
       - "127.0.0.1:${DB_PORT:-5432}:5432"
@@ -35,6 +35,10 @@ services:
   redis:
     image: docker.io/library/redis:7-alpine
     restart: unless-stopped
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
+      REDISCLI_AUTH: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
+    command: sh -c 'exec redis-server --requirepass "$$REDIS_PASSWORD"'
     ports:
       - "127.0.0.1:${REDIS_PORT:-6379}:6379"
     healthcheck:
@@ -46,8 +50,8 @@ services:
   web:
     <<: *app
     environment:
-      DATABASE_URL: postgresql+psycopg_async://${DB_USER:-myuser}:${DB_PASSWORD:-1234}@db:5432/${DB_NAME:-mydb}
-      REDIS_URL: redis://redis:6379/0
+      DATABASE_URL: postgresql+psycopg_async://${DB_USER:-myuser}:${DB_PASSWORD:?Set DB_PASSWORD in .env}@db:5432/${DB_NAME:-mydb}
+      REDIS_URL: redis://:${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}@redis:6379/0
       MEDIA_ROOT: /app/media
     volumes:
       - post_media:/app/media
