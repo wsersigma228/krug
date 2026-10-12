@@ -587,6 +587,8 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent); outline
 @media (hover: hover) and (pointer: fine) { .topbar .compose:hover { background: #e4e4e0; } }
 @media (max-width: 1300px) { .account-link > span:last-child { display: none; } }
 @media (max-width: 1080px) { .hsearch { display: none; } .header-controls { margin-left: auto; } }
+/* Five nav items no longer fit beside the controls under 1000px: drop the icons and tighten padding. */
+@media (max-width: 1000px) { .nav a { padding: 0 .6rem; } .nav a svg { display: none; } }
 @media (max-width: 850px) {
   .nav { display: none; }
   .topbar-inner { gap: 10px; }
