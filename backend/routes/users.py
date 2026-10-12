@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import delete, update
 from sqlalchemy.exc import IntegrityError
-from jose import jwt, ExpiredSignatureError, JWTError
+import jwt
 
 from backend.config import SECRET_KEY, ALGORITHM, PUBLIC_APP_URL, REFRESH_TOKEN_EXPIRE_DAYS
 from backend.database import get_db
@@ -123,13 +123,13 @@ async def refresh_token(
         user_id = payload.get("user_id")
         if type(user_id) is not int or not 1 <= user_id <= 2147483647:
             raise credentials_exception
-    except ExpiredSignatureError:
+    except jwt.ExpiredSignatureError:
         raise HTTPException(
             status_code=401,
             detail="Refresh token expired",
             headers={"WWW-Authenticate": "Bearer"}
             )
-    except (JWTError, ValueError, TypeError, OverflowError):
+    except (jwt.InvalidTokenError, ValueError, TypeError, OverflowError):
         raise credentials_exception
 
     result = await db.execute(select(User).filter(User.id == user_id).execution_options(populate_existing=True).with_for_update())

@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
-from jose import jwt
+import jwt
 from sqlalchemy import func, select, update
 
 from backend.models import RefreshToken
@@ -19,7 +19,7 @@ def age_use(db, jti_value, seconds):
 
 
 def jti(token):
-    return jwt.get_unverified_claims(token)["jti"]
+    return jwt.decode(token, options={"verify_signature": False})["jti"]
 
 
 async def family_rows(db, token):

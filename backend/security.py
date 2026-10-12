@@ -2,7 +2,7 @@ import secrets
 from datetime import datetime, timedelta, timezone
 from fastapi import Depends, Header, HTTPException, Security
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from jose import ExpiredSignatureError, JWTError, jwt
+import jwt
 from pwdlib import PasswordHash
 from pwdlib.hashers.argon2 import Argon2Hasher
 from pwdlib.hashers.bcrypt import BcryptHasher
@@ -85,13 +85,13 @@ async def get_current_user(
         user_id = payload.get("user_id")
         if type(user_id) is not int or not 1 <= user_id <= 2147483647:
             raise credentials_exception
-    except ExpiredSignatureError:
+    except jwt.ExpiredSignatureError:
         raise HTTPException(
             status_code=401,
             detail="Token expired",
             headers={"WWW-Authenticate": "Bearer"}
         )
-    except (JWTError, ValueError, TypeError, OverflowError):
+    except (jwt.InvalidTokenError, ValueError, TypeError, OverflowError):
         raise credentials_exception
 
     result = await db.execute(select(User).filter(User.id == user_id))

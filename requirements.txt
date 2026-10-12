@@ -6,7 +6,7 @@ psycopg[binary]
 pydantic
 python-dotenv
 pwdlib[argon2,bcrypt]
-python-jose[cryptography]
+PyJWT
 cryptography
 redis
 celery[redis]

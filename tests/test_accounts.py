@@ -376,7 +376,7 @@ async def test_failed_logins_keep_rate_counters_after_authentication_error(clien
                                          {"version": "0"}, {"version": 0.0},
                                          {"version": {}}, {"version": -1}, {"version": 1}])
 async def test_signed_jwt_missing_or_invalid_version_is_rejected(client, accounts, version_claim):
-    from jose import jwt
+    import jwt
     from backend.config import ALGORITHM, SECRET_KEY
 
     account, _ = accounts
@@ -395,7 +395,7 @@ async def test_login_waits_for_password_reset_and_rejects_old_password():
     from uuid import uuid4
 
     from httpx import ASGITransport, AsyncClient
-    from jose import jwt
+    import jwt
     from sqlalchemy import delete
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
     from sqlalchemy.pool import NullPool
