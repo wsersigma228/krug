@@ -164,6 +164,10 @@ catalog without requiring the running stack.
 jitter and the return to the page top without a browser.
 `node scripts/check_likes.cjs` checks the shared like/unlike control, failures,
 guest sign-in and detached screens without a browser.
+`node scripts/check_html_escape.cjs` checks that the `html` template tag escapes
+interpolated values by default. Pass trusted markup only as the result of
+`html`, `esc()` or `raw()`; a plain string, including `.join("")` output, is
+escaped. Pass arrays of `html` results to `html` directly instead of joining them.
 
 ## Interface preferences and localization
 
