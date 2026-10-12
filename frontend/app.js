@@ -198,6 +198,7 @@ function shell(route) {
         <a href="/app#explore" class="${route === "explore" ? "active" : ""}">${icon("explore")}<span>${t("Обзор")}</span></a>
         <a href="/app#teams" class="${["teams", "team", "team-new", "team-edit"].includes(route) ? "active" : ""}">${icon("people")}<span>${t("Команды")}</span></a>
         <a href="/app#events" class="${["events", "event", "event-new", "event-edit"].includes(route) ? "active" : ""}">${icon("calendar")}<span>${t("События")}</span></a>
+        <a href="/app#communities" class="${["communities", "community", "community-new", "community-edit"].includes(route) ? "active" : ""}">${icon("community")}<span>${t("Сообщества")}</span></a>
         <a href="/app#settings" class="${["settings", "profile", "applications", "saved", "projects"].includes(route) ? "active" : ""}" ${["settings", "profile", "applications", "saved", "projects"].includes(route) ? html`aria-current="page"` : ""}>${icon("settings")}<span>${t("Вы")}</span></a>
       </nav>`;
   document.querySelector(".hsearch").addEventListener("submit", (event) => {
