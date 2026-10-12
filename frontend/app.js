@@ -58,6 +58,12 @@ const icon = (name) =>
   html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">${iconPaths[name]}</svg>`;
 
 function saveSession(value) {
+  // The refresh token lives only in an HttpOnly cookie; never keep it in script-readable storage.
+  // `sid` identifies this login across access-token refreshes.
+  if (value) {
+    const { refresh_token, ...rest } = value;
+    value = { ...rest, sid: crypto.randomUUID() };
+  }
   session = value;
   me = null;
   if (value) sessionStorage.setItem("krug-session", JSON.stringify(value));
@@ -91,7 +97,7 @@ async function api(path, options = {}, retry = true) {
       ...options,
       body,
       headers,
-      credentials: "omit",
+      credentials: "same-origin", // lets /login and /logout set or clear the path-scoped refresh cookie
     });
   } catch {
     throw new Error(
@@ -108,9 +114,7 @@ async function api(path, options = {}, retry = true) {
       const original = session;
       refreshFlight = fetch("/refresh", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ refresh_token: original.refresh_token }),
-        credentials: "omit",
+        credentials: "same-origin",
       })
         .then(async (r) => {
           if (!r.ok) {
@@ -993,7 +997,7 @@ async function render(options = {}) {
     if (session && !me && !special) {
       const current = session;
       const profile = await api("/me");
-      if (session?.refresh_token === current.refresh_token) {
+      if (session?.sid === current.sid) {
         if (!profile.language) {
           const choice = await api("/me/language?initialize=true", { method: "PATCH", body: { language } });
           profile.language = choice.language;
