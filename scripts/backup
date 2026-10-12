@@ -19,11 +19,12 @@ if [[ "$#" -gt 1 || "${1:-}" == -* ]]; then
 fi
 base="${1:-backups}"
 compose=(-f docker-compose.yml)
-stopped=false
+stopped=()
 restart_services() {
-    if [[ "$stopped" == true ]]; then
-        stopped=false
-        ./scripts/compose "${compose[@]}" start web worker beat
+    if [[ "${#stopped[@]}" -gt 0 ]]; then
+        local services=("${stopped[@]}")
+        stopped=()
+        ./scripts/compose "${compose[@]}" start "${services[@]}"
     fi
 }
 trap restart_services EXIT
@@ -35,8 +36,15 @@ mkdir -m 700 -- "$target"
 trap 'echo "Backup incomplete: $target; do not restore from it." >&2' ERR
 if [[ "$consistent" == true ]]; then
     # Stop writers so the dump and photo archive describe one point in time.
-    stopped=true
-    ./scripts/compose "${compose[@]}" stop web worker beat
+    # Restart only what was running, so a stopped instance stays stopped.
+    for service in web worker beat; do
+        if ./scripts/compose "${compose[@]}" exec -T "$service" true >/dev/null 2>&1; then
+            stopped+=("$service")
+        fi
+    done
+    if [[ "${#stopped[@]}" -gt 0 ]]; then
+        ./scripts/compose "${compose[@]}" stop "${stopped[@]}"
+    fi
 fi
 # Variables are expanded inside the db container, where the credentials are set.
 ./scripts/compose "${compose[@]}" exec -T db sh -c \
