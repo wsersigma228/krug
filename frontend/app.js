@@ -51,10 +51,10 @@ const icon = (name) =>
 
 function saveSession(value) {
   // The refresh token lives only in an HttpOnly cookie; never keep it in script-readable storage.
-  // `sid` identifies this login across access-token refreshes.
+  // `sid` identifies this login across access-token refreshes; not a secret (randomUUID needs a secure context).
   if (value) {
     const { refresh_token, ...rest } = value;
-    value = { ...rest, sid: crypto.randomUUID() };
+    value = { ...rest, sid: `${Date.now()}-${Math.random()}` };
   }
   session = value;
   me = null;
