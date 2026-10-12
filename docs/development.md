@@ -264,12 +264,17 @@ reads `X-Forwarded-For`/`X-Forwarded-Proto` only from peers listed in
 through `env_file`). Behind a reverse proxy, set it to the address that connects to
 the app container as seen by uvicorn, otherwise every client shares the proxy's rate-limit
 budget. Do not use `*` while the app port is reachable directly. SMTP authentication requires STARTTLS.
+Rootless Podman port publishing can present the container network gateway (observed:
+`10.89.0.x`) as every client's address even without a proxy; per-IP limits are then shared
+by all clients, while per-account limits still apply. Check `podman logs` for the address
+uvicorn sees before relying on per-IP limits.
+
 ### Backup
 
 On the execution host run `./scripts/backup [--consistent] [DIR]` (default `DIR` is
 `backups/`, which Git ignores). It creates `DIR/<UTC timestamp>/` with mode 700 containing
 `db.dump` (`pg_dump -Fc`) and `media.tar.gz`, then checks them with `pg_restore --list`
-and `tar -tzf`. It needs running `db` and `web` containers and prints only paths and sizes.
+and `tar -tzf`. It needs a running `db` container (photos are read by a one-off `web` container) and prints only paths and sizes.
 
 Without `--consistent`, web, worker and beat keep running, so the dump and photo archive
 can differ by writes made during the backup. With `--consistent`, the script stops web,
