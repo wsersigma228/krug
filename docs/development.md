@@ -103,6 +103,8 @@ if your credentials/ports differ from test defaults.
 .venv/bin/python -m ruff check .
 node --check frontend/app.js
 node --check frontend/projects.js
+node --check frontend/platform.js
+node --check frontend/home.js
 node --check frontend/i18n.js
 node scripts/check_i18n.cjs
 node scripts/check_html_escape.cjs
@@ -323,4 +325,4 @@ mixed saved content. Use the existing locale, collaboration and viewport scripts
 for regression checks; compare screenshots with the approved mockups in `docs/design/redesign-2026-10/`
 separately. Functional success alone is not visual acceptance.
 
-App CSS/JS and font CSS URLs in index.html carry the coordinated release query 20261012-redesign1. Bump that value when shipping changed app assets: the HTML is no-store, while persistent browser caches can otherwise retain an earlier script after a deployment. This is a native cache key, not a frontend build step. Draft covers use authenticated blob requests in the app and join existing object-URL cleanup; never make draft media public to fix an image request.
+App CSS/JS and font CSS URLs in index.html carry the coordinated release query 20261012-redesign2. Bump that value when shipping changed app assets: the HTML is no-store, while persistent browser caches can otherwise retain an earlier script after a deployment. This is a native cache key, not a frontend build step. Draft covers use authenticated blob requests in the app and join existing object-URL cleanup; never make draft media public to fix an image request.

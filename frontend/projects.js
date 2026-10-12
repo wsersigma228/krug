@@ -27,6 +27,7 @@ async function discoveryScreen(root, query, stamp) {
   const kinds = ["all", "projects", "teams", "events", "communities", "people"];
   const kind = kinds.includes(query.get("kind")) ? query.get("kind") : "all";
   const filters = ["search", "skill", "language", "format"];
+  if (kind === "all" && ![...filters].some(key => query.get(key))) return homeScreen(root, query, stamp);
   const supportedFilters = kind === "people" ? filters.filter(key => key !== "format") : filters;
   const hrefFor = (value, reset = false) => { const params = new URLSearchParams(); if (query.has("search")) params.set("search", query.get("search")); if (!reset) for (const key of filters.slice(1)) if (key !== "format" || value !== "people") if (query.has(key)) params.set(key, query.get(key)); params.set("kind", value); return "/app#explore?" + params; };
   const mobile = matchMedia("(max-width: 850px)");
