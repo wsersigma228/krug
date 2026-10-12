@@ -1,52 +1,68 @@
 ---
 name: Krug
-description: Coral and graphite collaboration discovery for people, projects, teams, events, communities and public updates.
+description: Graphite, blue and orange collaboration discovery for people, projects, teams, events, communities and public updates. Screens are being migrated to this system step by step (docs/design/redesign-2026-10).
 colors:
-  canvas-light: "#f5f6f8"
+  canvas-light: "#f4f4f1"
   paper-light: "#ffffff"
-  text-light: "#242932"
-  muted-light: "#596572"
-  line-light: "#e7dedd"
-  soft-light: "#f5e9e7"
-  accent-light: "#c83f38"
+  text-light: "#141414"
+  muted-light: "#626262"
+  line-light: "#e4e4df"
+  soft-light: "#ededea"
+  accent-light: "#1f6bff"
   on-accent-light: "#ffffff"
-  hover-light: "#a8322d"
-  canvas-dark: "#181c22"
-  paper-dark: "#22272f"
-  text-dark: "#eff2f6"
-  muted-dark: "#a4afbc"
-  line-dark: "#3e3a3b"
-  soft-dark: "#332c2c"
-  accent-dark: "#ff786f"
-  on-accent-dark: "#241111"
-  hover-dark: "#ff938b"
+  hover-light: "#1858d9"
+  accent-ink-light: "#0a4fd1"
+  hero-light: "#17191c"
+  hero-ink: "#f4f4f2"
+  hero-muted-light: "#a3a5a8"
+  hero-line-light: "#2c2f33"
+  signal-light: "#ff6b2c"
+  live-light: "#0f8a55"
+  canvas-dark: "#0d0e10"
+  paper-dark: "#16171a"
+  text-dark: "#ececee"
+  muted-dark: "#9a9ca3"
+  line-dark: "#26282c"
+  soft-dark: "#1e2023"
+  accent-dark: "#5b95ff"
+  on-accent-dark: "#06101f"
+  hover-dark: "#7aa9ff"
+  accent-ink-dark: "#8db5ff"
+  hero-dark: "#131416"
+  signal-dark: "#ff8a55"
+  live-dark: "#4cc58b"
+  entity-project: "#1f6bff"
+  entity-team: "#12a26b"
+  entity-event: "#ff6b2c"
+  entity-community: "#8b5cf6"
+  entity-person: "#e2a400"
   viewer-backdrop: "#080c12e6"
 typography:
   headline:
-    fontFamily: '"Krug Inter", Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif'
-    fontSize: "clamp(32px, 3vw, 46px)"
+    fontFamily: '"Krug Unbounded", "Krug Onest", ui-sans-serif, system-ui, sans-serif'
+    fontSize: "clamp(1.5rem, calc(1.1rem + 1.2vw), 2.5rem)"
     fontWeight: 650
     lineHeight: 1.15
     letterSpacing: "-0.02em"
   title:
-    fontFamily: '"Krug Inter", Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif'
+    fontFamily: '"Krug Geologica", "Krug Onest", ui-sans-serif, system-ui, sans-serif'
     fontSize: "22px"
     fontWeight: 600
     lineHeight: 1.3
     letterSpacing: "-0.02em"
   section:
-    fontFamily: '"Krug Inter", Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif'
-    fontSize: "21px"
+    fontFamily: '"Krug Unbounded", "Krug Onest", ui-sans-serif, system-ui, sans-serif'
+    fontSize: "17px"
     fontWeight: 650
     lineHeight: 1.3
     letterSpacing: "-0.02em"
   body:
-    fontFamily: '"Krug Inter", Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif'
+    fontFamily: '"Krug Onest", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif'
     fontSize: "18px"
     fontWeight: 400
     lineHeight: 1.75
   excerpt:
-    fontFamily: '"Krug Inter", Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif'
+    fontFamily: '"Krug Onest", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif'
     fontSize: "16px"
     fontWeight: 400
     lineHeight: 1.65
@@ -56,41 +72,38 @@ typography:
     fontWeight: 650
     lineHeight: 1.15
   discovery-headline:
-    fontFamily: '"Krug Inter", Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif'
-    fontSize: "clamp(24px, 2vw, 31px)"
+    fontFamily: '"Krug Unbounded", "Krug Onest", ui-sans-serif, system-ui, sans-serif'
+    fontSize: "clamp(19px, 1.6vw, 25px)"
     fontWeight: 650
     lineHeight: 1.1
   discovery-card-title:
-    fontFamily: '"Krug Inter", Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif'
+    fontFamily: '"Krug Geologica", "Krug Onest", ui-sans-serif, system-ui, sans-serif'
     fontSize: "17px"
     fontWeight: 700
     lineHeight: 1.25
   discovery-card-summary:
-    fontFamily: '"Krug Inter", Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif'
+    fontFamily: '"Krug Onest", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif'
     fontSize: "14px"
     fontWeight: 400
     lineHeight: 1.35
   label:
-    fontFamily: '"Krug Inter", Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif'
+    fontFamily: '"Krug Onest", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif'
     fontSize: "14px"
     fontWeight: 600
   metadata:
-    fontFamily: '"Krug Inter", Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif'
+    fontFamily: '"Krug Onest", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif'
     fontSize: "12px"
   author:
-    fontFamily: '"Krug Inter", Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif'
+    fontFamily: '"Krug Onest", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif'
     fontSize: "14px"
     fontWeight: 600
 rounded:
   text-control: "4px"
-  badge: "5px"
-  field: "8px"
-  control: "9px"
-  feedback: "10px"
+  field: "0.45rem"
+  control: "0.55rem"
+  card: "0.55rem"
+  badge: "999px"
   photo: "14px"
-  card-mobile: "12px"
-  card: "14px"
-  post-card: "16px"
   circle: "50%"
 spacing:
   compact: "8px"
@@ -158,7 +171,7 @@ components:
   post-card:
     backgroundColor: "{colors.paper-light}"
     textColor: "{colors.text-light}"
-    rounded: "{rounded.post-card}"
+    rounded: "{rounded.card}"
     padding: "20px"
 ---
 
@@ -168,31 +181,32 @@ components:
 
 **Creative North Star: "A practical place to find collaborators"**
 
-Krug helps people find collaborators through projects, teams, events, communities and opt-in profiles. Coral actions distinguish active choices against graphite or light neutral surfaces. Stories retain their responsive masonry grid, proportional photos, optional titles and readable text.
+Krug helps people find collaborators through projects, teams, events, communities and opt-in profiles. Blue actions distinguish active choices against a graphite header band and neutral surfaces; orange marks the active destination and today. Stories retain their responsive masonry grid, proportional photos, optional titles and readable text.
 
-Dark is the initial theme; saved Light, Dark and System choices remain effective. Both themes share their geometry. The sticky header keeps the top-left wordmark, labelled navigation, language/theme preferences and account/write actions available while it compacts on downward scrolling and expands upward. Russian and English interface copy changes independently of user stories, names and biographies.
+Dark is the initial theme; saved Light, Dark and System choices remain effective. Both themes share their geometry. The sticky header keeps the top-left wordmark, labelled navigation, language/theme preferences and account/write actions available on a graphite band that stays at a fixed height (the earlier compaction on scroll is retired; the scroll listener and `header-compact` class remain in the script without visual effect). Russian and English interface copy changes independently of user stories, names and biographies.
 
-The shipped themes are coral light and coral dark; a standalone monochrome theme remains deferred.
+The visual foundation (tokens, fonts, header, dock, base components) follows the approved October 2026 redesign; individual screens are migrated step by step, so some screens still carry layouts from the earlier coral design. A standalone monochrome theme is dropped.
 
 **Key Characteristics:**
 
-- Graphite and light neutral surfaces with accessible coral actions.
-- Self-hosted Inter typography with a native sans-serif fallback.
+- Graphite header band and neutral surfaces with accessible blue actions and orange signal.
+- Self-hosted Unbounded (display), Geologica (card titles) and Onest (UI text), all with Cyrillic.
 - Distinct cards for people, projects, teams, events and communities; factual counts only.
 - Responsive masonry cards with proportional photographs for Stories.
-- Persistent preferences and a smoothly compacting sticky header.
+- Persistent preferences and a sticky graphite header with search.
 
 ## Colors
 
-The shared palette pairs restrained coral with neutral surfaces; the frontmatter records the light and dark values.
+The shared palette pairs blue accent and orange signal with cool neutral surfaces and a graphite hero band; the frontmatter records the light and dark values. Entity colours (project blue, team green, event orange, community violet, person amber) are exposed as `--c-*` tokens with per-type button pairs `--c-btn/--c-on/--c-ink` through `data-type` or `.type-*`; screens adopt them in later steps.
 
 ### Primary
 
-- **Accent / On accent:** coral primary buttons, active navigation, selection and feedback. Light-mode coral uses white labels; brighter dark-mode coral uses dark labels to preserve contrast. The circular brand mark and active underline use Accent; primary hover uses Hover.
+- **Accent / On accent:** blue primary buttons, focus rings and selection. Light mode uses white labels; the brighter dark-mode blue uses dark labels to preserve contrast. Primary hover uses Hover; text links use Accent ink.
+- **Hero and signal:** the header is graphite (`--hero`, with `--hero-ink/-muted/-line`) in both themes. Signal orange marks the active navigation underline and the current-day line; Live green marks running events.
 
 ### Neutral
 
-- **Canvas:** page and solid sticky-header background.
+- **Canvas:** page background.
 - **Paper:** post cards, forms, settings/authentication cards, theme disclosure and mobile bottom navigation.
 - **Text:** story copy, authors and primary headings.
 - **Muted:** metadata, introductions, hints and inactive navigation.
@@ -202,23 +216,23 @@ The shared palette pairs restrained coral with neutral surfaces; the frontmatter
 
 The live CSS variables `--canvas`, `--paper`, `--text`, `--muted`, `--line`, `--soft`, `--accent`, `--on-accent` and `--hover` map to the corresponding light values at the root and dark values under `data-theme="dark"`. Frontmatter component variants use the light baseline unless explicitly labelled dark.
 
-**The Coral Action Rule.** Use coral for actions and active state; let neutral surfaces frame user content and retain photographs in their original colors.
+**The Blue Action Rule.** Use blue for actions, orange only for the active destination and today markers; let neutral surfaces frame user content and retain photographs in their original colors.
 
 ## Typography
 
-**Interactive app font:** the locally hosted Inter variable font with a native sans-serif fallback. It is served from the app and includes its license in `frontend/INTER-LICENSE.txt`; there is no third-party font request. Font synthesis is disabled. Static public share pages use the system sans-serif stack declared in `frontend/share.css`.
+**Interactive app fonts:** locally hosted variable fonts declared in `frontend/fonts/fonts.css` (licences beside the files, OFL). Unbounded is for the wordmark, page titles, section headings and big numbers; Geologica (weight 700, `SHRP` 60) for card and box titles; Onest for all UI and body text. The root size is fluid: `clamp(15px, calc(10.5px + .3vw), 20px)`. There is no third-party font request. Font synthesis is disabled. Static public share pages use the system sans-serif stack declared in `frontend/share.css`.
 
 ### Hierarchy
 
-- **App headline:** regular route headings use `clamp(32px, 3vw, 46px)` and become (34px) on narrow screens. Public share headlines use `clamp(36px, 6vw, 52px)`.
+- **App headline:** regular route headings use `clamp(1.5rem, calc(1.1rem + 1.2vw), 2.5rem)` in Unbounded and become (26px) on narrow screens; headings wrap anywhere so long Russian words never overflow. Public share headlines use `clamp(36px, 6vw, 52px)`.
 - **Story title and excerpt:** story links use (22px), increasing to (23px) on mobile; excerpts use (16px), preserve newlines and cap at (75ch). Full story copy uses (18px), reducing to (17px) on mobile, preserves newlines and stays within (70ch).
-- **Discovery hierarchy:** the compact discovery heading uses `clamp(24px, 2vw, 31px)` on desktop, (22–29px) through tablet widths and (21–27px) on phones. Card titles use (17px) with (14px) summaries. These compact discovery sizes are separate from the story scale.
-- **Section:** app section headings use (21px), reducing to (20px) on mobile. Public share section headings use (24px).
+- **Discovery hierarchy:** the compact discovery heading uses `clamp(19px, 1.6vw, 25px)` on desktop, (18–23px) through tablet widths and (17–22px) on phones. Card titles use (17px) with (14px) summaries. These compact discovery sizes are separate from the story scale.
+- **Section:** app section headings use (17px) Unbounded, (16px) on mobile. Public share section headings use (24px).
 - **Label:** compact action controls; field labels use weight (550). General introductions use (16px), line-height (1.6) and maximum width (65ch), reducing to (15px) on mobile. Discovery introductions use (15px) desktop and (12px) on narrow screens.
 - **Metadata:** dates use tabular numerals and sit below the author beside a two-row avatar; size is (12px). Author names retain (14px) and weight (600), separating identity from the quieter date. Hints use (13px) and line-height (1.55).
 - **Metadata:** dates use tabular numerals and sit below the author beside a two-row avatar; size is (12px). Author names retain (14px) and weight (600), separating identity from the quieter date. Hints use (13px) and line-height (1.55).
 
-The native sans-serif wordmark uses (26px), weight (750) and tracking (-0.03em), reducing to (22px) on mobile and (20px) at the narrowest breakpoint. It is an identity treatment, not the page heading.
+The lowercase "krug" wordmark (a ring plus Unbounded text) uses (1.25rem) and tracking (-0.035em). It is an identity treatment, not the page heading.
 
 **The Reading First Rule.** Keep stories readable without photographs, preserve user line breaks and allow long text to wrap.
 
@@ -230,31 +244,31 @@ Post listings use CSS Grid with `repeat(auto-fill, minmax(min(100%, 350px), 1fr)
 
 Listing photos appear after the author and before the optional title and text. Full posts retain heading, optional photo and full text order; an untitled full post has a visually hidden Post heading rather than an invented visible title. Text-only cards retain the same controls and reading path.
 
-At (1700px) and above, the header uses three columns with equal flexible sides: the brand stays left, navigation occupies the center and grouped preferences/account actions stay right. Tablet and mobile retain their compact navigation patterns. Search spans the available feed container instead of a separate narrow cap.
+The header is one row, (3.9rem) high, inside a centred container of at most (2400px): wordmark, navigation, a search field (up to (30rem); light field on graphite, dark field in the dark theme), language/theme controls, account and a primary "Create" action (signed in). Search submits to the discovery query (`#explore?kind=all&search=…`). Below (1080px) the search field is hidden; below (1300px) the username is hidden; below (560px) "Create" shrinks to an icon.
 
-The sticky header keeps controls and focused elements in the same DOM. The current compact shell uses a (64px) desktop header and a (62px) header at widths up to (850px); narrow layouts move the four primary destinations to the fixed bottom navigation. Header and tagline transitions use `cubic-bezier(.16, 1, .3, 1)`; reduced motion disables them.
+The header keeps controls and focused elements in the same DOM. At widths up to (850px) the four primary destinations move to the fixed bottom navigation, whose current item carries an orange mark; reduced motion disables transitions.
 
-At (650px) and below, the header stays one row and the fixed bottom navigation carries the four primary destinations. General content uses the full width, (20px) side padding and bottom clearance `calc(100px + env(safe-area-inset-bottom))`; discovery overrides its top and side spacing to stay compact. Story search moves the language select to a second full-width row; ordinary fields use (16px) text while this select uses (13px). Search labels remain accessible while visually hidden. Toasts clear the bottom navigation and safe area. At (360px) and below, header side padding becomes (9px).
+At (650px) and below, the header stays one row and the fixed bottom navigation carries the four primary destinations. General content uses the full width, (20px) side padding and bottom clearance `calc(100px + env(safe-area-inset-bottom))`; discovery overrides its top and side spacing to stay compact. Story search moves the language select to a second full-width row; ordinary fields use (16px) text while this select uses (13px). Search labels remain accessible while visually hidden. Toasts clear the bottom navigation and safe area. 
 
 At mobile widths, project, person and role cards become one column with (16px) gaps; the Stories masonry grid also becomes one column. Authentication forms cap at (490px). Tabs, statistics and action controls wrap.
 
 ## Elevation & Depth
 
-Post cards and form/settings/authentication containers use Paper and one-pixel Line borders. Cards remain flat at rest; their different heights come from content rather than fixed image crops. The header and bottom navigation remain solid. The only box shadows belong to transient toasts: `0 8px 28px #2429321a` in light mode and `0 8px 28px #00000033` in dark mode.
+Post cards and form/settings/authentication containers use Paper and one-pixel Line borders. Cards remain flat at rest; their different heights come from content rather than fixed image crops. The header and bottom navigation remain solid. The only box shadows belong to transient surfaces (toast, theme menu): `0 8px 28px #14141424` in light mode and `0 8px 28px #00000066` in dark mode.
 
 **The Flat Surface Rule.** Separate resting content with cool surfaces and dividers; reserve the shipped shadow for transient toast feedback.
 
 ## Shapes
 
-Fields, tabs and mobile navigation use the field radius; primary controls use the control radius. Form/settings cards use the card radius, reduced on mobile. Post cards use a distinct (16px) radius at every width. Photos use the photo radius; toasts and editor previews use the feedback radius. Status badges have the badge radius. Avatars are circular (32px), with a profile variant (72px). The top-left brand mark is a circular Accent outline (26px with 5px border; mobile 22px with 6px border). Interface SVG icons use (20px) dimensions, with a filled heart for liked state.
+Fields use the field radius (0.45rem); controls, tabs, cards and containers use the shared radius (0.55rem) at every width. Badges and tags are pills. Photos use the photo radius; toasts and editor previews use the feedback radius. Status badges have the badge radius. Avatars are circular (32px), with a profile variant (72px). The top-left brand mark is a circular outline in the header ink colour (1.4rem). Interface SVG icons use (20px) dimensions, with a filled heart for liked state.
 
 ## Components
 
 ### Buttons
 
-Primary actions use Accent/On accent, minimum height (44px) and compact padding. Secondary/liked controls use Soft/Text. Destructive actions are transparent with a Muted border and gain Accent/On accent on fine-pointer hover. Text actions remain transparent and underline on hover. Disabled buttons show wait cursor and opacity (0.55); pressed controls scale to (0.98).
+Primary actions use Accent/On accent, minimum height (44px) and compact padding. Secondary/liked controls use Soft/Text. Destructive actions are transparent with a Muted border and fill with Signal on fine-pointer hover. Text actions remain transparent and underline on hover. Disabled buttons show wait cursor and opacity (0.55); pressed controls scale to (0.98).
 
-Transform/background transitions use (150ms ease-out). Fine-pointer hover avoids sticky touch states. Keyboard focus uses a (2px) Muted outline with (4px) offset for controls, links and fields.
+Transform/background transitions use (150ms ease-out). Fine-pointer hover avoids sticky touch states. Keyboard focus uses a (2px) Accent outline with (2px) offset for controls and links (white inside the graphite header); fields show an Accent border with a soft ring.
 
 ### Cards / Containers
 
@@ -268,11 +282,11 @@ Search uses a quiet Paper field with an initially transparent border and an Acce
 
 ### Navigation and tabs
 
-Desktop navigation combines inline SVG icons and labels at (14px), weight (550), minimum height (46px) and padding (10px). Active destinations use Text with an Accent bottom border; inactive fine-pointer hover uses Soft/Text. Mobile stacks icons above (10px) labels, adds field-radius corners and uses Soft/Text active fill. Current destinations expose `aria-current="page"`. Discovery tabs use (13px) type and an Accent underline; shared feed tabs retain their filled active state.
+Desktop navigation combines inline SVG icons and labels at (14px), weight (550), minimum height (46px) and padding (10px). Header navigation sits on graphite with Hero muted labels; the active destination turns white with a Signal bottom border and `aria-current="page"`. In other navigation patterns active destinations use Text; inactive fine-pointer hover uses Soft/Text. Mobile stacks icons above (10px) labels on a Paper dock; the current item uses Text and a Signal mark above it. Current destinations expose `aria-current="page"`. Discovery tabs use (13px) type and a Text underline; shared feed tabs fill the active tab with Text/Paper.
 
 ### Badges and feedback
 
-Draft/status badges are non-interactive Soft/Muted annotations at (11px). Errors and success messages use explicit text on Soft; errors also have a Muted border. Loading uses readable status copy with a (16px), one-second linear spinner. Toasts use Accent/On accent, the toast shadow and (180ms ease-out) opacity. Feedback is announced through `role="status"` and `aria-live="polite"`.
+Draft/status badges are non-interactive Soft/Muted annotations at (11px). Errors and success messages use explicit text on Soft; errors also have a Muted border. Loading uses readable status copy with a (16px), one-second linear spinner. Toasts use the graphite hero colours with a hero line border, the transient shadow and (180ms ease-out) opacity. Feedback is announced through `role="status"` and `aria-live="polite"`.
 
 ### Photographs
 
@@ -298,8 +312,8 @@ Listing cards place Like and labelled Comments together below the photo and text
 
 ### Do:
 
-- **Do** use shared theme variables and the recorded coral/graphite palette.
-- **Do** use simple native sans-serif headings, reading text and controls.
+- **Do** use shared theme variables and the recorded graphite/blue/orange palette.
+- **Do** follow the font roles: Unbounded for titles, Geologica for card titles, Onest for the rest.
 - **Do** preserve proportional photographs and readable text-only posts at every width.
 - **Do** allow an empty title without introducing a synthetic visible heading.
 - **Do** keep labelled navigation, account/write actions and preference controls reachable during header compaction.
@@ -308,7 +322,7 @@ Listing cards place Like and labelled Comments together below the photo and text
 
 ### Don't:
 
-- **Don't** replace the established graphite and coral palette with pastel accents.
+- **Don't** replace the graphite, blue and orange palette with pastel accents.
 - **Don't** stretch photographs to grid height, force square crops or make stories depend on an image.
 - **Don't** translate user stories, names or biographies with interface copy.
 - **Don't** extend the toast shadow into resting post cards or add cinematic motion.
@@ -318,7 +332,7 @@ Documentation is derived from the current frontend source. Temporary synthetic r
 
 ## Project discovery and sharing
 
-Collaboration discovery uses coral and graphite, with light and dark accent/text
+Collaboration discovery uses graphite, blue and orange, with light and dark accent/text
 pairs. Its tabs are All, Projects, Teams, Events, Communities and People. All
 interleaves real records from native and external projects, teams, events,
 communities and opt-in people in a shared card grid. Empty sources do not leave
@@ -354,7 +368,7 @@ reduced motion bypasses the transition. Result changes use short opacity/transfo
 transitions; there is no motion library or scroll choreography.
 
 Public story and update pages use share.css with readable 880px measure, native typography,
-proportional media, keyboard focus, coral controls and system light/dark preference. Project share
+proportional media, keyboard focus, blue controls and system light/dark preference. Project share
 pages expand to 1900px with description and collaboration details side by side; below
 1000px they return to an 880px single column. They link to the interactive project
 screen for collaboration, roles, applications, updates and interest choices.

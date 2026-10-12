@@ -15,8 +15,8 @@ a choice saves the current interface language when the UI first loads it.
 Posts, comments, biographies and usernames are never translated. Search language
 is an independent PostgreSQL matching mode, not the interface language.
 
-Light, dark and system themes are available. The default uses cold graphite and a
-warm coral accent; existing saved choices are respected. Collaboration
+Light, dark and system themes are available. The default uses graphite surfaces with a
+blue accent and orange signal; existing saved choices are respected. Collaboration
 discovery places search above the results, with a desktop filter rail and compact
 mobile controls. Distinct person, project and role cards use real records. Stories
 retain a responsive masonry feed with native sans-serif text and distinct author,

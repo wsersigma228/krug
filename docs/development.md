@@ -199,10 +199,12 @@ recipient language at delivery time, falling back to English for unset accounts.
 `krug-theme` stores `light`, `dark` or `system` per browser. System mode follows
 `prefers-color-scheme`; theme does not sync through the account. Storage failures
 allow preferences to work for the current visit. Without a saved choice, the UI
-starts in the cold graphite dark theme with a warm coral accent. The native frontend
-uses the system sans-serif font for headings, reading and controls. The sticky header
-compacts on downward scrolling and expands upward; controls stay in the same DOM
-and reduced-motion disables transitions. Story/feed pages use
+starts in the dark theme with a blue accent on graphite and orange signal (October 2026
+redesign; screens are migrated step by step). The native frontend self-hosts Unbounded
+(titles), Geologica (card titles) and Onest (UI text) from `frontend/fonts/`, loaded by
+`fonts.css` (same origin, so CSP `font-src` falls back to `default-src 'self'`). The sticky
+graphite header has a fixed height and includes the discovery search; controls stay in the
+same DOM and reduced-motion disables transitions. Story/feed pages use
 `min(calc(100% - 64px), 3600px)`. Collaboration discovery uses an 1800px shell,
 expanding to at most 2200px on wide viewports; project detail and updates cap at
 1800px. Discovery presents native and external projects, opt-in people and actual
@@ -318,7 +320,7 @@ remove the verified isolated stack afterward. Never run it against production.
 It exercises profile photos, event creation/attribution, team applications,
 acceptance, team-to-project transfer, covers, community join/posts/moderation and
 mixed saved content. Use the existing locale, collaboration and viewport scripts
-for regression checks; compare screenshots with `docs/design/coral-concept.png`
+for regression checks; compare screenshots with the approved mockups in `docs/design/redesign-2026-10/`
 separately. Functional success alone is not visual acceptance.
 
-App CSS/JS URLs in index.html carry the coordinated release query 20261012-hardening. Bump that value when shipping changed app assets: the HTML is no-store, while persistent browser caches can otherwise retain an earlier script after a deployment. This is a native cache key, not a frontend build step. Draft covers use authenticated blob requests in the app and join existing object-URL cleanup; never make draft media public to fix an image request.
+App CSS/JS and font CSS URLs in index.html carry the coordinated release query 20261012-redesign1. Bump that value when shipping changed app assets: the HTML is no-store, while persistent browser caches can otherwise retain an earlier script after a deployment. This is a native cache key, not a frontend build step. Draft covers use authenticated blob requests in the app and join existing object-URL cleanup; never make draft media public to fix an image request.

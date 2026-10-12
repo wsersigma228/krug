@@ -95,7 +95,7 @@ Email notifications are strictly opt-in.
 <td valign="top">
 
 ### 🌗 Thoughtful UI
-Coral and graphite themes, RU/EN, keyboard access, reduced motion
+Graphite, blue and orange themes, RU/EN, keyboard access, reduced motion
 and layouts from 320 px phones to 4K.
 
 </td>
