@@ -368,8 +368,23 @@ const translationPattern = new RegExp(Object.keys(english).sort((a, b) => b.leng
 function t(copy) {
   return language === "ru" ? copy : copy.replace(translationPattern, (key) => english[key]);
 }
+// Markup that is already safe to insert: the result of html``, esc() or raw(). Everything else is escaped.
+class SafeHtml {
+  constructor(value) { this.value = value; }
+  toString() { return this.value; }
+  valueOf() { return this.value; }
+}
+const escapeEntities = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+const esc = (value) => new SafeHtml(String(value ?? "").replace(/[&<>"']/g, (c) => escapeEntities[c]));
+// Only for static markup written in code (for example attribute fragments); never for data.
+const raw = (value) => new SafeHtml(String(value));
+function htmlValue(value) {
+  if (value instanceof SafeHtml) return value.value;
+  if (Array.isArray(value)) return value.map(htmlValue).join("");
+  return value === null || value === undefined || value === false ? "" : esc(value).value;
+}
 function html(strings, ...values) {
-  return strings.reduce((copy, part, index) => copy + t(part) + (index < values.length ? values[index] : ""), "");
+  return new SafeHtml(strings.reduce((copy, part, index) => copy + t(part) + (index < values.length ? htmlValue(values[index]) : ""), ""));
 }
 function cancelThemeTransition() {
   const pending = themeTransition;

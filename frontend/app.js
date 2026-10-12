@@ -20,14 +20,6 @@ let me = null,
   toastTimer,
   objectURLs = [],
   postGridObserver;
-const esc = (value) =>
-  String(value ?? "").replace(
-    /[&<>"']/g,
-    (c) =>
-      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
-        c
-      ],
-  );
 const date = (value) =>
   new Date(value).toLocaleDateString(language === "ru" ? "ru-RU" : "en-US", {
     day: "numeric",
@@ -85,7 +77,7 @@ function errorText(error) {
 async function api(path, options = {}, retry = true) {
   const headers = new Headers(options.headers);
   if (session?.access_token)
-    headers.set("Authorization", html`Bearer ${session.access_token}`);
+    headers.set("Authorization", `Bearer ${session.access_token}`);
   let body = options.body;
   if (body && !(body instanceof Blob)) {
     headers.set("Content-Type", "application/json");

@@ -70,7 +70,7 @@ preferences.context.document.startViewTransition = undefined;
 preferences.run("theme = 'light'; applyPreferences({ transitionTheme: true });");
 assert.equal(preferences.root.dataset.theme, 'light', 'Unsupported browsers apply the theme immediately');
 assert.equal(en('t("Неверное имя пользователя или пароль.")'), 'Incorrect username or password.');
-assert.equal(en('html`<p>Автор ${"Автор Настройки <b>user text</b>"}</p>`'), '<p>Author Автор Настройки <b>user text</b></p>');
+assert.equal(String(en('html`<p>Автор ${"Автор Настройки <b>user text</b>"}</p>`')), '<p>Author Автор Настройки &lt;b&gt;user text&lt;/b&gt;</p>');
 const source = ['frontend/app.js', 'frontend/projects.js', 'frontend/platform.js'].map(path => fs.readFileSync(path, 'utf8')).join('\n');
 for (const fragment of source.match(/[\u0400-\u04ff][^<>"'`{}\n]*/g) || []) {
   const copy = fragment.trim().replace(/\$$/, '').trim();
