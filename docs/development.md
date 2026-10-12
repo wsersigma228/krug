@@ -100,13 +100,25 @@ if your credentials/ports differ from test defaults.
 
 ```bash
 .venv/bin/python -m pytest -q
+.venv/bin/python -m ruff check .
 node --check frontend/app.js
 node --check frontend/projects.js
 node --check frontend/i18n.js
 node scripts/check_i18n.cjs
+node scripts/check_html_escape.cjs
 .venv/bin/python -m scripts.smoke
 .venv/bin/python -m scripts.smoke_accounts
 ```
+
+Dependency audit (CI runs it too; needs `pip install pip-audit`, not part of the app
+requirements):
+
+```bash
+python -m pip_audit -r constraints.txt --no-deps --disable-pip
+```
+
+Ruff rules live in `ruff.toml`; CI runs `ruff check`, `pip_audit` and `node --check`
+for every frontend and `scripts/*.cjs` file.
 
 Wait for web health before smoke checks. Smoke scripts default to loopback
 8000 (and 8025 for Mailpit); set `APP_URL` and `MAILPIT_URL` for another stack.
