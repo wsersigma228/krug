@@ -571,7 +571,7 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent); outline
 .header-controls { display: flex; flex: none; align-items: center; gap: .6rem; }
 .preferences, .header-actions { display: flex; align-items: center; gap: .45rem; }
 .preference-button, .topbar .compose { min-height: max(44px, 2.4rem); }
-.preference-button { min-width: max(44px, 2.4rem); padding: 0 .6rem; border: 1px solid var(--hero-line); border-radius: var(--radius); background: transparent; color: var(--hero-ink); font-size: .85rem; font-weight: 600; }
+.preference-button { display: inline-flex; align-items: center; justify-content: center; cursor: pointer; min-width: max(44px, 2.4rem); padding: 0 .6rem; border: 1px solid var(--hero-line); border-radius: var(--radius); background: transparent; color: var(--hero-ink); font-size: .85rem; font-weight: 600; }
 .topbar .preference-button:hover { background: #ffffff1a; color: #fff; }
 .theme-picker { position: relative; }
 .theme-picker summary { list-style: none; }
