@@ -47,7 +47,7 @@ python3.14 -m venv .venv
 cp .env.example .env
 ```
 
-Set a unique `SECRET_KEY` and strong `DB_PASSWORD` in `.env`. Generate secrets with
+Set a unique `SECRET_KEY`, `DB_PASSWORD` and `REDIS_PASSWORD` in `.env`. Generate secrets with
 `.venv/bin/python -c 'import secrets; print(secrets.token_urlsafe(48))'`.
 Keep `DB_USER`, `DB_PASSWORD`, `DB_NAME` and the host `DATABASE_URL` consistent;
 use a hexadecimal database password to avoid URL-reserved punctuation (generate

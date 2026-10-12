@@ -132,7 +132,7 @@ Requires Python 3.14 and Docker Compose or Podman on Linux.
 git clone https://github.com/wsersigma228/krug.git && cd krug
 python3.14 -m venv .venv
 .venv/bin/python -m pip install -r requirements-dev.txt -c constraints.txt
-cp .env.example .env          # set SECRET_KEY and DB_PASSWORD
+cp .env.example .env          # set SECRET_KEY, DB_PASSWORD and REDIS_PASSWORD
 ./scripts/start --dev-mail    # build, migrate, start, wait for health
 ```
 
@@ -143,7 +143,7 @@ cp .env.example .env          # set SECRET_KEY and DB_PASSWORD
 | Mailpit | http://localhost:8025 |
 
 > [!IMPORTANT]
-> Generate unique secrets in `.env`; a hexadecimal `DB_PASSWORD` avoids URL escaping.
+> Generate unique secrets in `.env`; hexadecimal `DB_PASSWORD` and `REDIS_PASSWORD` avoid URL escaping.
 > The launcher keeps database and photo volumes. Never run `down -v` unless you
 > intend to delete stored data.
 

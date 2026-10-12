@@ -132,7 +132,7 @@ flowchart LR
 git clone https://github.com/wsersigma228/krug.git && cd krug
 python3.14 -m venv .venv
 .venv/bin/python -m pip install -r requirements-dev.txt -c constraints.txt
-cp .env.example .env          # задай SECRET_KEY и DB_PASSWORD
+cp .env.example .env          # задай SECRET_KEY, DB_PASSWORD и REDIS_PASSWORD
 ./scripts/start --dev-mail    # сборка, миграции, запуск, ожидание health
 ```
 
@@ -143,7 +143,7 @@ cp .env.example .env          # задай SECRET_KEY и DB_PASSWORD
 | Mailpit | http://localhost:8025 |
 
 > [!IMPORTANT]
-> Сгенерируй уникальные секреты в `.env`; шестнадцатеричный `DB_PASSWORD` не требует
+> Сгенерируй уникальные секреты в `.env`; шестнадцатеричные `DB_PASSWORD` и `REDIS_PASSWORD` не требуют
 > URL-экранирования. Скрипт сохраняет тома БД и фото. Не запускай `down -v`, если
 > не собираешься удалить данные.
 

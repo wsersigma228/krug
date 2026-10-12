@@ -73,7 +73,7 @@ python3.14 -m venv .venv
 cp .env.example .env
 ```
 
-Укажи уникальный `SECRET_KEY`, надёжный пароль базы и правильный `PUBLIC_APP_URL`.
+Укажи уникальный `SECRET_KEY`, пароли базы (`DB_PASSWORD`) и Redis (`REDIS_PASSWORD`) и правильный `PUBLIC_APP_URL`.
 Параметры `DB_USER`, `DB_PASSWORD`, `DB_NAME` должны соответствовать `DATABASE_URL`.
 Для пароля базы удобно использовать hex, чтобы избежать специальных символов URL:
 

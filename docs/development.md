@@ -18,8 +18,9 @@ Create `.venv` with `python3.14 -m venv .venv` on the Linux execution host.
 Run containers, databases, migrations and application services on that host.
 An editing machine can check syntax without starting containers.
 
-Copy `.env.example` to `.env`; set a generated `SECRET_KEY`, database credentials
-and `PUBLIC_APP_URL`. Compose connects to its internal `db` and `redis` services;
+Copy `.env.example` to `.env`; set a generated `SECRET_KEY`, `DB_PASSWORD`,
+`REDIS_PASSWORD` and `PUBLIC_APP_URL`. Compose refuses to start when `DB_PASSWORD` or
+`REDIS_PASSWORD` is empty or unset (there are no default passwords). Compose connects to its internal `db` and `redis` services;
 host-side tools use `.env`'s `DATABASE_URL` and `REDIS_URL`. Never commit `.env`.
 If you change ports, change the host URLs as well:
 
@@ -29,7 +30,9 @@ If you change ports, change the host URLs as well:
 | `DB_PORT` | 5432 | Loopback PostgreSQL port |
 | `REDIS_PORT` | 6379 | Loopback Redis port |
 | `MAILPIT_PORT` | 8025 | Loopback development mailbox UI |
-| `DB_USER`, `DB_PASSWORD`, `DB_NAME` | See `.env.example` | Database initialization and application connection |
+| `DB_USER`, `DB_PASSWORD`, `DB_NAME` | `DB_PASSWORD` required; others in `.env.example` | Database initialization and application connection |
+| `REDIS_PASSWORD` | Required | Redis `requirepass`; the app and healthcheck authenticate with it |
+| `FORWARDED_ALLOW_IPS` | `127.0.0.1` | Proxy peers whose forwarded client IP uvicorn trusts; see Public hosting |
 | `MEDIA_ROOT` | `media` | Host-side photo directory; Compose mounts its photo volume at `/app/media` |
 
 Database initialization variables apply to a **fresh** PostgreSQL volume. An
@@ -37,6 +40,21 @@ existing volume keeps its database users and passwords. Update those deliberatel
 in PostgreSQL rather than deleting the volume to make configuration changes work.
 
 ## Start and update
+
+The web, worker and beat containers run as the non-root `app` user (uid/gid 10001).
+Photos in an existing `post_media` volume may be root-owned from earlier images, so
+`./scripts/start` runs `chown -R 10001:10001 /app/media` in a one-off container before
+migrations. The command is idempotent and changes only ownership.
+
+Existing installs, before the first `./scripts/start` after this change:
+
+- Add `REDIS_PASSWORD` to `.env` (hexadecimal, see `.env.example`). Redis now requires
+  it; its container is recreated because its command changed. Redis has no volume, so
+  queued Celery tasks that have not run are lost.
+- Set `DB_PASSWORD` to the password the existing PostgreSQL volume was created with.
+  Before this change Compose used `1234` when `DB_PASSWORD` was unset, so older installs
+  may need `DB_PASSWORD=1234`. Changing `.env` does not change the database password;
+  to rotate it, run `ALTER USER` in PostgreSQL first and then update `.env`.
 
 On the execution host, use `./scripts/start --dev-mail` for captured mail or
 `./scripts/start` for the SMTP configuration in `.env`. Keep the same mail mode
@@ -223,9 +241,40 @@ Mailpit messages are temporary; its mailbox is not a backup.
 
 For public hosting configure HTTPS, the actual public `PUBLIC_APP_URL`, trusted
 proxy handling and your SMTP credentials. Compose alone does not provide a TLS
-reverse proxy. Account rate limits use socket IP; unconfigured proxy forwarding
-can make all visitors share an IP budget. SMTP authentication requires STARTTLS.
-The WIP has no automatic backup/restore workflow; test your own restore procedure.
+reverse proxy. Account rate limits use the client IP that uvicorn reports. uvicorn
+reads `X-Forwarded-For`/`X-Forwarded-Proto` only from peers listed in
+`FORWARDED_ALLOW_IPS` (environment variable; default `127.0.0.1`; `.env` reaches web
+through `env_file`). Behind a reverse proxy, set it to the address that connects to
+the app container as seen by uvicorn, otherwise every client shares the proxy's rate-limit
+budget. Do not use `*` while the app port is reachable directly. SMTP authentication requires STARTTLS.
+### Backup
+
+On the execution host run `./scripts/backup [--consistent] [DIR]` (default `DIR` is
+`backups/`, which Git ignores). It creates `DIR/<UTC timestamp>/` with mode 700 containing
+`db.dump` (`pg_dump -Fc`) and `media.tar.gz`, then checks them with `pg_restore --list`
+and `tar -tzf`. It needs running `db` and `web` containers and prints only paths and sizes.
+
+Without `--consistent`, web, worker and beat keep running, so the dump and photo archive
+can differ by writes made during the backup. With `--consistent`, the script stops web,
+worker and beat, and restarts them when it exits. Copy the directory off the host.
+Back up `.env` separately; it is not part of the script output.
+
+### Restore
+
+Restore only deliberately. Rehearse on an isolated stack first (own checkout, project
+name, ports, `.env` and volumes). On the deployment, take a fresh backup first, then:
+
+1. Stop the application: `./scripts/compose stop web worker beat`.
+2. Restore the photo archive into an empty `post_media` volume, or accept that files in
+   the archive overwrite same-named files: extract `media.tar.gz` into `/app/media` with
+   `./scripts/compose run -T --rm --no-deps web tar -C /app/media -xzf -` and the archive on stdin.
+3. Restore the database into the running `db` container from the dump on stdin:
+   `./scripts/compose exec -T db sh -c 'pg_restore --clean --if-exists -U "$POSTGRES_USER" -d "$POSTGRES_DB"'`.
+   `--clean` drops existing objects in the target database.
+4. Check out the code revision that produced the dump, then run `./scripts/start` so the
+   migration step reconciles the schema. Check `alembic current`, container state and health.
+
+Mailpit messages are not backed up. Verify a backup by restoring it into a separate stack.
 
 Коралловое оформление discovery: поиск над выдачей, отдельная форма фильтров с кнопкой применения, смешанная сетка реальных результатов во вкладке «Всё». Переключение темы использует native View Transition с круговым раскрытием 400ms от переключателя; при reduced-motion или недоступном API тема применяется сразу. Быстрые смены выбора отменяют прежнюю анимацию, сохраняя последний выбор.
 
