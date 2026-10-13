@@ -165,8 +165,6 @@ input[type="file"] { font-size: 13px; padding: 12px; }
 .load-more { display: flex; margin: 24px auto; }
 .back { display: inline-block; color: var(--muted); font-size: 14px; margin-bottom: 20px; padding: 8px 0; }
 .photo-preview { max-width: 100%; max-height: 280px; object-fit: contain; border-radius: 10px; }
-.settings-grid { display: grid; gap: 20px; }
-.settings-grid .card { margin: 0; }
 .article-title { margin-top: 22px; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .layout-discovery { max-width: 1800px; padding-top: 28px; }
@@ -1032,3 +1030,20 @@ input, textarea, select { border-color: var(--field-line); }
 .post-card-inner { border-radius: var(--radius); }
 .post-card .post-excerpt { max-width: 70ch; }
 [data-type] .post-card-inner { border-left: 3px solid var(--c); }
+/* Settings: section nav on the left from 900px (a scrolling row on narrow screens), panels on the right. */
+.settings-layout { display: grid; gap: clamp(18px, 2vw, 32px); align-items: start; }
+.settings-side { display: grid; gap: 1rem; min-width: 0; }
+.settings-nav { display: flex; gap: .2rem; overflow-x: auto; scrollbar-width: none; }
+.settings-nav a { display: inline-flex; align-items: center; min-height: 2.75rem; padding: .5rem .8rem; border-radius: var(--radius); color: var(--muted); font-weight: 600; white-space: nowrap; }
+.settings-nav a:hover { color: var(--text); background: var(--soft); }
+.settings-side .account-links { flex-direction: column; gap: .2rem; margin: 0; }
+.settings-side .account-links a { min-height: 2.75rem; background: transparent; color: var(--muted); }
+.settings-side .account-links a:hover { color: var(--text); background: var(--soft); }
+.settings-main { display: grid; gap: clamp(16px, 1.6vw, 24px); min-width: 0; }
+.settings-main .dt-box-b .form { margin: 0; }
+#settings-profile, #settings-notify, #settings-account { scroll-margin-top: 5.5rem; }
+@media (min-width: 900px) {
+  .settings-layout { grid-template-columns: minmax(12rem, 16rem) minmax(0, 1fr); }
+  .settings-side { position: sticky; top: 5.5rem; }
+  .settings-nav { flex-direction: column; overflow: visible; }
+}

@@ -929,9 +929,11 @@ async function settingsScreen(root, stamp) {
       t("Настройки"),
       t("Немного о себе и о том, как оставаться на связи."),
     ) +
-    html`<nav class="account-links" aria-label="${t("Мои разделы")}"><a href="/app#projects">${t("Мои проекты")}</a><a href="/app#saved">${t("Сохранённое")}</a><a href="/app#applications">${t("Мои заявки")}</a><a href="/app#collaboration-profile">${t("Профиль для сотрудничества")}</a>${me.role === "admin" ? html`<a href="/app#admin-review">Проверка внешних проектов</a>` : ""}<a href="/app#external-submit">${t("Предложить внешний проект")}</a></nav><div class="settings-grid">
-      <section class="card">
-      <h2>Профиль</h2>
+    html`<div class="settings-layout"><aside class="settings-side">
+      <nav class="settings-nav" aria-label="${t("Разделы настроек")}"><a href="#settings-profile">${t("Профиль")}</a><a href="#settings-notify">${t("Email и уведомления")}</a><a href="#settings-account">${t("Доступ к аккаунту")}</a></nav>
+      <nav class="account-links" aria-label="${t("Мои разделы")}"><a href="/app#projects">${t("Мои проекты")}</a><a href="/app#saved">${t("Сохранённое")}</a><a href="/app#applications">${t("Мои заявки")}</a><a href="/app#collaboration-profile">${t("Профиль для сотрудничества")}</a>${me.role === "admin" ? html`<a href="/app#admin-review">Проверка внешних проектов</a>` : ""}<a href="/app#external-submit">${t("Предложить внешний проект")}</a></nav>
+      </aside><div class="settings-main">
+      <section class="dt-box" id="settings-profile"><div class="dt-box-h"><h2>Профиль</h2></div><div class="dt-box-b">
       <p class="small">@${esc(me.username)} · открытый профиль</p>
       <div class="avatar-settings"><span class="platform-avatar">${me.avatar_url ? html`<img src="${esc(me.avatar_url)}" alt="">` : esc((me.display_name || me.username)[0]?.toUpperCase())}</span><form class="form" id="avatar-form"><label class="field">${t("Фото профиля — JPEG, PNG или WebP до 8 МиБ")}<input name="avatar" type="file" accept="image/jpeg,image/png,image/webp"></label><div class="toolbar"><button>${t("Загрузить фото")}</button>${me.avatar_url ? html`<button type="button" class="secondary" id="remove-avatar">${t("Удалить фото")}</button>` : ""}</div><span class="hint" role="status"></span></form></div>
       <form class="form" id="profile-form">${input("display_name", t("Отображаемое имя"), "text", html`maxlength="100" value="${esc(me.display_name || "")}"`)}
@@ -940,9 +942,8 @@ async function settingsScreen(root, stamp) {
       </label>
       <button>Сохранить профиль</button>
       </form>
-      </section>
-      <section class="card">
-      <h2>Email и уведомления</h2>
+      </div></section>
+      <section class="dt-box" id="settings-notify"><div class="dt-box-h"><h2>Email и уведомления</h2></div><div class="dt-box-b">
       <p>${me.email || t("Email не указан при регистрации.")}</p>
       <p class="hint">${me.email_verified ? t("✓ Email подтверждён.") : me.email ? t("Email ещё не подтверждён.") : t("В этой версии добавить email после регистрации нельзя.")}</p>${me.email && !me.email_verified ? html`<button class="secondary" id="verify">Отправить письмо для подтверждения</button>` : ""}<hr class="divider">
       <form class="form" id="notifications">
@@ -951,9 +952,8 @@ async function settingsScreen(root, stamp) {
       <span class="hint">Лента работает независимо от писем. Уведомления доступны после подтверждения email.</span>
       <button>Сохранить уведомления</button>
       </form>
-      </section>
-      <section class="card">
-      <h2>Доступ к аккаунту</h2>
+      </div></section>
+      <section class="dt-box" id="settings-account"><div class="dt-box-h"><h2>Доступ к аккаунту</h2></div><div class="dt-box-b">
       <p class="hint">Выход завершит все сессии на всех устройствах.</p>
       <div class="toolbar">
       <button class="secondary" id="logout">Выйти на всех устройствах</button>${me.email ? html`<a class="text-button" href="/app#recover">Изменить пароль</a>` : ""}</div>
@@ -961,8 +961,13 @@ async function settingsScreen(root, stamp) {
       <h3>Удалить аккаунт</h3>
       <p class="hint">Все ваши истории, фото, подписки и комментарии будут удалены навсегда.</p>
       <button class="danger" id="delete-account">Удалить мой аккаунт</button>
-      </section>
-      </div>`;
+      </div></section>
+      </div></div>`;
+  root.querySelectorAll(".settings-nav a").forEach(link => link.addEventListener("click", event => {
+    // Section links scroll in place; a hash change would re-route the app to an unknown screen.
+    event.preventDefault();
+    root.querySelector(link.getAttribute("href"))?.scrollIntoView({ block: "start" });
+  }));
   bindForm(root.querySelector("#avatar-form"), async data => {
     const file = data.get("avatar");
     if (!file?.size) throw new Error(t("Выберите фото профиля."));
