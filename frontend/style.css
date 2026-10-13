@@ -826,7 +826,7 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent); outline
 .dt-subnav a:hover { color: var(--text); }
 .dt-subnav a:hover, .dt-subnav a:focus-visible { border-color: var(--c-btn); }
 .dt-subnav .num { margin-left: .35rem; color: var(--muted); font-size: .85rem; font-weight: 500; font-variant-numeric: tabular-nums; }
-[data-type] [id^="dt-"] { scroll-margin-top: 7.5rem; }
+[data-type] [id^="dt-"], [data-type] #collaboration-profile { scroll-margin-top: 7.5rem; }
 /* Body: main column plus a right rail from 1100px. */
 .dt-body { display: grid; grid-template-columns: minmax(0, 1fr); gap: clamp(20px, 2.2vw, 44px); align-items: start; padding-block: clamp(24px, 2.4vw, 48px) 3rem; }
 .dt-main, .dt-rail { display: grid; min-width: 0; gap: clamp(20px, 2.2vw, 36px); align-content: start; }

@@ -655,7 +655,7 @@ async function profileScreen(root, id, stamp) {
       title: name,
       mono: letter,
       meta: html`<span class="dt-kind">@${profile.username}</span>`,
-      actions: html`${own ? html`<a class="button secondary" href="/app#settings">Редактировать профиль</a><a class="text-button" href="/app#posts">Мои истории</a>` : me ? html`<button id="follow" class="${follow.subscribed ? "secondary" : "dt-primary"}">${follow.subscribed ? t("Вы подписаны · отписаться") : t("Подписаться")}</button>` : html`<a class="button dt-primary" href="/app#login">Войти и подписаться</a>`}${own && me?.role === "admin" ? html`<a class="text-button" href="/app#admin-review">Очередь проверки</a>` : ""}`,
+      actions: html`${own ? html`<a class="button secondary" href="/app#settings">${t("Редактировать профиль")}</a><a class="text-button" href="/app#posts">${t("Мои истории")}</a>` : me ? html`<button id="follow" class="${follow.subscribed ? "secondary" : "dt-primary"}">${follow.subscribed ? t("Вы подписаны · отписаться") : t("Подписаться")}</button>` : html`<a class="button dt-primary" href="/app#login">${t("Войти и подписаться")}</a>`}${own && me?.role === "admin" ? html`<a class="text-button" href="/app#admin-review">${t("Очередь проверки")}</a>` : ""}`,
     })}${detailSubnav([["dt-about", t("О себе")], ["collaboration-profile", t("Сотрудничество")], ["dt-stories", t("Истории")]])}
     <div class="dt-wrap dt-body"><main class="dt-main">
       <section class="dt-box" id="dt-about"><div class="dt-box-h"><h2>${t("О себе")}</h2></div><div class="dt-box-b"><p class="bio">${profile.bio || t("Пока без описания. Истории расскажут больше.")}</p></div></section>
