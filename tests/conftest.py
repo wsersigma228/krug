@@ -69,8 +69,10 @@ async def accounts(client):
         })
         assert response.status_code == 201, response.text
         user = response.json()
-        tokens = (await client.post("/login", json={"username": username, "password": "test-password"})).json()
+        login = await client.post("/login", json={"username": username, "password": "test-password"})
+        tokens = login.json()
         user["tokens"] = tokens
+        user["refresh"] = login.cookies.get("krug_refresh")
         user["headers"] = {"Authorization": f"Bearer {tokens['access_token']}"}
         users.append(user)
     return users

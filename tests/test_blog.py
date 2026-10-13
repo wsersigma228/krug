@@ -35,9 +35,9 @@ async def test_login_and_token_types(client, accounts):
     assert unknown.status_code == wrong.status_code == 401
     assert unknown.json() == wrong.json() == {"detail": "Invalid username or password"}
     assert (await client.get("/me", headers=author["headers"])).status_code == 200
-    assert (await client.get("/me", headers={"Authorization": f"Bearer {author['tokens']['refresh_token']}"})).status_code == 401
-    assert (await client.post("/refresh", json={"refresh_token": author["tokens"]["access_token"]})).status_code == 401
-    assert (await client.post("/refresh", json={"refresh_token": author["tokens"]["refresh_token"]})).status_code == 200
+    assert (await client.get("/me", headers={"Authorization": f"Bearer {author['refresh']}"})).status_code == 401
+    assert (await client.post("/refresh", cookies={"krug_refresh": author["tokens"]["access_token"]})).status_code == 401
+    assert (await client.post("/refresh", cookies={"krug_refresh": author["refresh"]})).status_code == 200
     assert (await client.get("/admin/panel", headers=author["headers"])).status_code == 403
 
 
@@ -46,7 +46,7 @@ async def test_invalid_token_subject_is_401(client, user_id):
     access = create_access_token({"user_id": user_id})
     refresh = create_refresh_token({"user_id": user_id})
     assert (await client.get("/me", headers={"Authorization": f"Bearer {access}"})).status_code == 401
-    assert (await client.post("/refresh", json={"refresh_token": refresh})).status_code == 401
+    assert (await client.post("/refresh", cookies={"krug_refresh": refresh})).status_code == 401
 
 
 async def test_public_posts_and_draft_privacy(client, accounts):

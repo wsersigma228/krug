@@ -147,20 +147,9 @@ class UserLogin(BaseModel):
     password: str = Field(min_length=1, max_length=100)
 
 
-class Token(BaseModel):
-    access_token: str
-    refresh_token: str
-    token_type: str
-
-
-class TokenRefreshRequest(BaseModel):
-    # Optional: browsers send the token in the HttpOnly cookie instead.
-    refresh_token: str | None = Field(default=None, min_length=1, max_length=2048)
-
-
 class AccessTokenResponse(BaseModel):
+    # Refresh tokens are never in JSON: they travel only in the HttpOnly `krug_refresh` cookie.
     access_token: str
-    refresh_token: str | None = Field(default=None, description="Only in body mode (no cookie sent)")
     token_type: str = "bearer"
 
 

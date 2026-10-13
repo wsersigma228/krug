@@ -26,4 +26,4 @@ async def test_bootstrap_preserves_ids_and_invalidates_old_tokens(db, client, mo
     new = await db.scalar(select(User).where(User.username == "krugdev"))
     assert new and new.id > old_id
     assert (await client.get("/me", headers={"Authorization": f"Bearer {access_token}"})).status_code == 401
-    assert (await client.post("/refresh", json={"refresh_token": refresh_token})).status_code == 401
+    assert (await client.post("/refresh", cookies={"krug_refresh": refresh_token})).status_code == 401

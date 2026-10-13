@@ -44,9 +44,9 @@ async def test_email_confirmation_is_single_use_and_does_not_revoke_session(clie
 
 async def test_password_reset_changes_password_and_revokes_all_sessions(client, accounts, db):
     account, _ = accounts
-    second = (await client.post("/login", json={
+    second = await client.post("/login", json={
         "username": account["username"], "password": "test-password",
-    })).json()
+    })
     row, token = await issue_token(client, db, account, "reset")
     assert (await client.post("/auth/password-reset/confirm", json={
         "token": token, "password": "replacement-password",
@@ -54,11 +54,11 @@ async def test_password_reset_changes_password_and_revokes_all_sessions(client, 
     await db.refresh(row)
     assert row.consumed is True
     assert row.encrypted_secret is None
-    for tokens in [account["tokens"], second]:
+    for tokens, refresh in [(account["tokens"], account["refresh"]), (second.json(), second.cookies.get("krug_refresh"))]:
         assert (await client.get("/me", headers={
             "Authorization": f"Bearer {tokens['access_token']}",
         })).status_code == 401
-        assert (await client.post("/refresh", json={"refresh_token": tokens["refresh_token"]})).status_code == 401
+        assert (await client.post("/refresh", cookies={"krug_refresh": refresh})).status_code == 401
     assert (await client.post("/login", json={
         "username": account["username"], "password": "test-password",
     })).status_code == 401
@@ -137,15 +137,15 @@ async def test_reissue_cancels_old_token_and_durable_delivery(client, accounts, 
 
 async def test_logout_revokes_all_sessions_but_allows_new_login(client, accounts):
     account, _ = accounts
-    second = (await client.post("/login", json={
+    second = await client.post("/login", json={
         "username": account["username"], "password": "test-password",
-    })).json()
+    })
     assert (await client.post("/logout", headers=account["headers"])).status_code == 204
-    for tokens in [account["tokens"], second]:
+    for tokens, refresh in [(account["tokens"], account["refresh"]), (second.json(), second.cookies.get("krug_refresh"))]:
         assert (await client.get("/me", headers={
             "Authorization": f"Bearer {tokens['access_token']}",
         })).status_code == 401
-        assert (await client.post("/refresh", json={"refresh_token": tokens["refresh_token"]})).status_code == 401
+        assert (await client.post("/refresh", cookies={"krug_refresh": refresh})).status_code == 401
     assert (await client.post("/logout", headers=account["headers"])).status_code == 401
     assert (await client.post("/login", json={
         "username": account["username"], "password": "test-password",
@@ -157,14 +157,14 @@ async def test_accounts_without_email_still_work(client):
     username = f"noemail_{uuid4().hex[:10]}"
     created = await client.post("/users", json={"username": username, "password": "test-password"})
     assert created.status_code == 201
-    tokens = (await client.post("/login", json={"username": username, "password": "test-password"})).json()
-    headers = {"Authorization": f"Bearer {tokens['access_token']}"}
+    login = await client.post("/login", json={"username": username, "password": "test-password"})
+    headers = {"Authorization": f"Bearer {login.json()['access_token']}"}
     me = await client.get("/me", headers=headers)
     assert me.status_code == 200
     assert me.json()["email"] is None
     assert me.json()["email_verified"] is False
     assert (await client.post("/auth/email-verification/request", headers=headers)).status_code == 400
-    assert (await client.post("/refresh", json={"refresh_token": tokens["refresh_token"]})).status_code == 200
+    assert (await client.post("/refresh", cookies={"krug_refresh": login.cookies.get("krug_refresh")})).status_code == 200
 
 
 @pytest.mark.parametrize("endpoint,payload", [
@@ -387,7 +387,7 @@ async def test_signed_jwt_missing_or_invalid_version_is_rejected(client, account
     access = jwt.encode({**common, "token_type": "access"}, SECRET_KEY, algorithm=ALGORITHM)
     refresh = jwt.encode({**common, "token_type": "refresh"}, SECRET_KEY, algorithm=ALGORITHM)
     assert (await client.get("/me", headers={"Authorization": f"Bearer {access}"})).status_code == 401
-    assert (await client.post("/refresh", json={"refresh_token": refresh})).status_code == 401
+    assert (await client.post("/refresh", cookies={"krug_refresh": refresh})).status_code == 401
 
 
 async def test_login_waits_for_password_reset_and_rejects_old_password():

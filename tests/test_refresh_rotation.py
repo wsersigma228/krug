@@ -13,6 +13,18 @@ async def login(client, account):
     return response
 
 
+def refresh_cookie(response):
+    """Refresh token as delivered to the browser: only via the HttpOnly cookie."""
+    token = response.cookies.get("krug_refresh")
+    assert token
+    return token
+
+
+async def post_refresh(client, token):
+    # Sent explicitly so replaying an old token works even after the jar moved on.
+    return await client.post("/refresh", cookies={"krug_refresh": token})
+
+
 def age_use(db, jti_value, seconds):
     return update(RefreshToken).where(RefreshToken.jti == jti_value).values(
         used_at=datetime.now(timezone.utc) - timedelta(seconds=seconds))
@@ -28,9 +40,11 @@ async def family_rows(db, token):
     return (await db.scalars(select(RefreshToken).where(RefreshToken.family_id == family))).all()
 
 
-async def test_login_sets_http_only_cookie_and_body_token(client, accounts):
+async def test_login_sets_http_only_cookie_and_no_body_token(client, accounts):
     response = await login(client, accounts[0])
-    assert response.json()["refresh_token"]
+    assert "refresh_token" not in response.json()
+    assert set(response.json()) == {"access_token", "token_type"}
+    assert refresh_cookie(response)
     header = response.headers["set-cookie"].lower()
     assert "krug_refresh=" in header
     assert "httponly" in header and "samesite=strict" in header and "path=/refresh" in header
@@ -52,15 +66,24 @@ async def test_cookie_refresh_rotates_without_body_token(client, accounts, db):
     assert len(rows) == 2 and sum(row.used_at is not None for row in rows) == 1
 
 
-async def test_body_mode_returns_new_refresh_token(client, accounts):
-    tokens = (await login(client, accounts[0])).json()
-    client.cookies.clear()
-    response = await client.post("/refresh", json={"refresh_token": tokens["refresh_token"]})
+async def test_refresh_rotates_cookie_and_never_returns_refresh_token_in_json(client, accounts):
+    original = refresh_cookie(await login(client, accounts[0]))
+    response = await post_refresh(client, original)
     assert response.status_code == 200
-    assert response.json()["refresh_token"] not in (None, tokens["refresh_token"])
+    assert "refresh_token" not in response.json()
+    assert set(response.json()) == {"access_token", "token_type"}
+    rotated = refresh_cookie(response)
+    assert rotated != original
+    assert (await post_refresh(client, rotated)).status_code == 200
+
+
+async def test_body_token_is_ignored(client, accounts):
+    token = refresh_cookie(await login(client, accounts[0]))
+    client.cookies.clear()
+    # Body mode is gone: a refresh token in JSON is neither accepted nor echoed back.
+    response = await client.post("/refresh", json={"refresh_token": token})
+    assert response.status_code == 401
     assert "set-cookie" not in response.headers
-    again = await client.post("/refresh", json={"refresh_token": response.json()["refresh_token"]})
-    assert again.status_code == 200
 
 
 async def test_missing_token_is_401(client):
@@ -70,39 +93,41 @@ async def test_missing_token_is_401(client):
 
 
 async def test_reuse_after_grace_revokes_family(client, accounts, db):
-    first_tokens = (await login(client, accounts[0])).json()
+    first = refresh_cookie(await login(client, accounts[0]))
     client.cookies.clear()
-    rotated = (await client.post("/refresh", json={"refresh_token": first_tokens["refresh_token"]})).json()
-    await db.execute(age_use(db, jti(first_tokens["refresh_token"]), 120))
+    rotated = refresh_cookie(await post_refresh(client, first))
+    await db.execute(age_use(db, jti(first), 120))
     await db.commit()
 
-    reuse = await client.post("/refresh", json={"refresh_token": first_tokens["refresh_token"]})
+    reuse = await post_refresh(client, first)
     assert reuse.status_code == 401
-    assert await family_rows(db, first_tokens["refresh_token"]) == []
-    assert (await client.post("/refresh", json={"refresh_token": rotated["refresh_token"]})).status_code == 401
+    assert await family_rows(db, first) == []
+    assert (await post_refresh(client, rotated)).status_code == 401
 
 
 async def test_reuse_within_grace_returns_access_only(client, accounts, db):
-    tokens = (await login(client, accounts[0])).json()
+    token = refresh_cookie(await login(client, accounts[0]))
     client.cookies.clear()
-    assert (await client.post("/refresh", json={"refresh_token": tokens["refresh_token"]})).status_code == 200
-    response = await client.post("/refresh", json={"refresh_token": tokens["refresh_token"]})
+    assert (await post_refresh(client, token)).status_code == 200
+    response = await post_refresh(client, token)
     assert response.status_code == 200
     assert set(response.json()) == {"access_token", "token_type"}
     assert "set-cookie" not in response.headers
-    assert len(await family_rows(db, tokens["refresh_token"])) == 2
+    assert len(await family_rows(db, token)) == 2
 
 
 async def test_reuse_detection_ends_all_sessions(client, accounts, db):
-    other = (await login(client, accounts[0])).json()
-    victim = (await login(client, accounts[0])).json()
+    other_response = await login(client, accounts[0])
+    other, other_access = refresh_cookie(other_response), other_response.json()["access_token"]
+    victim_response = await login(client, accounts[0])
+    victim = refresh_cookie(victim_response)
     client.cookies.clear()
-    await client.post("/refresh", json={"refresh_token": victim["refresh_token"]})
-    await db.execute(age_use(db, jti(victim["refresh_token"]), 120))
+    await post_refresh(client, victim)
+    await db.execute(age_use(db, jti(victim), 120))
     await db.commit()
-    assert (await client.post("/refresh", json={"refresh_token": victim["refresh_token"]})).status_code == 401
-    assert (await client.post("/refresh", json={"refresh_token": other["refresh_token"]})).status_code == 401
-    assert (await client.get("/me", headers={"Authorization": f"Bearer {other['access_token']}"})).status_code == 401
+    assert (await post_refresh(client, victim)).status_code == 401
+    assert (await post_refresh(client, other)).status_code == 401
+    assert (await client.get("/me", headers={"Authorization": f"Bearer {other_access}"})).status_code == 401
 
 
 async def test_cookie_refresh_twice_past_grace(client, accounts, db):
@@ -136,8 +161,8 @@ async def test_cookie_secure_when_public_url_is_https(client, accounts, monkeypa
 
 async def test_purge_expired_refresh_tokens(client, accounts, db):
     from backend.tasks.auth_tasks import purge_expired
-    stale = (await login(client, accounts[0])).json()["refresh_token"]
-    live = (await login(client, accounts[0])).json()["refresh_token"]
+    stale = refresh_cookie(await login(client, accounts[0]))
+    live = refresh_cookie(await login(client, accounts[0]))
     await db.execute(update(RefreshToken).where(RefreshToken.jti == jti(stale)).values(
         expires_at=datetime.now(timezone.utc) - timedelta(seconds=1)))
     assert await purge_expired(db) >= 1
@@ -156,7 +181,7 @@ async def test_logout_revokes_tokens_and_clears_cookie(client, accounts, db):
 
 
 async def test_login_deletes_expired_rows(client, accounts, db):
-    stale = (await login(client, accounts[0])).json()["refresh_token"]
+    stale = refresh_cookie(await login(client, accounts[0]))
     await db.execute(update(RefreshToken).where(RefreshToken.jti == jti(stale)).values(
         expires_at=datetime.now(timezone.utc) - timedelta(days=1)))
     await db.commit()

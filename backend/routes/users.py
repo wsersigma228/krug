@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from secrets import token_urlsafe
 
-from fastapi import APIRouter, Body, Depends, HTTPException, Request, Response
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import delete, update
@@ -11,7 +11,7 @@ import jwt
 from backend.config import SECRET_KEY, ALGORITHM, PUBLIC_APP_URL, REFRESH_TOKEN_EXPIRE_DAYS
 from backend.database import get_db
 from backend.models import User, EmailDelivery, RefreshToken
-from backend.schemas import AccessTokenResponse, UserCreate, UserResponse, UserLogin, Token, TokenRefreshRequest
+from backend.schemas import AccessTokenResponse, UserCreate, UserResponse, UserLogin
 from backend.security import create_access_token, issue_refresh_token, revoke_refresh_tokens, get_current_user, get_current_admin, verify_password, DUMMY_PASSWORD_HASH
 from backend.crud import users as crud_users
 from backend.rate_limit import check_rate_limit
@@ -69,9 +69,9 @@ async def create_user(user: UserCreate, request: Request, db: AsyncSession = Dep
         raise HTTPException(status_code=409, detail="Username or email already exists") from None
 
 
-@router.post("/login", response_model=Token)
+@router.post("/login", response_model=AccessTokenResponse)
 async def login(user: UserLogin, request: Request, response: Response, db: AsyncSession = Depends(get_db)):
-    """Exchange credentials for access and refresh tokens."""
+    """Exchange credentials for an access token; the refresh token goes only to the HttpOnly cookie."""
     await check_rate_limit(db, request, "login", user.username)
     db_user = await db.scalar(select(User).where(User.username == user.username).execution_options(populate_existing=True).with_for_update())
     password_valid = verify_password(
@@ -94,26 +94,22 @@ async def login(user: UserLogin, request: Request, response: Response, db: Async
     refresh_token = issue_refresh_token(db, token_data, token_urlsafe(16))
     await db.commit()
     set_refresh_cookie(response, refresh_token)
-    return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}
+    return {"access_token": access_token, "token_type": "bearer"}
 
 
-@router.post("/refresh", response_model=AccessTokenResponse, response_model_exclude_none=True)
+@router.post("/refresh", response_model=AccessTokenResponse)
 async def refresh_token(
     request: Request, response: Response,
-    body: TokenRefreshRequest | None = Body(default=None),
     db: AsyncSession = Depends(get_db),
 ):
-    """Rotate a refresh token (cookie or body) and issue a new access token."""
+    """Rotate the refresh cookie and issue a new access token."""
     await check_rate_limit(db, request, "refresh")
     credentials_exception = HTTPException(
         status_code=401,
         detail="Invalid refresh token",
         headers={"WWW-Authenticate": "Bearer"}
     )
-    # An explicit body token wins over the cookie: API clients that share a cookie jar
-    # (and tests) must be able to refresh a specific token. Browsers send no body.
-    body_token = body.refresh_token if body else None
-    raw_token = body_token or request.cookies.get(REFRESH_COOKIE)
+    raw_token = request.cookies.get(REFRESH_COOKIE)
     if not raw_token:
         raise credentials_exception
     try:
@@ -163,10 +159,7 @@ async def refresh_token(
     record.used_at = now
     new_refresh = issue_refresh_token(db, token_data, record.family_id)
     await db.commit()
-    if body_token:
-        result["refresh_token"] = new_refresh
-    else:
-        set_refresh_cookie(response, new_refresh)
+    set_refresh_cookie(response, new_refresh)
     return result
 
 
