@@ -119,9 +119,9 @@ async function run() {
     await ownerPage.goto(base + '/app#roles');
     const discoverableRole = ownerPage.locator('.platform-card-opening h3 a').filter({ hasText: openingTitle });
     await discoverableRole.waitFor();
-    assert.equal(await discoverableRole.getAttribute('href'), `/project/${projectSlug}`, 'Open role links to its actual project page');
+    assert.equal(await discoverableRole.getAttribute('href'), `/app#project/${projectSlug}`, 'Open role links to its actual project page');
     await discoverableRole.click();
-    await ownerPage.waitForURL(`**/project/${projectSlug}`);
+    await ownerPage.waitForURL(`**/app#project/${projectSlug}`);
     await ownerPage.getByRole('heading', { name: `Preview collaboration ${key}` }).waitFor();
     await ownerPage.goto(base + `/app#project/${projectSlug}`);
     await ownerPage.waitForFunction(() => { const main = document.querySelector('main'); return main && !main.inert && main.getAttribute('aria-busy') !== 'true'; });
@@ -260,8 +260,8 @@ async function run() {
     await applicantPage.getByText(`Accepted member update ${key}`, { exact: true }).waitFor();
     project = await api(`/projects/${projectSlug}`);
     assert.equal(project.published_updates_count, 1);
-    await applicantPage.goto(base + '/app#explore');
-    await applicantPage.getByRole('heading', { name: 'Все результаты' }).waitFor();
+    await applicantPage.goto(base + '/app#explore?kind=projects'); // plain explore is now the greeting home, not a results list
+    await applicantPage.locator('#discovery-results').getByRole('heading', { name: 'Проекты', exact: true }).waitFor();
     await applicantPage.locator('.platform-card h3 a').filter({ hasText: `Preview collaboration ${key}` }).waitFor();
     for (const [width, height] of [[390, 844], [1440, 1000], [2560, 1440], [3840, 2160]]) {
       await applicantPage.setViewportSize({ width, height });
@@ -330,7 +330,9 @@ async function run() {
       await applicantPage.getByRole('link', { name: 'Создать похожий проект' }).waitFor();
       await applicantPage.getByRole('link', { name: 'Открытые профили интереса' }).waitFor();
       await applicantPage.getByRole('link', { name: 'Создать похожий проект' }).click();
-      await applicantPage.getByText(externalTitle, { exact: true }).waitFor();
+      await applicantPage.waitForURL(/#project-new\?inspired=/);
+      await applicantPage.locator('input[name=slug]').waitFor();
+      await applicantPage.getByText(externalTitle, { exact: true }).first().waitFor();
       await applicantPage.locator('input[name=slug]').fill(`inspired-${key}`);
       await applicantPage.locator('input[name=title]').fill(`Inspired project ${key}`);
       await applicantPage.locator('input[name=summary]').fill('An independent synthetic project inspired by an external reference.');
