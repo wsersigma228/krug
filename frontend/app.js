@@ -646,18 +646,25 @@ async function profileScreen(root, id, stamp) {
   const follow =
     me && !own ? await api("/subscriptions/" + id + "/check") : null;
   if (stamp !== generation) return;
+  const name = profile.display_name || profile.username;
+  const letter = detailLetter(name);
   root.innerHTML =
-    html`<section class="card">
-      <div class="profile-top">
-      <span class="avatar large">${profile.avatar_url ? html`<img src="${esc(profile.avatar_url)}" alt="">` : esc(profile.username[0].toUpperCase())}</span>
-      <div>
-      <h1>${esc(profile.display_name || profile.username)}</h1>
-      <span class="small">@${esc(profile.username)}</span>
-      </div>
-      </div>
-      <p class="bio">${profile.bio || t("Пока без описания. Истории расскажут больше.")}</p>
-      <div class="toolbar">${own ? html`<a class="button secondary" href="/app#settings">Редактировать профиль</a><a class="text-button" href="/app#posts">Мои истории</a>` : me ? html`<button id="follow" class="${follow.subscribed ? "secondary" : ""}">${follow.subscribed ? t("Вы подписаны · отписаться") : t("Подписаться")}</button>` : html`<a class="button" href="/app#login">Войти и подписаться</a>`}</div>
-      </section><section id="collaboration-profile" class="collaboration-profile"></section>${own && me?.role === "admin" ? html`<a class="text-button" href="/app#admin-review">Очередь проверки</a>` : ""}<h2>${t("Истории")}</h2><div class="stats"><span><strong>${profile.posts_count}</strong>${t("публикаций")}</span><span><strong>${profile.subscribers_count}</strong>${t("подписчиков")}</span><span><strong>${profile.subscriptions_count}</strong>${t("подписок")}</span></div>`;
+    html`<div class="dt" data-type="person">${detailHead({
+      crumbs: [[t("Люди"), "/app#explore?kind=people"], [name]],
+      emblem: profile.avatar_url ? html`<span class="dt-emblem round"><img src="${profile.avatar_url}" alt=""></span>` : html`<span class="dt-emblem round" aria-hidden="true">${letter}</span>`,
+      title: name,
+      mono: letter,
+      meta: html`<span class="dt-kind">@${profile.username}</span>`,
+      actions: html`${own ? html`<a class="button secondary" href="/app#settings">Редактировать профиль</a><a class="text-button" href="/app#posts">Мои истории</a>` : me ? html`<button id="follow" class="${follow.subscribed ? "secondary" : "dt-primary"}">${follow.subscribed ? t("Вы подписаны · отписаться") : t("Подписаться")}</button>` : html`<a class="button dt-primary" href="/app#login">Войти и подписаться</a>`}${own && me?.role === "admin" ? html`<a class="text-button" href="/app#admin-review">Очередь проверки</a>` : ""}`,
+    })}${detailSubnav([["dt-about", t("О себе")], ["collaboration-profile", t("Сотрудничество")], ["dt-stories", t("Истории")]])}
+    <div class="dt-wrap dt-body"><main class="dt-main">
+      <section class="dt-box" id="dt-about"><div class="dt-box-h"><h2>${t("О себе")}</h2></div><div class="dt-box-b"><p class="bio">${profile.bio || t("Пока без описания. Истории расскажут больше.")}</p></div></section>
+      <section class="dt-box dt-collab" id="collaboration-profile"></section>
+      <section class="dt-box" id="dt-stories"><div class="dt-box-h"><h2>${t("Истории")}</h2></div><div class="dt-box-b" id="profile-posts"></div></section>
+    </main>
+    <aside class="dt-rail">
+      <section class="dt-box"><div class="dt-box-h"><h2>${t("Активность")}</h2></div><div class="dt-box-b"><dl class="dt-facts"><div><dt>${t("публикаций")}</dt><dd>${profile.posts_count}</dd></div><div><dt>${t("подписчиков")}</dt><dd>${profile.subscribers_count}</dd></div><div><dt>${t("подписок")}</dt><dd>${profile.subscriptions_count}</dd></div></dl></div></section>
+    </aside></div></div>`;
   await collaborationProfileBlock(root, id, own, stamp);
   if (follow)
     actionButton(root.querySelector("#follow"), async () => {
@@ -668,7 +675,7 @@ async function profileScreen(root, id, stamp) {
       render();
     });
   await paged(
-    root,
+    root.querySelector("#profile-posts"),
     `/authors/${id}/posts`,
     (p) => postCard(p, profile.username),
     stamp,
