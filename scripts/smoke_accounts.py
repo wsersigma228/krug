@@ -24,7 +24,7 @@ def main():
         def login():
             response = app.post("/login", json={"username": username, "password": password})
             response.raise_for_status()
-            return response.json()
+            return response
 
         def read_link(subject, token_required=True):
             deadline = time.monotonic() + 75
@@ -49,7 +49,7 @@ def main():
             created.raise_for_status()
             user_id = created.json()["id"]
             original = login()
-            headers = {"Authorization": f"Bearer {original['access_token']}"}
+            headers = {"Authorization": f"Bearer {original.json()['access_token']}"}
             assert app.post("/auth/email-verification/request", headers=headers).status_code == 202
             token = read_link("Verify your email")
             assert app.get("/verify-email").status_code == 200
@@ -80,8 +80,8 @@ def main():
             assert app.post("/auth/password-reset/confirm", json={"token": token, "password": replacement}).status_code == 204
             password = replacement
             assert app.get("/me", headers=headers).status_code == 401
-            assert app.post("/refresh", json={"refresh_token": original["refresh_token"]}).status_code == 401
-            tokens = login()
+            assert app.post("/refresh", cookies={"krug_refresh": original.cookies.get("krug_refresh")}).status_code == 401
+            tokens = login().json()
             headers = {"Authorization": f"Bearer {tokens['access_token']}"}
             assert app.post("/logout", headers=headers).status_code == 204
             assert app.get("/me", headers=headers).status_code == 401
@@ -93,7 +93,7 @@ def main():
                 headers = {"Authorization": f"Bearer {author_login.json()['access_token']}"}
                 assert app.delete(f"/users/{author_id}", headers=headers).status_code == 204
             if user_id is not None:
-                headers = {"Authorization": f"Bearer {login()['access_token']}"}
+                headers = {"Authorization": f"Bearer {login().json()['access_token']}"}
                 response = app.delete(f"/users/{user_id}", headers=headers)
                 assert response.status_code == 204, "Temporary account cleanup failed"
             if message_ids:

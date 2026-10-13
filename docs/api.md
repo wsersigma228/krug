@@ -3,15 +3,16 @@
 Interactive OpenAPI documentation is at `/docs`; its JSON schema is at
 `/openapi.json`. Requests and responses use JSON except photo uploads/downloads.
 Dates include timezone information. Send access tokens as
-`Authorization: Bearer ACCESS_TOKEN`; refresh tokens are accepted only by `/refresh`.
+`Authorization: Bearer ACCESS_TOKEN`. Refresh tokens are never in JSON: they travel only in the
+HttpOnly `krug_refresh` cookie and are accepted only by `/refresh`.
 
 ## Accounts
 
 | Method and path | Access | Body / result |
 | --- | --- | --- |
 | `POST /users` | Public | `{username,password,email?,language?}` → 201 account |
-| `POST /login` | Public | `{username,password}` → access/refresh tokens; also sets the `krug_refresh` cookie |
-| `POST /refresh` | Refresh cookie or body token | Cookie mode: no body → `{access_token,token_type}` and a rotated cookie. Body mode: `{refresh_token}` → also returns a new `refresh_token` |
+| `POST /login` | Public | `{username,password}` → `{access_token,token_type}`; sets the `krug_refresh` cookie |
+| `POST /refresh` | Refresh cookie | No body → `{access_token,token_type}` and a rotated cookie; a token in the body is ignored |
 | `GET /me` | Signed in | Your account, including email/verification status and nullable language |
 | `PATCH /me/language` | Signed in | `{language:"ru"}` or `{language:"en"}` → saved `{language}` |
 | `POST /logout` | Signed in | 204; revokes all sessions and refresh tokens, clears the cookie |
@@ -28,15 +29,13 @@ Dates include timezone information. Send access tokens as
 
 Login sets cookie `krug_refresh` (HttpOnly, SameSite=Strict, Path=`/refresh`,
 Max-Age = `REFRESH_TOKEN_EXPIRE_DAYS`, Secure when `PUBLIC_APP_URL` starts with
-`https`) and still returns `refresh_token` in the body for API clients. Every
-refresh token carries a `jti` stored server-side in `refresh_tokens`, grouped by
-login into a family.
+`https`); the JSON response never contains a refresh token. Every refresh token
+carries a `jti` stored server-side in `refresh_tokens`, grouped by login into a family.
 
-`POST /refresh` rotates: the presented token is marked used and a new one of the
-same family is issued. A body `refresh_token` takes precedence over the cookie
-(body mode: response includes the new `refresh_token`, no cookie is set); with no
-body the cookie is used (response has no `refresh_token`, a new cookie is set).
-Unknown, expired or foreign tokens return 401.
+`POST /refresh` rotates: the cookie token is marked used, a new one of the same
+family is issued and set as the cookie. There is no body mode and no API client
+mode: scripts must keep the cookie (for example a cookie jar). Unknown, expired or
+foreign tokens return 401.
 
 Reuse detection: presenting an already-used token more than 30 seconds after its
 use is treated as theft; the whole family is deleted and the request returns 401.
