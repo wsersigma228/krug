@@ -402,16 +402,29 @@ async function adminReviewScreen(root, stamp) {
   claimList.innerHTML = claims.length ? claims.map(item => html`<article class="review-item"><h3><a href="/app#project/${esc(item.project_slug)}">${esc(item.project_title)}</a></h3><p class="hint">${t("Запросивший")}: ${item.requester_id} · ${date(item.created_at)}</p>${item.evidence_url && /^https?:\/\//i.test(item.evidence_url) ? html`<a class="text-button" href="${esc(item.evidence_url)}" target="_blank" rel="noopener noreferrer">${esc(item.evidence_url)}</a>` : ""}<p>${esc(item.evidence_text || "")}</p><div class="toolbar"><button data-review="approved" data-type="claim" data-id="${item.id}">${t("Одобрить")}</button><button class="secondary" data-review="rejected" data-type="claim" data-id="${item.id}">${t("Отклонить")}</button></div></article>`).join("") : `<p class="hint">${t("Нет ожидающих запросов.")}</p>`;
   root.querySelectorAll("[data-review]").forEach(button => actionButton(button, async () => { const path = button.dataset.type === "external" ? "/admin/external-submissions/" : "/admin/project-claims/"; await api(path + button.dataset.id, {method:"PATCH",body:{status:button.dataset.review}}); await render(); }));
 }
+function applicationRow({ type, application }) {
+  const project = type === "project";
+  const title = project
+    ? html`<a class="author" href="/app#project/${esc(application.project_slug)}">${esc(application.project_title)}</a>`
+    : html`<a class="author" href="/app#team/${esc(application.team_slug)}">${esc(application.team_title)} · ${esc(application.opening_title)}</a>`;
+  const contact = project && application.status === "accepted" && application.owner_contact_url ? html`<a class="button" href="${esc(application.owner_contact_url)}" target="_blank" rel="noopener noreferrer">${t("Связаться с командой")}</a>` : "";
+  const withdraw = application.status !== "pending" ? "" : project ? html`<button class="secondary" data-withdraw-project="${application.id}">${t("Отозвать заявку")}</button>` : html`<button class="secondary" data-withdraw-team="${application.id}">${t("Отозвать заявку")}</button>`;
+  return html`<article class="app-item" data-type="${project ? "project" : "team"}"><div class="app-item-head"><span class="app-kind">${project ? t("Проект") : t("Команда")}</span>${title}</div><p>${esc(application.message)}</p>${contact || withdraw ? html`<div class="toolbar">${contact}${withdraw}</div>` : ""}</article>`;
+}
 async function applicationsScreen(root, stamp) {
   const [projectResult, teamResult] = await Promise.allSettled([api("/me/applications"), api("/team-applications?limit=100")]);
   if (stamp !== generation) return;
   const projects = projectResult.status === "fulfilled" ? projectResult.value : [];
   const teams = teamResult.status === "fulfilled" ? teamResult.value.items : [];
-  const projectError = projectResult.status === "rejected" ? `<p class="error" role="alert">${esc(errorText(projectResult.reason))}</p>` : "";
-  const teamError = teamResult.status === "rejected" ? `<p class="error" role="alert">${esc(errorText(teamResult.reason))}</p>` : "";
-  root.innerHTML = heading("", t("Мои заявки"), t("Контактные ссылки открываются только после принятия заявки.")) +
-    `<section class="platform-detail-section"><h2>${t("Проекты")}</h2>${projectError}${projects.length ? projects.map(application => html`<article class="project-application"><div class="project-card-meta"><a class="author" href="/app#project/${esc(application.project_slug)}">${esc(application.project_title)}</a><span>${applicationLabel(application.status)}</span></div><p>${esc(application.message)}</p>${application.status === "accepted" && application.owner_contact_url ? html`<a class="button" href="${esc(application.owner_contact_url)}" target="_blank" rel="noopener noreferrer">${t("Связаться с командой")}</a>` : ""}${application.status === "pending" ? html`<button class="secondary" data-withdraw-project="${application.id}">${t("Отозвать заявку")}</button>` : ""}</article>`).join("") : projectError ? "" : `<p class="hint">${t("Заявок пока нет")}</p>`}</section>` +
-    `<section class="platform-detail-section"><h2>${t("Команды")}</h2>${teamError}${teams.length ? teams.map(application => html`<article class="project-application"><div class="project-card-meta"><a class="author" href="/app#team/${esc(application.team_slug)}">${esc(application.team_title)} · ${esc(application.opening_title)}</a><span>${applicationLabel(application.status)}</span></div><p>${esc(application.message)}</p>${application.status === "pending" ? html`<button class="secondary" data-withdraw-team="${application.id}">${t("Отозвать заявку")}</button>` : ""}</article>`).join("") : teamError ? "" : `<p class="hint">${t("Заявок пока нет")}</p>`}<a class="button secondary" href="/app#explore?kind=teams">${t("Найти команды")}</a></section>`;
+  const errors = [projectResult, teamResult].filter(result => result.status === "rejected").map(result => `<p class="error" role="alert">${esc(errorText(result.reason))}</p>`).join("");
+  const rows = [...projects.map(application => ({ type: "project", application })), ...teams.map(application => ({ type: "team", application }))];
+  // Pending and accepted come first; any other status keeps its place after them.
+  const statuses = [...new Set(["pending", "accepted", ...rows.map(({ application }) => application.status)])];
+  const groups = statuses.map(status => [status, rows.filter(({ application }) => application.status === status)]).filter(([, items]) => items.length);
+  root.innerHTML = heading("", t("Мои заявки"), t("Контактные ссылки открываются только после принятия заявки.")) + errors +
+    groups.map(([status, items]) => `<section class="dt-box app-group"><div class="dt-box-h"><h2>${esc(applicationLabel(status))}</h2><span class="hint">${items.length}</span></div><div class="app-list">${items.map(applicationRow).join("")}</div></section>`).join("") +
+    (groups.length || errors ? "" : `<p class="hint">${t("Заявок пока нет")}</p>`) +
+    `<a class="button secondary" href="/app#explore?kind=teams">${t("Найти команды")}</a>`;
   root.querySelectorAll("[data-withdraw-project]").forEach(button => actionButton(button, async () => { await api("/me/applications/" + button.dataset.withdrawProject + "/withdraw", {method:"POST"}); await render(); }));
   root.querySelectorAll("[data-withdraw-team]").forEach(button => actionButton(button, async () => { await api("/team-applications/" + button.dataset.withdrawTeam, {method:"PATCH", body:{status:"withdrawn"}}); await render(); }));
 }

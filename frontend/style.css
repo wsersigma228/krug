@@ -1047,3 +1047,14 @@ input, textarea, select { border-color: var(--field-line); }
   .settings-side { position: sticky; top: 5.5rem; }
   .settings-nav { flex-direction: column; overflow: visible; }
 }
+/* Applications: one panel per status; each row takes the colour of its entity type (project or team). */
+.app-group { margin: 0; }
+.app-list { display: grid; }
+.app-item { display: grid; gap: .5rem; min-width: 0; padding: 1rem 1.2rem; border-bottom: 1px solid var(--line); border-left: 3px solid var(--c); }
+.app-item:last-child { border-bottom: 0; }
+.app-item p { margin: 0; max-width: 70ch; line-height: 1.6; overflow-wrap: anywhere; }
+.app-item-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: .2rem .7rem; min-width: 0; }
+.app-item-head .author { min-width: 0; font-weight: 600; overflow-wrap: anywhere; }
+.app-item .toolbar { margin-top: 0; }
+.app-kind { color: var(--c-ink); font-size: .8rem; font-weight: 650; letter-spacing: .04em; text-transform: uppercase; }
+.app-group .dt-box-h .hint { margin: 0; }
