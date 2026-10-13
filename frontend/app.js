@@ -665,6 +665,7 @@ async function profileScreen(root, id, stamp) {
     <aside class="dt-rail">
       <section class="dt-box"><div class="dt-box-h"><h2>${t("Активность")}</h2></div><div class="dt-box-b"><dl class="dt-facts"><div><dt>${t("публикаций")}</dt><dd>${profile.posts_count}</dd></div><div><dt>${t("подписчиков")}</dt><dd>${profile.subscribers_count}</dd></div><div><dt>${t("подписок")}</dt><dd>${profile.subscriptions_count}</dd></div></dl></div></section>
     </aside></div></div>`;
+  detailBind(root);
   await collaborationProfileBlock(root, id, own, stamp);
   if (follow)
     actionButton(root.querySelector("#follow"), async () => {
