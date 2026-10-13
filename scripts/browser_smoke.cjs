@@ -33,7 +33,7 @@ async function main() {
     await p.getByRole('button', { name: 'Создать аккаунт' }).click();
     await p.waitForURL('**/app#explore');
     users.push(user);
-    await p.getByRole('heading', { name: 'Обзор', exact: true }).waitFor();
+    await p.getByRole('heading', { level: 1, name: /^Привет,/ }).waitFor();
     return user;
   }
   async function mailToken(user, subject) {
@@ -119,9 +119,9 @@ async function main() {
     await noOverflow(phone);
     await phone.locator('[data-delete-comment]').click();
     await phone.waitForFunction(() => !document.querySelector('[data-delete-comment]'));
-    await phone.goto(base + '/app#explore');
-    await phone.locator('input[name=search]').fill(title);
-    await phone.getByRole('button', { name: 'Найти', exact: true }).click();
+    await phone.goto(base + '/app#stories'); // post search moved from explore to the stories screen
+    await phone.locator('form.search input[name=search]').fill(title);
+    await phone.locator('form.search').getByRole('button', { name: 'Найти', exact: true }).click();
     await phone.getByRole('link', { name: title, exact: true }).waitFor();
     await noOverflow(phone);
     await phone.goto(base + '/app#post/2147483647');
