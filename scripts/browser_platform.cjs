@@ -110,7 +110,7 @@ async function waitReady(page, selector) {
 async function run() {
   const owner = await account('krug_platform_owner');
   const member = await account('krug_platform_member');
-  const browser = await chromium.launch({ headless: true, ...(process.env.BROWSER_CHANNEL ? { channel: process.env.BROWSER_CHANNEL } : {}) });
+  const browser = await chromium.launch({ headless: true, ...(process.env.BROWSER_CHANNEL ? { channel: process.env.BROWSER_CHANNEL } : {}), ...(process.env.BROWSER_EXECUTABLE ? { executablePath: process.env.BROWSER_EXECUTABLE } : {}) });
   const ownerContext = await browser.newContext({ viewport: { width: 1440, height: 1000 }, locale: 'ru-RU', colorScheme: 'light' });
   const memberContext = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'ru-RU', colorScheme: 'dark', isMobile: true, hasTouch: true });
   const ownerPage = await ownerContext.newPage();

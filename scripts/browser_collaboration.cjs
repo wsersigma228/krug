@@ -61,7 +61,7 @@ async function run() {
   fs.mkdirSync(output, { recursive: true });
   const owner = await createAccount(`krug_ui_owner_${key}`);
   const applicant = await createAccount(`krug_ui_person_${key}`);
-  const browser = await chromium.launch({ headless: true, ...(process.env.BROWSER_CHANNEL ? { channel: process.env.BROWSER_CHANNEL } : {}) });
+  const browser = await chromium.launch({ headless: true, ...(process.env.BROWSER_CHANNEL ? { channel: process.env.BROWSER_CHANNEL } : {}), ...(process.env.BROWSER_EXECUTABLE ? { executablePath: process.env.BROWSER_EXECUTABLE } : {}) });
   const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, locale: 'ru-RU', colorScheme: 'dark' });
   const otherContext = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, locale: 'ru-RU', colorScheme: 'dark' });
   const ownerPage = await context.newPage();

@@ -143,7 +143,7 @@ The regular launcher never resets application data.
 Optional browser checks use Playwright installed in a separate tools directory:
 set `NODE_PATH` to its `node_modules`, then run `node scripts/browser_smoke.cjs`.
 Use `APP_URL`, optional `MAILPIT_URL` (to exercise captured confirmation/reset links),
-and `BROWSER_CHANNEL=msedge` for an installed Edge rather than Playwright Chromium.
+and `BROWSER_CHANNEL=msedge` for an installed Edge, or `BROWSER_EXECUTABLE` with the path of another Chromium-based browser (for example Brave), rather than Playwright Chromium. Every `scripts/browser_*.cjs` accepts both variables.
 `BROWSER_OUTPUT` chooses the screenshot folder; otherwise a temporary folder is used.
 The check covers 1440px desktop and 390px mobile viewports, temporary accounts,
 photo drafts/publication, social interactions, search, errors and empty states.

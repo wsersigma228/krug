@@ -39,7 +39,7 @@ async function run() {
   const person = `krug_ui_claim_${key}`;
   const personSession = await sessionFor(person, true);
   const personProfile = await api('/me', { token: personSession.access_token });
-  const browser = await chromium.launch({ headless: true, ...(process.env.BROWSER_CHANNEL ? { channel: process.env.BROWSER_CHANNEL } : {}) });
+  const browser = await chromium.launch({ headless: true, ...(process.env.BROWSER_CHANNEL ? { channel: process.env.BROWSER_CHANNEL } : {}), ...(process.env.BROWSER_EXECUTABLE ? { executablePath: process.env.BROWSER_EXECUTABLE } : {}) });
   const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, locale: 'ru-RU' });
   const adminPage = await context.newPage();
   const personPage = await context.newPage();
