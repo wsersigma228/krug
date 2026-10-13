@@ -124,7 +124,7 @@ async function main() {
     await page.locator("[data-theme-choice=dark]").click();
     await page.waitForFunction(() => document.documentElement.dataset.theme === "dark");
     await page.emulateMedia({ reducedMotion: "reduce" });
-    assert.equal(await page.locator(".platform-card").first().evaluate(node => getComputedStyle(node).animationDuration), "0s", "Reduced motion disables discovery card animation");
+    assert.equal(await page.locator(".hm-tile, .hm-fcard, .hm-card").first().evaluate(node => getComputedStyle(node).animationDuration), "0s", "Reduced motion disables discovery card animation");
     await page.locator("#ui-theme").click();
     await page.locator("[data-theme-choice=light]").click();
     assert.equal(await page.locator("html").getAttribute("data-theme"), "light", "Reduced motion applies theme changes immediately");
