@@ -916,3 +916,64 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent); outline
 .dt-collab > section:last-child { margin-bottom: 1.2rem; }
 .dt-collab > :first-child:not(h2) { margin-top: 1.2rem; }
 .dt-collab .bio, .dt-collab .project-tags { margin-block: .4rem; }
+
+/* Step 4 — lists and search results: discovery results, roles, saved, my projects, teams/events/communities, people.
+   Same band, tabs, card and empty-state language as the home (home.js), so switching from home to tabs or search has no jump. */
+.lst-band .hm-top { gap: .9rem; }
+.lst-title { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: .75rem 1.5rem; }
+.lst-title .hm-hello { flex: 1 1 18rem; min-width: 0; }
+.lst-title .button { flex: none; }
+.lst-band .discovery-search { margin: 0; }
+.lst-band .platform-list-search { max-width: 44rem; }
+.lst { padding-block: clamp(20px, 2.2vw, 40px) 3rem; }
+.lst .hint { font-size: .9rem; }
+.lst .tabs { gap: .2rem; margin: 0 0 1.25rem; border-bottom: 1px solid var(--line); }
+.lst .tabs a { min-height: 44px; padding: .7rem 1rem; border-radius: 0; border-bottom: 2px solid transparent; color: var(--muted); font-size: .98rem; font-weight: 600; }
+.lst .tabs a.active { background: none; color: var(--text); border-color: var(--text); }
+.lst .back { display: inline-flex; align-items: center; min-height: 44px; margin-bottom: 1rem; color: var(--c-ink, var(--accent-ink)); font-weight: 600; }
+.lst .discovery-results-heading { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .5rem 1.5rem; margin: 0 0 1.1rem; padding-bottom: .7rem; border-bottom: 1px solid var(--line); }
+.lst .discovery-results-heading h2 { position: static; width: auto; height: auto; margin: 0; padding: 0; overflow: visible; clip: auto; white-space: normal; border: 0; font-size: clamp(1.25rem, 1.4vw, 1.8rem); line-height: 1.15; }
+.lst .discovery-results-heading .toolbar { display: flex; flex-wrap: wrap; gap: .4rem 1rem; }
+.lst .discovery-results-heading .text-button { min-height: 44px; display: inline-flex; align-items: center; color: var(--accent-ink); font-weight: 600; }
+.lst-q { padding: 0 .3rem; border-radius: .3rem; background: var(--accent-soft); color: var(--accent-ink); font-weight: 650; overflow-wrap: anywhere; }
+.lst .project-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr)); gap: clamp(14px, 1.4vw, 24px); align-items: stretch; }
+.lst .platform-card { display: flex; flex-direction: column; min-width: 0; padding: 0; gap: 0; border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper); animation: none; transform: none; transition: border-color 150ms ease-out; }
+.lst .platform-card:hover { transform: none; border-color: color-mix(in oklab, var(--text) 30%, var(--line)); }
+.lst .platform-card .hm-row { gap: .4rem .6rem; }
+.lst .platform-card .hm-kind { color: var(--muted); font-size: .85rem; }
+.lst .platform-card h3 { margin: 0; }
+.lst .platform-card .project-tags { gap: .35rem; }
+.lst .platform-card .project-tag { padding: .2rem .5rem; font-size: .78rem; }
+.lst .platform-card .hm-foot span { font-variant-numeric: tabular-nums; }
+.lst .platform-card .hm-foot .hm-btn { margin-left: auto; }
+.lst .platform-card .hint { margin: 0; }
+.lst-cover .platform-cover, .lst-cover .platform-cover-fallback { position: absolute; inset: 0; display: block; width: 100%; height: 100%; aspect-ratio: auto; border-radius: 0; object-fit: cover; }
+.lst-cover .platform-cover-fallback { display: grid; place-items: center; color: var(--c-ink); }
+.lst-intent { margin: 0; color: var(--c-ink); font-size: .9rem; font-weight: 650; }
+.lst-facts { margin: 0; color: var(--muted); font-size: .9rem; overflow-wrap: anywhere; }
+.lst .save-platform { margin-left: auto; }
+.lst .load-more { margin: clamp(20px, 2vw, 32px) auto 0; min-width: 12rem; }
+.lst .empty { display: grid; justify-items: start; gap: .5rem; padding: clamp(24px, 3vw, 40px); border-radius: var(--radius); text-align: left; }
+.lst .empty h2 { margin: 0; font-size: 1.25rem; }
+.lst .empty .button { margin-top: .5rem; }
+.lst .discovery-sidebar { position: sticky; border-radius: var(--radius); background: var(--paper); }
+.lst .upcoming-rail { margin-top: 0; padding: 1rem; border-radius: var(--radius); }
+.lst #people-list { margin: 0; padding: 0 1rem; overflow: hidden; border-radius: var(--radius); }
+.lst .person { min-height: 4.5rem; padding: .6rem 0; }
+.lst .person:last-child { border-bottom: 0; }
+.lst #people-list .empty { border: 0; background: none; padding: clamp(20px, 2.4vw, 32px) 0; }
+.lst .discovery-source { margin-top: clamp(28px, 3vw, 44px); }
+.lst .discovery-source > .discovery-results-heading { margin-bottom: 1rem; }
+.lst .discovery-source .discovery-results-heading h3 { margin: 0; font-size: 1.2rem; line-height: 1.2; }
+.lst .upcoming-event-title, .lst .upcoming-event .hint { overflow-wrap: anywhere; }
+.lst .person .author { flex: 1; overflow-wrap: anywhere; font-weight: 650; }
+@media (max-width: 1150px) {
+  .lst.discovery-shell, .lst .discovery-center, .lst .discovery-filter-form { display: block; }
+  .lst .discovery-sidebar { position: static; min-height: 0; margin-bottom: 1rem; }
+  .lst .discovery-filters[open] > .filter-fields { position: static; top: auto; right: auto; width: auto; margin-top: .6rem; box-shadow: none; }
+  .lst .upcoming-rail { display: none; }
+}
+@media (max-width: 650px) {
+  .lst .project-grid { grid-template-columns: minmax(0, 1fr); }
+  .lst .discovery-results-heading { margin-bottom: .8rem; }
+}
