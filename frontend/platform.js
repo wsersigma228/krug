@@ -81,35 +81,43 @@ function detailBind(root) {
     target.scrollIntoView({ block: "start", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
   }));
 }
+// List cards use the home card language: entity-colour cover (or first-letter field), Geologica title, status chip, counts.
+function listCover(entity, kind, title = entity.title) {
+  return entity.cover_url ? html`<div class="hm-cover lst-cover">${platformCover(entity, kind)}</div>` : homeCover(title || "", platformTitle(kind));
+}
+const listChips = { event: { active: "live", scheduled: "reg" }, team: { recruiting: "live", active: "reg" }, project: { active: "live" } };
 function platformCard(entity, kind) {
   if (kind === "person") {
     const name = entity.display_name || entity.username;
     const intent = { looking_for_teammates:"Ищу участников в проект", looking_for_project:"Ищу проект", open_to_collaboration:"Открыт к сотрудничеству", interested_in_event:"Интересуюсь мероприятиями" }[entity.intent_kind];
-    return html`<article class="platform-card platform-person"><a class="platform-avatar" href="/app#profile/${entity.id}" aria-label="${t("Профиль")} ${esc(name)}">${entity.avatar_url ? html`<img src="${esc(entity.avatar_url)}" alt="">` : esc(name[0]?.toUpperCase())}</a><div class="platform-card-copy"><div class="platform-card-meta"><span>${t("Человек")}</span><span>@${esc(entity.username)}</span></div><h3><a href="/app#profile/${entity.id}">${esc(name)}</a></h3>${intent ? html`<p class="platform-card-meta">${t(intent)}</p>` : ""}<p class="platform-card-summary">${esc(entity.intent_text || entity.bio || "")}</p>${platformTags(entity)}<p class="hint">${[entity.timezone, entity.commitment].filter(Boolean).join(" · ")}</p></div><a class="project-open" href="/app#profile/${entity.id}">${t("Профиль")}${icon("arrow")}</a></article>`;
+    return html`<article class="hm-card platform-card type-person">${listCover(entity, kind, name)}<div class="hm-in"><div class="hm-row"><a class="platform-avatar" href="/app#profile/${entity.id}" aria-label="${t("Профиль")} ${esc(name)}">${entity.avatar_url ? html`<img src="${esc(entity.avatar_url)}" alt="">` : esc(name[0]?.toUpperCase())}</a><span class="hm-kind">@${esc(entity.username)}</span></div>
+      <h3><a href="/app#profile/${entity.id}">${esc(name)}</a></h3>${intent ? html`<p class="lst-intent">${t(intent)}</p>` : ""}<p>${esc(entity.intent_text || entity.bio || "")}</p>${platformTags(entity)}
+      <div class="hm-foot"><span>${[entity.timezone, entity.commitment].filter(Boolean).join(" · ")}</span><a class="hm-btn" href="/app#profile/${entity.id}">${t("Профиль")}</a></div></div></article>`;
   }
   if (kind === "opening") {
     const related = entity.project || entity.team;
     const relatedKind = entity.project ? "project" : "team";
     const href = related?.slug ? platformUrl(relatedKind, related.slug) : "/app#explore?kind=projects";
     const context = related ? html`<p class="hint">${entity.project ? t("Проект") : t("Команда")}: ${esc(related.title)}</p>` : "";
-    return html`<article class="platform-card platform-card-opening"><div class="platform-card-meta"><span>${t("Открытая роль")}</span><span>${esc(entity.commitment || "")}</span></div>${platformCover(related, relatedKind)}<div class="platform-card-copy"><h3><a href="${href}">${esc(entity.title || entity.role)}</a></h3><p class="platform-card-summary">${esc(entity.description || related?.summary || "")}</p>${context}${platformTags(entity)}</div><a class="project-open" href="${href}">${t("Посмотреть и откликнуться")}${icon("arrow")}</a></article>`;
+    return html`<article class="hm-fcard platform-card type-${relatedKind}">${listCover(related || entity, relatedKind)}<div class="hm-in"><div class="hm-row"><span class="hm-kind">${t("Открытая роль")}${entity.commitment ? html` · ${esc(entity.commitment)}` : ""}</span></div>
+      <h3><a href="${href}">${esc(entity.title || entity.role)}</a></h3>${context}<p>${esc(entity.description || related?.summary || "")}</p>${platformTags(entity)}
+      <div class="hm-foot"><a class="hm-btn" href="${href}">${t("Посмотреть и откликнуться")}</a></div></div></article>`;
   }
   const href = platformUrl(kind, entity.slug);
-  const count = kind === "project" ? [[entity.member_count, "участников"], [entity.open_roles_count, "открытых ролей"]] : kind === "team" ? [[entity.member_count, "участников"], [entity.openings_count, "открытых ролей"]] : kind === "community" ? [[entity.member_count, "участников"], [entity.published_posts_count, "публикаций"]] : [];
+  const counts = kind === "project" ? [[entity.member_count, ["участник", "участника", "участников"]], [entity.open_roles_count, ["роль", "роли", "ролей"]]] : kind === "team" ? [[entity.member_count, ["участник", "участника", "участников"]], [entity.openings_count, ["роль", "роли", "ролей"]]] : kind === "community" ? [[entity.member_count, ["участник", "участника", "участников"]], [entity.published_posts_count, ["публикация", "публикации", "публикаций"]]] : [];
   const meta = kind === "project" ? entity.origin === "external" ? t("Внешний проект") : t("Проект") : platformTitle(kind);
-  const status = kind === "event" ? entity.status : kind === "project" || kind === "team" ? entity.status : "";
+  const status = kind === "event" || kind === "project" || kind === "team" ? entity.status : "";
+  const chip = status ? { class: listChips[kind]?.[status] || "wait", label: kind === "project" ? projectLabel(status) : platformStatus(kind, status) } : null;
   const facts = kind === "event" ? [entity.starts_at && date(entity.starts_at), entity.format && t({ online:"Онлайн", local:"На месте", hybrid:"Гибридный" }[entity.format]), entity.location].filter(Boolean) : kind === "team" ? [entity.format && t({ online:"Онлайн", local:"На месте", hybrid:"Гибридный" }[entity.format]), entity.location].filter(Boolean) : [];
   const action = kind === "event" ? t("О событии") : kind === "team" ? t("Смотреть команду") : kind === "community" ? t("Открыть сообщество") : t("Подробнее");
-  const glyph = kind === "project" ? "folder" : kind === "team" ? "people" : kind === "event" ? "calendar" : "community";
   const saveButton = session && ["project", "team", "community", "event"].includes(kind) ? html`<button class="save-platform" data-platform-save="${kind}" data-slug="${esc(entity.slug)}" aria-pressed="false" aria-label="${t("Сохранить")}" title="${t("Сохранить")}">${icon("bookmark")}</button>` : "";
-  return html`<article class="platform-card platform-card-${kind}" data-platform-kind="${kind}" data-platform-slug="${esc(entity.slug)}">
-    <div class="platform-card-topline"><div class="platform-card-kind">${icon(glyph)}<span>${meta}</span>${status ? html`<span class="project-status" data-status="${esc(status)}">${esc(kind === "project" ? projectLabel(status) : platformStatus(kind, status))}</span>` : ""}${kind === "project" && entity.origin === "external" && entity.source_name ? html`<span>${esc(entity.source_name)}</span>` : ""}</div>${saveButton}</div>
-    <div class="platform-card-media">${platformCover(entity, kind)}</div><div class="platform-card-copy">
-      <h3><a href="${href}">${esc(entity.title)}</a></h3><p class="platform-card-summary">${esc(entity.summary || "")}</p>${facts.length ? html`<p class="platform-card-meta">${facts.join(" · ")}</p>` : ""}${platformTags(entity)}
-      ${count.some(([value]) => Number.isInteger(value)) ? html`<div class="platform-card-counts">${count.filter(([value]) => Number.isInteger(value) && value > 0).map(([value, label]) => html`<span>${value} ${t(label)}</span>`)}</div>` : ""}
-      ${kind === "project" && entity.origin === "external" ? html`<p class="hint">${t("Источник не означает, что авторы набирают команду.")}</p>` : ""}</div>
-    <div class="platform-card-actions"><a class="project-open" href="${href}">${action}${icon("arrow")}</a></div>
-  </article>`;
+  const countTexts = counts.filter(([value]) => Number.isInteger(value) && value > 0).map(([value, forms]) => pluralForm(value, forms));
+  return html`<article class="hm-card platform-card platform-card-${kind}" data-platform-kind="${kind}" data-platform-slug="${esc(entity.slug)}">${listCover(entity, kind)}<div class="hm-in">
+    <div class="hm-row"><span class="hm-kind">${meta}${kind === "project" && entity.origin === "external" && entity.source_name ? html` · ${esc(entity.source_name)}` : ""}</span>${chip ? html`<span class="hm-status ${chip.class}">${esc(chip.label)}</span>` : ""}${saveButton}</div>
+    <h3><a href="${href}">${esc(entity.title)}</a></h3>${entity.summary ? html`<p>${esc(entity.summary)}</p>` : ""}${facts.length ? html`<p class="lst-facts">${facts.join(" · ")}</p>` : ""}${platformTags(entity)}
+    ${kind === "project" && entity.origin === "external" ? html`<p class="hint">${t("Источник не означает, что авторы набирают команду.")}</p>` : ""}
+    <div class="hm-foot">${countTexts.map(text => html`<span>${text}</span>`)}<a class="hm-btn" href="${href}">${action}</a></div>
+  </div></article>`;
 }
 function platformEventRow(event) {
   return html`<article class="upcoming-event"><a class="upcoming-event-cover" href="${platformUrl("event", event.slug)}">${platformCover(event, "event", true)}</a><div><a class="upcoming-event-title" href="${platformUrl("event", event.slug)}">${esc(event.title)}</a><p class="hint">${[event.starts_at && date(event.starts_at), event.format === "online" ? t("Онлайн") : event.location].filter(Boolean).join(" · ")}</p><a class="upcoming-find-team" href="/app#teams?event_id=${event.id}">${t("Найти команду")}</a></div></article>`;
@@ -192,10 +200,13 @@ async function platformListScreen(kind, query, root, stamp) {
   if (stamp !== generation) return;
   const createRoute = kind === "team" ? "team-new" : kind === "event" ? "event-new" : "community-new";
   const createLabel = kind === "team" ? t("Создать команду") : kind === "event" ? t("Создать событие") : t("Создать сообщество");
-  root.innerHTML = html`<section class="platform-list-heading"><div><h1>${t(config.list)}</h1><p class="intro">${kind === "team" ? t("Найдите людей, которые работают над общей задачей.") : kind === "event" ? t("Встречи и события, опубликованные участниками.") : t("Места, где участники делятся знаниями и публикациями.")}</p></div>${session ? html`<a class="button" href="/app#${createRoute}">${icon("plus")} ${createLabel}</a>` : html`<a class="button" href="/app#login?next=${createRoute}">${t("Войти, чтобы создать")}</a>`}</section>
-    <form class="discovery-search platform-list-search" role="search"><label class="field"><span>${t("Поиск")}</span><input name="search" value="${esc(query.get("search") || "")}" maxlength="100" placeholder="${t("Название, навык или тема")}"></label><button>${icon("explore")} ${t("Найти")}</button></form>
-    <div class="discovery-results-heading"><h2>${t("Открытые для участников")}</h2></div><div id="platform-list-results">${platformCardGrid(page.items, kind)}</div>`;
+  listLayout(root);
+  root.innerHTML = listBand(t(config.list), kind === "team" ? t("Найдите людей, которые работают над общей задачей.") : kind === "event" ? t("Встречи и события, опубликованные участниками.") : t("Места, где участники делятся знаниями и публикациями."), {
+    action: session ? html`<a class="button" href="/app#${createRoute}">${icon("plus")} ${createLabel}</a>` : html`<a class="button" href="/app#login?next=${createRoute}">${t("Войти, чтобы создать")}</a>`,
+    search: listSearch(query, t("Название, навык или тема"), "platform-list-search"),
+  }) + html`<div class="hm-wrap lst"><div class="discovery-results-heading"><h2>${t("Открытые для участников")}</h2></div><div id="platform-list-results">${platformCardGrid(page.items, kind)}</div></div>`;
   bindForm(root.querySelector(".platform-list-search"), async data => { const next = new URLSearchParams(query); const search = data.get("search").trim(); if (search) next.set("search", search); else next.delete("search"); go(`${kind === "team" ? "teams" : kind === "event" ? "events" : "communities"}?${next}`); });
+  await hydratePlatformCovers(root.querySelector("#platform-list-results"), stamp);
   bindPlatformSaves(root.querySelector("#platform-list-results"), stamp);
 }
 function platformFormMarkup(kind, entity, events = []) {
