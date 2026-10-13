@@ -1,6 +1,7 @@
 "use strict";
 // Translate static UI copy only. Template values (posts, names, bios) stay untouched.
 const english = {
+  "Описание пока не добавлено.": "No description has been added yet.", "Пока нет публикаций.": "No posts yet.","О команде": "About the team", "Состав": "Composition", "О сообществе": "About the community", "Активность": "Activity", "Детали": "Details", "Навигация": "Navigation", "Разделы страницы": "Page sections",
   "Проекты": "Projects",
   "Истории": "Stories",
   "Сохранённое": "Saved",
