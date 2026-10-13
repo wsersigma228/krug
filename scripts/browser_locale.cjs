@@ -197,7 +197,7 @@ async function main() {
     await page.waitForURL(/#post\/\d+$/);
     const untitledId = new URL(page.url()).hash.split('/')[1];
     assert.equal((await request('/posts/' + untitledId)).title, '');
-    await page.locator('h1.sr-only').waitFor({ state: 'attached' });
+    await page.locator('h1.dt-title', { hasText: 'Post' }).waitFor();
     await request('/posts', 'POST', { title: 'Synthetic text-only story', content: 'A text-first feed should work with and without photographs. This temporary post is part of the browser verification and will be removed with the test account.', is_published: true });
     otherUser = await request('/users', 'POST', { username: username + '_writer', password });
     const otherTokens = await request('/login', 'POST', { username: otherUser.username, password });
