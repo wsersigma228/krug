@@ -140,7 +140,7 @@ async function main() {
     await page.unroute("**/people?*");
     await page.addInitScript(() => Object.defineProperty(document, "startViewTransition", { configurable: true, value: undefined }));
     await page.goto(base + "/app#explore");
-    await page.locator(".platform-card").first().waitFor();
+    await page.locator(".hm-tile, .hm-fcard, .hm-card").first().waitFor();
     await page.locator("#ui-theme").click();
     await page.locator("[data-theme-choice=dark]").click();
     assert.equal(await page.locator("html").getAttribute("data-theme"), "dark", "Browsers without View Transitions apply the theme immediately");
