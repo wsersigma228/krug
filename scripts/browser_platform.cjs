@@ -41,7 +41,7 @@ async function assertDraftCover(kind, entitySlug, owner, member, ownerPage) {
   for (const routeName of [detailRoute, editRoute]) {
     await ownerPage.goto(base + '/app#' + routeName);
     const coverSelector = routeName === detailRoute
-      ? kind === 'project' ? '.project-detail-main > img.platform-cover' : '.platform-detail > div > img.platform-cover'
+      ? '.dt-head .dt-emblem > img.platform-cover'
       : '.cover-editor img.platform-cover';
     await waitReady(ownerPage, coverSelector);
     await ownerPage.waitForFunction(selector => {
@@ -52,7 +52,7 @@ async function assertDraftCover(kind, entitySlug, owner, member, ownerPage) {
   }
   const restored = await api(route, { token: owner.token, method: 'PATCH', body: { visibility: 'public' } });
   await ownerPage.goto(base + '/app#' + detailRoute);
-  const detailSelector = kind === 'project' ? '.project-detail-main > img.platform-cover' : '.platform-detail > div > img.platform-cover';
+  const detailSelector = '.dt-head .dt-emblem > img.platform-cover';
   await waitReady(ownerPage, detailSelector);
   assert.equal(await ownerPage.locator(detailSelector).getAttribute('src'), restored.cover_url, kind + ' public cover keeps its direct URL');
   await ownerPage.waitForFunction(selector => {

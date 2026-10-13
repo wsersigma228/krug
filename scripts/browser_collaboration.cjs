@@ -167,7 +167,7 @@ async function run() {
     await applicantPage.getByText(/game design/i).waitFor();
 
     await applicantPage.goto(base + `/app#project/${projectSlug}`);
-    const projectTag = applicantPage.locator(".project-detail .project-tags a.project-tag").first();
+    const projectTag = applicantPage.locator(".dt[data-type=\"project\"] .project-tags a.project-tag").first();
     assert((await projectTag.boundingBox()).height >= 44, "Mobile project tag has a 44px target");
     await projectTag.click();
     await applicantPage.waitForURL(/#explore\?kind=projects/);
