@@ -1026,6 +1026,9 @@ input, textarea, select { border-color: var(--field-line); }
 .dt-box.post-detail .article-body { margin: 0 0 1.2rem; max-width: 70ch; font-size: 1.05rem; line-height: 1.7; }
 .dt-box.comments { margin: 0; padding: 0; max-width: none; scroll-margin-top: 7.5rem; }
 .dt-box.comments .comment:last-child { border-bottom: 0; }
+/* Comments have no avatar: the author and date sit on one line instead of the avatar grid. */
+.dt-box.comments .comment .post-meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: .2rem .7rem; }
+.dt-box.comments .comment .author { overflow-wrap: anywhere; font-weight: 600; }
 /* Feed cards: readable measure; entity colour shows only inside a typed context (project updates, communities). */
 .post-card-inner { border-radius: var(--radius); }
 .post-card .post-excerpt { max-width: 70ch; }
