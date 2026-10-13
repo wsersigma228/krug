@@ -37,11 +37,11 @@ async function main() {
       await page.setViewportSize({ width, height });
       await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
       assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `Horizontal overflow at ${width}px`);
-      if (width <= 850) assert.equal(await page.locator('.mobile-dock a').count(), 4, 'Four real mobile destinations remain available');
-      if (width > 850) assert.equal(await page.locator('.nav a').count(), 4, 'Four desktop destinations remain available');
+      if (width <= 850) assert.equal(await page.locator('.mobile-dock a').count(), 5, 'Five real mobile destinations remain available');
+      if (width > 850) assert.equal(await page.locator('.nav a').count(), 5, 'Five desktop destinations remain available');
       if (width === 390) assert.equal(await page.locator('.discovery-filters').evaluate(node => node.open), false, 'Desktop-open filters collapse at mobile width when only search is set');
       if (width === 1440) {
-        const search = await page.locator('.discovery-search').boundingBox();
+        const search = await page.locator('.hsearch').boundingBox(); // desktop search lives in the header; the band field is mobile-only (.hm-msearch)
         const tabs = await page.locator('.discovery-tabs').boundingBox();
         const rail = await page.locator('.discovery-sidebar').boundingBox();
         const center = await page.locator('.discovery-center').boundingBox();
@@ -81,7 +81,7 @@ async function main() {
     await page.locator('.discovery-filters summary').click();
     await page.locator('.discovery-filters input[name=skill]').waitFor({ state: 'visible' });
     await page.locator('#ui-language').click();
-    await page.locator('.discovery-intro h1').waitFor();
+    await page.locator('.hm-band h1').waitFor(); // list bands replaced the old discovery intro
     await page.locator('#ui-language').click();
     await page.goto(base + "/app#explore");
     await page.locator(".hm-tile, .hm-fcard, .hm-card").first().waitFor();
