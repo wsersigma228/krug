@@ -149,7 +149,7 @@ The check covers 1440px desktop and 390px mobile viewports, temporary accounts,
 photo drafts/publication, social interactions, search, errors and empty states.
 It removes only its temporary accounts and captured messages.
 
-`scripts/browser_discovery_viewports.cjs` checks 320px–3840px layouts, four mobile
+`scripts/browser_discovery_viewports.cjs` checks 320px–3840px layouts, five mobile
 destinations, collapsed mobile filters and RU/EN discovery labels, then captures
 screenshots. It creates no fixtures and refuses any `APP_URL` except
 `http://127.0.0.1:18103`; run it only against the isolated preview.
