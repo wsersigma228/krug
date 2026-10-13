@@ -161,7 +161,8 @@ for 320px–3840px viewport, keyboard, theme, reduced-motion and error-state che
 `node scripts/browser_collaboration.cjs` creates synthetic preview accounts, projects,
 roles and applications and captures populated screens; these fixtures remain in that
 preview database. Set `BROWSER_ADMIN_USERNAME` to an admin already promoted in the
-same preview database to include submission, ownership-review and claimed-project
+same preview database, and `BROWSER_ADMIN_PASSWORD` to that admin's password if it
+differs from the synthetic default, to include submission, ownership-review and claimed-project
 edit checks. The script refuses any `APP_URL` other than the isolated preview.
 For a focused pass over an existing pending item, use
 `scripts/browser_admin_tail.cjs` with `BROWSER_EXTERNAL_TITLE` set to that item's
