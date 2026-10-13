@@ -281,8 +281,10 @@ On the execution host run `./scripts/backup [--consistent] [DIR]` (default `DIR`
 and `tar -tzf`. It needs a running `db` container (photos are read by a one-off `web` container) and prints only paths and sizes.
 
 Without `--consistent`, web, worker and beat keep running, so the dump and photo archive
-can differ by writes made during the backup. With `--consistent`, the script stops web,
-worker and beat, and restarts them when it exits. Copy the directory off the host.
+can differ by writes made during the backup. With `--consistent`, the script reads which of
+web, worker and beat are running from the container engine, stops only those, and starts
+exactly those again when it exits. If it cannot read that state, it exits before dumping.
+Copy the directory off the host.
 Back up `.env` separately; it is not part of the script output.
 
 ### Restore
