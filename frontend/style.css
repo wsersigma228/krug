@@ -1058,3 +1058,16 @@ input, textarea, select { border-color: var(--field-line); }
 .app-item .toolbar { margin-top: 0; }
 .app-kind { color: var(--c-ink); font-size: .8rem; font-weight: 650; letter-spacing: .04em; text-transform: uppercase; }
 .app-group .dt-box-h .hint { margin: 0; }
+/* Admin queue: one compact row per request, decision buttons on the right (stacked on narrow screens). */
+.review-queue { margin: 0; }
+.review-list { display: grid; }
+.review-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .6rem 1.2rem; align-items: start; min-width: 0; padding: .9rem 1.2rem; border-bottom: 1px solid var(--line); }
+.review-item:last-child { border-bottom: 0; }
+.review-item h3 { margin: 0 0 .25rem; font-size: 1.02rem; overflow-wrap: anywhere; }
+.review-item p { margin: .25rem 0 0; line-height: 1.5; overflow-wrap: anywhere; }
+.review-item .text-button { overflow-wrap: anywhere; }
+.review-item .toolbar { margin: 0; flex-wrap: nowrap; justify-content: flex-end; }
+@media (max-width: 560px) {
+  .review-item { grid-template-columns: minmax(0, 1fr); }
+  .review-item .toolbar { justify-content: flex-start; flex-wrap: wrap; }
+}
