@@ -37,11 +37,42 @@ trap 'echo "Backup incomplete: $target; do not restore from it." >&2' ERR
 if [[ "$consistent" == true ]]; then
     # Stop writers so the dump and photo archive describe one point in time.
     # Restart only what was running, so a stopped instance stays stopped.
-    for service in web worker beat; do
-        if ./scripts/compose "${compose[@]}" exec -T "$service" true >/dev/null 2>&1; then
-            stopped+=("$service")
+    # Read state from the engine, not from exec: a failed exec (e.g. runtime error) looks like "stopped".
+    # Engine choice mirrors scripts/compose. Any failure here aborts before the dump.
+    if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
+        engine=docker
+    else
+        engine=podman
+    fi
+    container_ids="$(./scripts/compose "${compose[@]}" ps -q)"
+    if [[ -n "$container_ids" ]]; then
+        mapfile -t ids <<<"$container_ids"
+        # Command substitution, not process substitution: a failing inspect must abort under set -e.
+        states="$("$engine" inspect --format '{{index .Config.Labels "com.docker.compose.service"}} {{.State.Running}}' "${ids[@]}")"
+        seen=0
+        writers=()
+        while read -r service running; do
+            seen=$((seen + 1))
+            if [[ "$running" != true && "$running" != false ]]; then
+                echo "Cannot read state of service '$service': '$running'" >&2
+                exit 1
+            fi
+            case "$service" in
+            web | worker | beat)
+                if [[ "$running" == true ]]; then
+                    writers+=("$service")
+                fi
+                ;;
+            esac
+        done <<<"$states"
+        # One line per container is expected; fewer lines would silently hide a running writer.
+        if [[ "$seen" -ne "${#ids[@]}" ]]; then
+            echo "Cannot read state of all containers: expected ${#ids[@]}, got $seen" >&2
+            exit 1
         fi
-    done
+        # Recorded only after validation, so the EXIT trap never starts a service this run did not stop.
+        stopped+=("${writers[@]}")
+    fi
     if [[ "${#stopped[@]}" -gt 0 ]]; then
         ./scripts/compose "${compose[@]}" stop "${stopped[@]}"
     fi
