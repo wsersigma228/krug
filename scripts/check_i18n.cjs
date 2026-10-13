@@ -71,6 +71,7 @@ preferences.run("theme = 'light'; applyPreferences({ transitionTheme: true });")
 assert.equal(preferences.root.dataset.theme, 'light', 'Unsupported browsers apply the theme immediately');
 assert.equal(en('t("Неверное имя пользователя или пароль.")'), 'Incorrect username or password.');
 assert.equal(String(en('html`<p>Автор ${"Автор Настройки <b>user text</b>"}</p>`')), '<p>Author Автор Настройки &lt;b&gt;user text&lt;/b&gt;</p>');
+assert.equal(String(en('html`<a class="active" data-status="draft"><option value="public">Всё сохранённое ${t("public")}</option></a>`')), '<a class="active" data-status="draft"><option value="public">All saved Public</option></a>', 'Static markup keeps Latin attribute values; status words translate only through t()');
 const source = ['frontend/app.js', 'frontend/projects.js', 'frontend/platform.js', 'frontend/home.js'].map(path => fs.readFileSync(path, 'utf8')).join('\n');
 for (const fragment of source.match(/[\u0400-\u04ff][^<>"'`{}\n]*/g) || []) {
   const copy = fragment.trim().replace(/\$$/, '').trim();

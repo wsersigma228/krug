@@ -406,8 +406,13 @@ function htmlValue(value) {
   if (Array.isArray(value)) return value.map(htmlValue).join("");
   return value === null || value === undefined || value === false ? "" : esc(value).value;
 }
+// Static markup is translated only by Russian keys: Latin keys ("public", "active", …) translate API values through an
+// explicit t(value) and would otherwise rewrite attribute values, names and classes written in the template.
+const markupPattern = new RegExp(Object.keys(english).filter((key) => /[а-яё]/i.test(key)).sort((a, b) => b.length - a.length)
+  .map((key) => key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|"), "g");
 function html(strings, ...values) {
-  return new SafeHtml(strings.reduce((copy, part, index) => copy + t(part) + (index < values.length ? htmlValue(values[index]) : ""), ""));
+  const translate = (part) => language === "ru" ? part : part.replace(markupPattern, (key) => english[key]);
+  return new SafeHtml(strings.reduce((copy, part, index) => copy + translate(part) + (index < values.length ? htmlValue(values[index]) : ""), ""));
 }
 function cancelThemeTransition() {
   const pending = themeTransition;
