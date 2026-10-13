@@ -179,7 +179,7 @@ let closeCreateOnOutside = null;
 function shell(route) {
   const wideFeed = ["stories", "feed"].includes(route);
   const discovery = ["explore", "teams", "communities", "events", "saved", "projects"].includes(route);
-  const detail = ["project", "team", "event", "community", "profile"].includes(route);
+  const detail = ["post", "project", "team", "event", "community", "profile"].includes(route);
   const links = [["explore", t("Обзор")], ["teams", t("Команды")], ["events", t("События")], ["communities", t("Сообщества")], ["stories", t("Обновления")]];
   const createOptions = [["project", "project-new", t("Проект"), t("Ищете людей в свой проект")], ["team", "team-new", t("Команда"), t("Соберите людей под общую задачу")], ["event", "event-new", t("Событие"), t("Встреча, джем или мероприятие")], ["community", "community-new", t("Сообщество"), t("Место для обсуждений и знаний")], ["post", "new", t("Пост"), t("Короткая публикация в ленте")]];
   app.innerHTML = html`<header class="topbar"><div class="topbar-inner">
@@ -842,21 +842,28 @@ async function postScreen(root, id, stamp, projectSlug = null, query = new URLSe
   const canComment = Boolean(me && (!post.community_id || communityMember));
   const projectLink = projectSlug ? "/project/" + encodeURIComponent(projectSlug) : "/app#stories";
   const backLink = communitySlug ? "/app#community/" + encodeURIComponent(communitySlug) : projectLink;
-  root.innerHTML = html`<a class="back" href="${backLink}">${communitySlug ? t("К сообществу") : projectSlug ? t("К проекту") : t("К историям")}</a>
-      <article class="card">
-      <div class="post-meta">
-      <a class="avatar" href="/app#profile/${author.id}">${esc(author.username[0].toUpperCase())}</a>
-      <a class="author" href="/app#profile/${author.id}">${esc(author.username)}</a>
-      <span>· ${date(post.created_at)}</span>${!post.is_published ? html`<span class="badge">Личный черновик</span>` : ""}</div>
-      <h1 class="${post.title ? "article-title" : "sr-only"}">${post.title ? esc(post.title) : t("Публикация")}</h1>${photoMarkup(post, "article-photo")}<div class="article-body">${esc(post.content)}</div>
+  const backLabel = communitySlug ? t("К сообществу") : projectSlug ? t("К проекту") : t("К историям");
+  // Entity colour follows the context: project updates, community posts, or the author's own posts.
+  const type = projectSlug ? "project" : communitySlug ? "community" : "person";
+  const title = post.title || t("Публикация");
+  root.innerHTML = html`<div class="dt" data-type="${type}">${detailHead({
+      crumbs: [[backLabel, backLink], [title]],
+      emblem: detailEmblem(null, "", author.username[0].toUpperCase(), true),
+      title,
+      mono: detailLetter(author.username),
+      meta: html`<a class="author" href="/app#profile/${author.id}">${author.username}</a><span>${date(post.created_at)}</span>${!post.is_published ? html`<span class="badge">Личный черновик</span>` : ""}`,
+    })}
+  <div class="dt-wrap dt-body"><main class="dt-main">
+      <article class="dt-box post-detail"><div class="dt-box-b">${photoMarkup(post, "article-photo")}<div class="article-body">${esc(post.content)}</div>
       <div class="toolbar">
       <button id="like" class="${likes.liked ? "liked" : "secondary"}" aria-pressed="${String(likes.liked)}">${icon("heart")} ${likes.count} · ${likes.liked ? t("Нравится") : t("Поддержать")}</button>
       <span class="spacer">
-      </span>${own ? html`<a class="button secondary" href="/app#edit/${id}${communitySlug ? "?community=" + encodeURIComponent(communitySlug) : ""}">Редактировать</a>` : ""}${canDelete ? html`<button class="danger" id="delete">Удалить</button>` : ""}</div>
-      <section class="comments" id="discussion">
-      <h2>Комментарии</h2>${canComment ? html`<form class="form"><label class="field">Ваш комментарий<textarea name="content" required maxlength="2000" placeholder="Поделитесь мыслью…"></textarea></label><button>Отправить</button></form>` : post.community_id && me ? html`<p class="hint">${t("Присоединитесь к сообществу, чтобы комментировать.")}</p>` : html`<p class="intro"><a class="text-button" href="/app#login">Войдите</a>, чтобы присоединиться к разговору.</p>`}<div id="comments">
-      </div>
-      </section></article>`;
+      </span>${own ? html`<a class="button secondary" href="/app#edit/${id}${communitySlug ? "?community=" + encodeURIComponent(communitySlug) : ""}">Редактировать</a>` : ""}${canDelete ? html`<button class="danger" id="delete">Удалить</button>` : ""}</div></div></article>
+      <section class="dt-box comments" id="discussion"><div class="dt-box-h"><h2>Комментарии</h2></div><div class="dt-box-b">
+      ${canComment ? html`<form class="form"><label class="field">Ваш комментарий<textarea name="content" required maxlength="2000" placeholder="Поделитесь мыслью…"></textarea></label><button>Отправить</button></form>` : post.community_id && me ? html`<p class="hint">${t("Присоединитесь к сообществу, чтобы комментировать.")}</p>` : html`<p class="intro"><a class="text-button" href="/app#login">Войдите</a>, чтобы присоединиться к разговору.</p>`}<div id="comments">
+      </div></div>
+      </section>
+  </main></div></div>`;
   const photosReady = hydratePhotos(root, stamp);
   bindLike(root.querySelector("#like"), id, likes);
   if (canDelete)
