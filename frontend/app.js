@@ -278,6 +278,13 @@ function themeIcon(value) {
 function heading(label, title, subtitle = "") {
   return html`<h1>${title}</h1>${subtitle ? html`<p class="intro">${subtitle}</p>` : ""}`;
 }
+function formHead(title, subtitle = "", back = "") {
+  return html`<header class="fx-head"><div class="dt-wrap">${back ? html`<nav class="dt-crumbs" aria-label="${t("Навигация")}">${back}</nav>` : ""}<h1 class="fx-title">${title}</h1>${subtitle ? html`<p class="dt-sub">${subtitle}</p>` : ""}</div></header>`;
+}
+function option(value, label) {
+  // Static values in html`` pass through t(); an interpolated value does not, so keys like "public" keep their value.
+  return html`<option value="${value}">${label}</option>`;
+}
 function empty(title, text, link = "") {
   return html`<div class="empty">
       <h2>${title}</h2>
@@ -482,7 +489,7 @@ async function authScreen(root, route, stamp) {
   const next = /^(project\/[a-z0-9-]+|project-new(?:\?inspired=[a-z0-9-]+)?|team\/[a-z0-9-]+|team-new(?:\?event=\d+)?|community\/[a-z0-9-]+|community-new|event\/[a-z0-9-]+|event-new|saved|projects|applications|collaboration-profile|external-submit|project-claim\/[a-z0-9-]+)$/.test(requestedNext) ? requestedNext : "explore";
   const register = route === "register",
     reset = route === "recover";
-  root.innerHTML = html`<div class="auth">${heading(t("Добро пожаловать"), reset ? t("Вернуться в Круг") : register ? t("Начните свою историю") : t("С возвращением"), reset ? t("Отправим ссылку для нового пароля, если email связан с аккаунтом.") : register ? t("Немного о себе — и вы среди своих.") : t("Войдите, чтобы читать своих людей и делиться мыслями."))}<div class="card">
+  root.innerHTML = html`<div class="auth fx-auth"><p class="fx-wordmark" aria-hidden="true">krug</p>${heading(t("Добро пожаловать"), reset ? t("Вернуться в Круг") : register ? t("Начните свою историю") : t("С возвращением"), reset ? t("Отправим ссылку для нового пароля, если email связан с аккаунтом.") : register ? t("Немного о себе — и вы среди своих.") : t("Войдите, чтобы читать своих людей и делиться мыслями."))}<div class="card fx-auth-card">
       <form class="form">${reset ? input("email", "Email", "email", 'required maxlength="100" autocomplete="email"') : [input("username", t("Имя пользователя"), "text", html`required ${register ? html`minlength="3"` : ""} maxlength="50" autocomplete="username"`), register ? [input("email", t("Email · необязательно"), "email", 'maxlength="100" autocomplete="email"'), html`<span class="hint">Нужен для восстановления пароля и писем. Без email восстановить доступ не получится.</span>`] : "", input("password", t("Пароль"), "password", html`required ${register ? html`minlength="8"` : ""} maxlength="100" autocomplete="${register ? "new-password" : "current-password"}"`)]}<button>${reset ? t("Отправить ссылку") : register ? t("Создать аккаунт") : t("Войти")}</button>
       </form>
       <div class="auth-switch">${register || reset ? html`<a href="/app#login">Уже есть аккаунт? Войти</a>` : html`<span>Первый раз здесь?</span><a href="/app#register">Регистрация</a>`}</div>${!register && !reset ? html`<a class="text-button small" href="/app#recover">Забыли пароль?</a>` : ""}</div>
@@ -525,7 +532,7 @@ async function tokenScreen(root, stamp) {
     accountLinkCompleted = false;
   }
   history.replaceState(null, "", location.pathname + location.search);
-  root.innerHTML = html`<div class="auth">${heading(t("Ваш аккаунт"), reset ? t("Новый пароль") : t("Подтверждение email"), t("Ссылка одноразовая. Действие выполняется только после нажатия кнопки."))}<div class="card">${
+  root.innerHTML = html`<div class="auth fx-auth"><p class="fx-wordmark" aria-hidden="true">krug</p>${heading(t("Ваш аккаунт"), reset ? t("Новый пароль") : t("Подтверждение email"), t("Ссылка одноразовая. Действие выполняется только после нажатия кнопки."))}<div class="card fx-auth-card">${
     token
       ? html`<form class="form">${reset ? input("password", t("Новый пароль"), "password", 'required minlength="8" maxlength="100" autocomplete="new-password"') : ""}<button>${reset ? t("Сохранить пароль") : t("Подтвердить email")}</button>
       </form>`
@@ -722,21 +729,21 @@ async function editorScreen(root, id, stamp, query = new URLSearchParams()) {
   if (stamp !== generation) return;
   if (post && post.author_id !== me.id)
     throw new Error(t("Редактировать публикацию может только её автор."));
-  root.innerHTML = html`<a class="back" href="/app#${post ? "post/" + id : "posts"}">← Назад</a>${heading(t("Творческая пауза"), post ? t("Редактировать пост") : t("Новый пост"), t("Пишите просто. Иногда одной мысли достаточно."))}<div class="card">
-      <form class="form">${input("title", t("Заголовок · необязательно"), "text", t('maxlength="200" placeholder="Заголовок — по желанию"'))}<label class="field">Текст<textarea class="editor" name="content" required placeholder="Начните здесь…">
+  root.innerHTML = html`<div class="fx-page" data-type="project">${formHead(post ? t("Редактировать пост") : t("Новый пост"), t("Пишите просто. Иногда одной мысли достаточно."), html`<a href="/app#${post ? "post/" + id : "posts"}">← ${t("Назад")}</a>`)}<div class="fx-wrap"><form class="fx-form has-rail">
+      <div class="fx-main"><section class="dt-box"><div class="dt-box-h"><h2>${t("Текст")}</h2></div><div class="dt-box-b fx-grid">${input("title", t("Заголовок · необязательно"), "text", t('maxlength="200" placeholder="Заголовок — по желанию"'))}<label class="field">${t("Текст")}<textarea class="editor" name="content" required placeholder="Начните здесь…">
       </textarea>
-      </label>
-      <label class="field">Одно фото · необязательно<input name="image" type="file" accept="image/jpeg,image/png,image/webp">
+      </label></div></section></div>
+      <aside class="fx-rail"><section class="dt-box"><div class="dt-box-h"><h2>${t("Фото")}</h2></div><div class="dt-box-b fx-grid"><label class="field">Одно фото · необязательно<input name="image" type="file" accept="image/jpeg,image/png,image/webp">
       <span class="hint">JPEG, PNG или WebP, не больше 8 МиБ. Фото будет сохранено с публикацией.</span>
       </label>
-      <div id="preview">${post ? photoMarkup(post) : ""}</div>${post?.image_url ? html`<label class="checkbox"><input type="checkbox" name="remove_image">Удалить текущее фото</label>` : ""}<label class="checkbox">
+      <div id="preview">${post ? photoMarkup(post) : ""}</div>${post?.image_url ? html`<label class="checkbox"><input type="checkbox" name="remove_image">Удалить текущее фото</label>` : ""}</div></section>
+      <section class="dt-box"><div class="dt-box-h"><h2>${t("Видимость")}</h2></div><div class="dt-box-b fx-grid"><label class="checkbox">
       <input type="checkbox" name="published" ${post?.is_published ? html`checked` : ""}>Опубликовать для всех</label>
-      <span class="hint">Если не отмечено, запись остаётся личным черновиком.</span>
-      <button>${post ? t("Сохранить изменения") : t("Сохранить пост")}</button>
+      <span class="hint">Если не отмечено, запись остаётся личным черновиком.</span></div></section></aside>
+      <div class="fx-actions"><button>${post ? t("Сохранить изменения") : t("Сохранить пост")}</button>
       <span class="hint" id="save-status" role="status">
-      </span>
-      </form>
-      </div>`;
+      </span></div>
+      </form></div></div>`;
   const form = root.querySelector("form");
   const projectId = post?.project_id || (/^\d+$/.test(query.get("project") || "") ? Number(query.get("project")) : null);
   const communityId = post?.community_id || (/^\d+$/.test(query.get("community_id") || "") ? Number(query.get("community_id")) : null);
@@ -744,7 +751,7 @@ async function editorScreen(root, id, stamp, query = new URLSearchParams()) {
   if (projectId) {
     const title = root.querySelector("h1");
     if (title) title.textContent = t(post ? "Редактировать обновление" : "Новое обновление проекта");
-    form.querySelector("button").textContent = t("Сохранить обновление");
+    form.querySelector(".fx-actions > button").textContent = t("Сохранить обновление");
 
     const context = document.createElement("p");
     context.className = "project-editor-context";
