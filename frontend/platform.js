@@ -59,6 +59,28 @@ async function hydratePlatformCovers(root, stamp) {
     }
   }
 }
+// Entity detail pages share one head (entity colour, crumbs, emblem, title, meta, actions) and an in-page sub-nav.
+// Sub-nav links only scroll to sections: detailBind cancels their default so the hash route never changes.
+function detailLetter(value) { return [...String(value || "").trim()][0]?.toUpperCase() || ""; }
+function detailEmblem(entity, kind, letter, round = false) {
+  const shape = round ? " round" : "";
+  return entity?.cover_url ? html`<span class="dt-emblem${shape}">${platformCover(entity, kind)}</span>` : html`<span class="dt-emblem${shape}" aria-hidden="true">${letter}</span>`;
+}
+function detailHead({ crumbs, emblem, title, summary = "", meta = "", actions = "", extra = "", mono = "" }) {
+  return html`<header class="dt-head" data-mono="${mono}"><div class="dt-wrap"><nav class="dt-crumbs" aria-label="${t("Навигация")}">${crumbs.map(([label, href]) => href ? html`<a href="${href}">${label}</a><span aria-hidden="true">/</span>` : html`<span aria-current="page">${label}</span>`)}</nav>
+    <div class="dt-grid">${emblem}<div class="dt-copy"><h1 class="dt-title">${title}</h1>${summary ? html`<p class="dt-sub">${summary}</p>` : ""}${meta ? html`<div class="dt-meta">${meta}</div>` : ""}</div><div class="dt-actions">${actions}</div></div>${extra}</div></header>`;
+}
+function detailSubnav(links) {
+  return html`<div class="dt-subnav"><div class="dt-wrap"><nav aria-label="${t("Разделы страницы")}">${links.map(([id, label]) => html`<a href="#${id}" data-jump="${id}">${label}</a>`)}</nav></div></div>`;
+}
+function detailBind(root) {
+  root.querySelectorAll("[data-jump]").forEach(link => link.addEventListener("click", event => {
+    const target = root.querySelector("#" + CSS.escape(link.dataset.jump));
+    if (!target) return;
+    event.preventDefault();
+    target.scrollIntoView({ block: "start", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  }));
+}
 function platformCard(entity, kind) {
   if (kind === "person") {
     const name = entity.display_name || entity.username;

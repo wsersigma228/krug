@@ -781,3 +781,136 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent); outline
   .hm-tabs a { padding-inline: .8rem; }
 }
 @media (prefers-reduced-motion: no-preference) { .hm-tile, .hm-fcard, .hm-card { transition: border-color 150ms ease-out; } }
+
+/* Redesign step 3: entity detail pages (project, team, event, community, profile). Everything sits under .dt
+   or .dt-head; the entity colour comes from data-type on .dt (see the colour rules at the top). */
+.layout-detail { width: 100%; max-width: none; padding: 0 0 2rem; min-height: calc(100vh - 3.9rem); }
+@media (max-width: 850px) { .layout-detail { padding-bottom: calc(82px + env(safe-area-inset-bottom)); } }
+.dt { color: var(--text); }
+.dt-wrap { width: min(100% - 2 * clamp(16px, 3vw, 72px), 2400px); margin-inline: auto; }
+/* Head: graphite band tinted by the entity colour, large faint monogram behind the copy. */
+.dt-head { position: relative; overflow: hidden; background: color-mix(in oklab, var(--c) 20%, var(--hero)); color: var(--hero-ink); border-bottom: 1px solid var(--hero-line); }
+.dt-head::after { content: attr(data-mono); position: absolute; right: clamp(16px, 4vw, 96px); bottom: -.22em; font: 800 clamp(9rem, 14vw, 18rem)/1 var(--font-display); letter-spacing: -.07em; color: color-mix(in oklab, var(--c) 26%, var(--hero)); pointer-events: none; }
+.dt-head > .dt-wrap { position: relative; z-index: 1; padding-block: clamp(18px, 1.8vw, 30px) clamp(22px, 2.2vw, 36px); }
+.dt-crumbs { display: flex; flex-wrap: wrap; gap: .25rem .5rem; align-items: center; color: var(--hero-muted); font-size: .9rem; overflow-wrap: anywhere; }
+.dt-crumbs a:hover { color: var(--hero-ink); text-decoration: underline; }
+.dt-crumbs [aria-current] { color: var(--hero-ink); }
+.dt-grid { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: clamp(16px, 1.8vw, 32px); align-items: center; margin-top: 1rem; }
+.dt-copy { min-width: 0; }
+.dt-emblem { display: grid; place-items: center; width: clamp(4.5rem, 5vw, 6.5rem); aspect-ratio: 1; overflow: hidden; border-radius: .6rem; background: color-mix(in oklab, var(--c) 55%, var(--hero)); color: #fff; font: 700 clamp(2.4rem, 2.8vw, 3.6rem)/1 var(--font-display); letter-spacing: -.06em; }
+.dt-emblem.round { border-radius: 50%; font-size: clamp(1.7rem, 2vw, 2.5rem); letter-spacing: -.03em; }
+.dt-emblem img, .dt-emblem .platform-cover, .dt-emblem .platform-cover-fallback { display: block; grid-column: auto; width: 100%; height: 100%; aspect-ratio: auto; max-height: none; border-radius: 0; object-fit: cover; }
+.dt-title { margin: 0; font-family: var(--font-display); font-size: clamp(1.9rem, 2.2vw, 2.9rem); font-weight: 650; line-height: 1.08; letter-spacing: -.03em; overflow-wrap: anywhere; hyphens: auto; }
+.dt-sub { max-width: 70ch; margin: .45rem 0 0; color: var(--hero-muted); font-size: 1.05rem; line-height: 1.5; overflow-wrap: anywhere; }
+.dt-meta { display: flex; flex-wrap: wrap; gap: .45rem 1.1rem; margin-top: .8rem; color: var(--hero-muted); font-size: .92rem; overflow-wrap: anywhere; }
+.dt-meta b { color: var(--hero-ink); font-weight: 600; }
+.dt-kind { color: color-mix(in oklab, var(--c) 45%, #fff); font-weight: 650; }
+.dt-actions { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; justify-content: flex-end; }
+.dt-actions > a, .dt-actions > button { min-height: 2.6rem; background: transparent; color: var(--hero-ink); border: 1px solid color-mix(in oklab, var(--c) 45%, var(--hero-line)); }
+.dt-actions > a:hover, .dt-actions > button:hover { background: color-mix(in oklab, var(--c) 18%, transparent); }
+.dt-actions .dt-primary { background: var(--c-btn); color: var(--c-on); border-color: var(--c-btn); }
+.dt-actions .dt-primary:hover { background: color-mix(in oklab, var(--c-btn) 88%, #fff); }
+.dt-actions .dt-icon { width: 2.6rem; padding: 0; }
+/* Countdown and phase bar in the head (events). Numbers come from home.js helpers, refreshed by homeTick. */
+.dt-clock { display: grid; grid-template-columns: minmax(0, 1fr); gap: .8rem; margin-top: clamp(16px, 1.6vw, 26px); padding: 1rem 1.2rem; border: 1px solid color-mix(in oklab, var(--c) 30%, var(--hero-line)); border-radius: var(--radius); background: color-mix(in oklab, var(--c) 10%, #ffffff06); }
+.dt-clock-row { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1rem; }
+.dt-clock .hm-big { font: 600 clamp(1.6rem, 2vw, 2.1rem)/1 var(--font-display); letter-spacing: -.03em; }
+.dt-clock .hm-kind { color: var(--hero-muted); font-size: .92rem; }
+.dt-clock .hm-phase { height: .55rem; }
+.dt-clock .hm-phase .hm-seg.done { background: var(--c-btn); border-color: var(--c-btn); }
+.dt-clock .hm-phase .hm-seg.reg { border-color: var(--c-btn); }
+/* Sub-nav: anchors to sections on the same page (no new routes). Sticky under the app header. */
+.dt-subnav { position: sticky; top: 3.9rem; z-index: 15; background: var(--paper); border-bottom: 1px solid var(--line); }
+.dt-subnav nav { display: flex; gap: .2rem; overflow-x: auto; scrollbar-width: none; }
+.dt-subnav a { padding: 1rem 1.1rem; border-bottom: 2px solid transparent; color: var(--muted); font-weight: 600; white-space: nowrap; }
+.dt-subnav a:hover { color: var(--text); }
+.dt-subnav a:hover, .dt-subnav a:focus-visible { border-color: var(--c-btn); }
+.dt-subnav .num { margin-left: .35rem; color: var(--muted); font-size: .85rem; font-weight: 500; font-variant-numeric: tabular-nums; }
+[data-type] [id^="dt-"] { scroll-margin-top: 7.5rem; }
+/* Body: main column plus a right rail from 1100px. */
+.dt-body { display: grid; grid-template-columns: minmax(0, 1fr); gap: clamp(20px, 2.2vw, 44px); align-items: start; padding-block: clamp(24px, 2.4vw, 48px) 3rem; }
+.dt-main, .dt-rail { display: grid; min-width: 0; gap: clamp(20px, 2.2vw, 36px); align-content: start; }
+@media (min-width: 1100px) {
+  .dt-body { grid-template-columns: minmax(0, 1fr) clamp(19rem, 22vw, 26rem); }
+  .dt-rail { position: sticky; top: 8.6rem; }
+}
+@media (min-width: 2400px) { .dt-wrap { width: min(100% - 2 * 72px, 2400px); } }
+/* Boxes: entity-colour square in the heading, hairline rules, no resting shadows. */
+.dt-box { min-width: 0; overflow: hidden; background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); }
+.dt-box-h { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .4rem 1rem; padding: 1rem 1.2rem; border-bottom: 1px solid var(--line); }
+.dt-box-h h2 { display: flex; align-items: center; gap: .6rem; margin: 0; font-family: var(--font-title); font-size: 1.15rem; font-weight: 700; letter-spacing: -.01em; overflow-wrap: anywhere; }
+.dt-box-h h2::before { content: ""; flex: none; width: .55rem; height: .55rem; border-radius: 2px; background: var(--c); }
+.dt-box-h a { color: var(--c-ink); font-weight: 600; font-size: .95rem; }
+.dt-box-b { padding: 1.1rem 1.2rem; min-width: 0; }
+.dt-box-b .project-description { margin: 0; max-width: 72ch; font-size: 1.05rem; line-height: 1.65; }
+.dt-box-b .project-tags { margin-top: 1rem; }
+.dt-box .dt-box-b > .hint { margin: 0; }
+.dt-cta .engagement-form > button, .dt-cta .platform-engagement > button { width: 100%; background: var(--c-btn); color: var(--c-on); }
+.dt-box .team-application-form > button, .dt-box .platform-inline-form > button { background: var(--c-btn); color: var(--c-on); }
+.dt-box .project-tag { background: color-mix(in oklab, var(--c) 12%, var(--paper)); color: color-mix(in oklab, var(--c) 55%, var(--ink)); }
+/* Facts: a definition list in the rail; the browser pairs dt and dd through display: contents. */
+.dt-facts { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: .7rem 1rem; margin: 0; font-size: .98rem; }
+.dt-facts > div { display: contents; }
+.dt-facts dt { color: var(--muted); }
+.dt-facts dd { margin: 0; min-width: 0; font-weight: 550; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+/* Call to action: tinted panel, primary button in the entity colour. */
+.dt-cta { display: grid; gap: .8rem; padding: 1.2rem; border: 1px solid color-mix(in oklab, var(--c) 38%, var(--line)); border-radius: var(--radius); background: color-mix(in oklab, var(--c) 13%, var(--paper)); }
+.dt-cta h2 { margin: 0; font-family: var(--font-title); font-size: 1.15rem; font-weight: 700; }
+.dt-cta .button:not(.secondary), .dt-cta button:not(.text-button):not(.secondary):not(.danger) { width: 100%; background: var(--c-btn); color: var(--c-on); }
+.dt-cta .button:not(.secondary):hover, .dt-cta button:not(.text-button):not(.secondary):not(.danger):hover { filter: brightness(1.06); }
+.dt-cta .button.secondary, .dt-cta > .secondary { width: 100%; }
+.dt-cta .danger { width: 100%; background: transparent; color: var(--text); border-color: color-mix(in oklab, var(--c) 45%, var(--line)); }
+.dt-cta .engagement-form, .dt-cta .platform-engagement { margin: 0; }
+.dt-cta .checkbox { font-size: .95rem; }
+.dt-cta .text-button { color: var(--c-ink); }
+.dt-cta > .hint { color: var(--muted); }
+/* Lists inside boxes: one row per item, rules between rows. */
+.dt-box .project-opening, .dt-box .project-application, .dt-box .team-opening, .dt-box .team-application { padding: 1.1rem 1.2rem; border-bottom: 1px solid var(--line); }
+.dt-box .project-opening:last-child, .dt-box .project-application:last-child, .dt-box .team-opening:last-child, .dt-box .team-application:last-child { border-bottom: 0; }
+.dt-box .project-opening h3, .dt-box .team-opening h3 { margin: 0 0 .4rem; font-size: 1.1rem; }
+.dt-box .project-member, .dt-box .platform-member { min-height: 0; padding: .75rem 1.2rem; border-bottom: 1px solid var(--line); }
+.dt-box .platform-member-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; }
+.dt-box .platform-member-list > p { padding: 1rem 1.2rem; }
+.dt-box .platform-member:last-child, .dt-box .project-member:last-child { border-bottom: 0; }
+.dt-box .project-community, .dt-box .project-community > section { display: block; }
+.dt-box .project-applications, .dt-box .project-contact-form { margin-top: 0; border-top: 1px solid var(--line); padding: 1rem 1.2rem; }
+.dt-box .project-role-editor, .dt-box .platform-inline-form { margin: 0; padding: 1rem 1.2rem; border: 0; border-top: 1px solid var(--line); border-radius: 0; background: transparent; }
+.dt-box .post-grid { padding: 1.1rem 1.2rem; }
+.dt-body .discovery-results-heading { margin-bottom: 0; }
+/* Slots: open roles and composition marks. */
+.dt-slot { display: inline-flex; align-items: center; gap: .45rem; min-height: 2.2rem; padding: .2rem .7rem .2rem .45rem; border: 1px solid var(--c-btn); border-radius: .4rem; color: var(--c-ink); font-size: .92rem; }
+.dt-slot i { flex: none; width: 1.2rem; height: 1.2rem; border: 1.5px dashed var(--c-btn); border-radius: 50%; }
+.dt-slots { display: flex; flex-wrap: wrap; gap: .4rem; }
+/* Narrow screens: head actions take the full width, the emblem shrinks. */
+@media (max-width: 760px) {
+  .dt-grid { grid-template-columns: auto minmax(0, 1fr); }
+  .dt-actions { grid-column: 1 / -1; justify-content: flex-start; }
+  .dt-emblem { width: 4.25rem; }
+}
+@media (max-width: 480px) { .dt-title { font-size: clamp(1.6rem, 7.4vw, 2rem); } }
+@media (prefers-reduced-motion: reduce) { .dt-subnav a, .dt-cta .button { transition: none !important; } }
+/* Detail pages: section-level details that differ from the shared rules above. */
+.dt-box-h .button { min-height: 2.4rem; padding: .5rem .9rem; background: var(--c-btn); color: var(--c-on); }
+.dt-box #project-openings > .hint, .dt-box #project-members > .hint, .dt-box #project-updates > .hint, .dt-box #project-applications > .hint { margin: 0; padding: 1rem 1.2rem; }
+.dt-box .project-role-editor > summary { min-height: 2.6rem; padding: .3rem 0; color: var(--c-ink); font-weight: 650; cursor: pointer; }
+.dt-box #project-updates .post-grid { grid-template-columns: minmax(0, 1fr); }
+.dt-box #project-updates { padding: 0 1.2rem 1.2rem; }
+.dt-stages { display: flex; flex-wrap: wrap; gap: .3rem 1.2rem; color: var(--hero-muted); font-size: .88rem; }
+.dt-stage { display: inline-flex; align-items: center; gap: .4rem; }
+.dt-stage::before { content: ""; width: .9rem; height: .45rem; border-radius: 2px; background: var(--c-btn); }
+.dt-stage.reg::before { background: color-mix(in oklab, var(--c-btn) 35%, transparent); border: 1.5px solid var(--c-btn); }
+.dt-stage.run::before { background: var(--c-btn); }
+.dt-box .dt-box-b > .hint { margin: 0; }
+.dt-box .project-opening > button.secondary { background: transparent; color: var(--c-ink); border: 1px solid color-mix(in oklab, var(--c-btn) 55%, var(--line)); }
+/* Profile: the collaboration block renders its own heading and rows inside the box. */
+.dt-collab > h2 { display: flex; align-items: center; gap: .6rem; margin: 0; padding: 1rem 1.2rem; border-bottom: 1px solid var(--line); font-family: var(--font-title); font-size: 1.15rem; font-weight: 700; letter-spacing: -.01em; }
+.dt-collab > h2::before { content: ""; flex: none; width: .55rem; height: .55rem; border-radius: 2px; background: var(--c); }
+.dt-collab > * { margin-inline: 1.2rem; }
+.dt-collab > h2 { margin-inline: 0; }
+.dt-collab > :not(h2) + * { margin-top: 0; }
+.dt-collab > .toolbar { margin-bottom: 1.2rem; }
+.dt-collab > section { margin-top: 1rem; }
+.dt-collab h3 { margin: 1rem 0 .4rem; font-size: 1.05rem; }
+.dt-collab > section:last-child { margin-bottom: 1.2rem; }
+.dt-collab > :first-child:not(h2) { margin-top: 1.2rem; }
+.dt-collab .bio, .dt-collab .project-tags { margin-block: .4rem; }

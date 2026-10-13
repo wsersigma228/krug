@@ -179,6 +179,7 @@ let closeCreateOnOutside = null;
 function shell(route) {
   const wideFeed = ["stories", "feed"].includes(route);
   const discovery = ["explore", "teams", "communities", "events", "saved", "projects"].includes(route);
+  const detail = ["project", "team", "event", "community", "profile"].includes(route);
   const links = [["explore", t("Обзор")], ["teams", t("Команды")], ["events", t("События")], ["communities", t("Сообщества")], ["stories", t("Обновления")]];
   const createOptions = [["project", "project-new", t("Проект"), t("Ищете людей в свой проект")], ["team", "team-new", t("Команда"), t("Соберите людей под общую задачу")], ["event", "event-new", t("Событие"), t("Встреча, джем или мероприятие")], ["community", "community-new", t("Сообщество"), t("Место для обсуждений и знаний")], ["post", "new", t("Пост"), t("Короткая публикация в ленте")]];
   app.innerHTML = html`<header class="topbar"><div class="topbar-inner">
@@ -190,7 +191,7 @@ function shell(route) {
       <details class="theme-picker"><summary id="ui-theme" class="preference-button" aria-label="${t("Тема")}" title="${t("Тема")}">${themeIcon(theme)}</summary>
       <div class="theme-options">${["light", "dark", "system"].map((value, index) => html`<button class="theme-option" data-theme-choice="${value}" aria-pressed="${String(theme === value)}">${themeIcon(value)}${t(["Светлая", "Тёмная", "Системная"][index])}</button>`)}</div></details>
       </div><div class="header-actions">${me ? html`<a class="account-link" href="/app#settings" aria-label="${esc(me.username)}"><span class="avatar">${me.avatar_url ? html`<img src="${esc(me.avatar_url)}" alt="">` : esc((me.display_name || me.username)[0]?.toUpperCase())}</span><span>@${esc(me.username)}</span></a><details class="create-menu"><summary class="button compose" aria-label="${t("Создать")}">${icon("plus")}<span>${t("Создать")}</span></summary><div class="create-options">${createOptions.map(([kind, route, title, hint]) => html`<a class="create-option" href="/app#${route}"><span class="create-dot dot-${kind}" aria-hidden="true"></span><span><span class="create-title">${title}</span><span class="create-hint">${hint}</span></span></a>`)}</div></details>` : html`<a class="account-link" href="/app#login" aria-label="${t("Войти")}"><span class="avatar">${icon("people")}</span></a>`}</div>
-      </div></div></header><div class="layout ${wideFeed ? "layout-feed" : discovery ? "layout-discovery" : ""}">
+      </div></div></header><div class="layout ${wideFeed ? "layout-feed" : discovery ? "layout-discovery" : detail ? "layout-detail" : ""}">
       <main class="main" id="main" tabindex="-1">
       <div class="loading" role="status">Загрузка…</div>
       </main>
