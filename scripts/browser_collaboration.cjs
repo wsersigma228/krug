@@ -13,6 +13,8 @@ if (!base || !/^http:\/\/127\.0\.0\.1:18103(?:\/|$)/.test(base)) {
 }
 const output = process.env.BROWSER_OUTPUT || fs.mkdtempSync(path.join(os.tmpdir(), 'krug-collaboration-'));
 const password = 'krug-ui-preview-only-password';
+// The admin is promoted by hand in the preview DB, so its password can differ; never printed.
+const adminPassword = process.env.BROWSER_ADMIN_PASSWORD || password;
 const issues = [];
 const key = crypto.randomBytes(4).toString('hex');
 
@@ -33,10 +35,10 @@ async function createAccount(username) {
   return { username, token: session.access_token, id: me.id };
 }
 
-async function login(page, user) {
+async function login(page, user, secret = password) {
   await page.goto(base + '/app#login');
   await page.getByLabel('Имя пользователя').fill(user.username);
-  await page.getByLabel('Пароль', { exact: true }).fill(password);
+  await page.getByLabel('Пароль', { exact: true }).fill(secret);
   await page.getByRole('button', { name: 'Войти', exact: true }).click();
   await page.getByRole('heading', { name: /^Привет,/ }).waitFor();
 }
@@ -313,7 +315,7 @@ async function run() {
 
       const adminPage = await context.newPage();
       const admin = { username: process.env.BROWSER_ADMIN_USERNAME };
-      await login(adminPage, admin);
+      await login(adminPage, admin, adminPassword);
       await adminPage.goto(base + '/app#admin-review');
       await adminPage.getByRole('heading', { name: externalTitle }).waitFor();
       await capture(adminPage, 'admin-review-1440.png');

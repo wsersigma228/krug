@@ -13,6 +13,8 @@ if (!base || !/^http:\/\/127\.0\.0\.1:18103(?:\/|$)/.test(base) || !adminUsernam
   throw new Error('Set APP_URL to 18103, BROWSER_ADMIN_USERNAME to the synthetic preview admin, and BROWSER_EXTERNAL_TITLE to a pending fixture.');
 }
 const password = 'krug-ui-preview-only-password';
+// The admin is promoted by hand in the preview DB, so its password can differ; never printed.
+const adminPassword = process.env.BROWSER_ADMIN_PASSWORD || password;
 const output = process.env.BROWSER_OUTPUT || fs.mkdtempSync(path.join(os.tmpdir(), 'krug-admin-tail-'));
 const key = crypto.randomBytes(4).toString('hex');
 
@@ -26,13 +28,13 @@ async function api(route, { token, method = 'GET', body } = {}) {
   return value;
 }
 
-async function sessionFor(username, register = false) {
-  if (register) await api('/users', { method: 'POST', body: { username, password, language: 'ru' } });
-  return api('/login', { method: 'POST', body: { username, password } });
+async function sessionFor(username, register = false, secret = password) {
+  if (register) await api('/users', { method: 'POST', body: { username, password: secret, language: 'ru' } });
+  return api('/login', { method: 'POST', body: { username, password: secret } });
 }
 
 async function run() {
-  const adminSession = await sessionFor(adminUsername);
+  const adminSession = await sessionFor(adminUsername, false, adminPassword);
   const adminList = await api('/admin/external-submissions', { token: adminSession.access_token });
   const submission = adminList.items.find(item => item.title === title);
   assert(submission, `Pending external submission not found: ${title}`);
