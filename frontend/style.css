@@ -1002,7 +1002,7 @@ input, textarea, select { border-color: var(--field-line); }
   .fx-form.has-rail > .fx-actions { grid-column: 1 / -1; }
 }
 /* Errors: the form-level alert (bindForm) sits above the sections in a bordered box. */
-.fx-form > .error { margin: 0; border-color: var(--text); }
+.fx-form > .error { grid-column: 1 / -1; margin: 0; border-color: var(--text); }
 /* Auth: centred compact card on the graphite band, same in both themes. */
 :root:has(.fx-auth) { background: var(--hero); }
 .layout:has(.fx-auth) { padding-top: clamp(24px, 6vh, 72px); }
