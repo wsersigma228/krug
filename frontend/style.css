@@ -231,9 +231,7 @@ input[type="file"] { font-size: 13px; padding: 12px; }
 .interest-visibility { padding-top: 12px; border-top: 1px solid var(--line); }
 .project-updates { margin-top: 56px; padding-top: 28px; border-top: 1px solid var(--line); }
 .project-updates .post-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); }
-.project-editor { padding: 28px; border: 1px solid var(--line); background: var(--paper); border-radius: 14px; max-width: 780px; }
 .project-editor-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-.project-editor > button { justify-self: start; }
 .project-editor-context { color: var(--muted); font-size: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
 .interested-person { display: flex; gap: 16px; padding: 24px 0; border-bottom: 1px solid var(--line); }
 .interested-person p { margin: 8px 0 0; overflow-wrap: anywhere; line-height: 1.6; }
@@ -410,12 +408,7 @@ input[type="file"] { font-size: 13px; padding: 12px; }
 .team-opening .platform-card-summary { display: block; }
 .team-application p { margin: 6px 0; }
 .platform-inline-form { max-width: 700px; margin-top: 16px; padding: 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); }
-.platform-form-heading { margin-bottom: 14px; }
-.platform-form-heading h1 { font-size: clamp(20px, 2vw, 27px); margin-bottom: 4px; }
-.platform-form-heading .intro { font-size: 13px; margin: 0; }
-.platform-form { max-width: 850px; }
 .platform-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
-.platform-editor > button { justify-self: start; }
 .cover-editor { display: grid; grid-template-columns: minmax(120px, 240px) auto; gap: 12px; align-items: center; }
 .cover-editor .platform-cover { border-radius: 8px; }
 .platform-engagement { gap: 6px; }
@@ -976,4 +969,56 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent); outline
 @media (max-width: 650px) {
   .lst .project-grid { grid-template-columns: minmax(0, 1fr); }
   .lst .discovery-results-heading { margin-bottom: .8rem; }
+}
+
+/* Step 4 — forms: auth card, entity and post editors, collaboration profile, claims and submissions. */
+/* Controls: fields get a visible 3:1 boundary on paper; focus keeps the calm accent border. */
+:root { --field-line: #8e9299; }
+:root[data-theme="dark"] { --field-line: #6b6f77; }
+input, textarea, select { border-color: var(--field-line); }
+/* Editor head: the entity-tinted band of the detail pages, without the monogram and emblem. */
+.fx-page { color: var(--text); }
+.fx-head { position: relative; overflow: hidden; background: color-mix(in oklab, var(--c) 20%, var(--hero)); color: var(--hero-ink); border-bottom: 1px solid var(--hero-line); }
+.fx-head .dt-wrap { padding-block: clamp(16px, 1.6vw, 26px) clamp(18px, 2vw, 30px); }
+.fx-head .dt-crumbs { margin-bottom: .6rem; }
+.fx-head .dt-crumbs a { display: inline-flex; align-items: center; gap: .4rem; }
+.fx-head .dt-crumbs svg { width: 1rem; height: 1rem; }
+.fx-title { margin: 0; font-family: var(--font-display); font-size: clamp(1.45rem, 2.2vw, 2.1rem); font-weight: 650; line-height: 1.12; letter-spacing: -.025em; overflow-wrap: anywhere; color: inherit; text-wrap: balance; }
+.fx-head .dt-sub { margin-top: .4rem; }
+/* Body: one column for short forms; from 1000px editors with a rail put hints, cover and visibility beside the fields. */
+.fx-wrap { width: min(100% - 2 * clamp(16px, 3vw, 72px), 1200px); margin-inline: auto; padding-block: clamp(20px, 2.2vw, 36px) 3rem; }
+.fx-wrap > .project-editor-context { margin: 0 0 1rem; max-width: 46rem; }
+.fx-form { display: grid; gap: clamp(16px, 1.6vw, 24px); min-width: 0; max-width: 46rem; }
+.fx-form.project-editor { padding: 0; border: 0; background: transparent; }
+.fx-form.has-rail { max-width: none; }
+.fx-main, .fx-rail { display: grid; gap: clamp(16px, 1.6vw, 24px); align-content: start; min-width: 0; }
+.fx-grid { display: grid; gap: 1rem; min-width: 0; }
+.fx-grid > .field, .fx-grid > .checkbox { min-width: 0; }
+.fx-main > .dt-box, .fx-rail > .dt-box { margin: 0; }
+.fx-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .8rem 1.2rem; }
+.fx-actions > .hint { margin: 0; }
+.fx-actions > button { min-width: 12rem; background: var(--c-btn); color: var(--c-on); border-color: var(--c-btn); }
+.fx-actions > button:hover { background: color-mix(in oklab, var(--c-btn) 88%, #fff); }
+@media (min-width: 1000px) {
+  .fx-form.has-rail { grid-template-columns: minmax(0, 1fr) minmax(240px, 300px); align-items: start; }
+  .fx-form.has-rail > .fx-actions { grid-column: 1 / -1; }
+}
+/* Errors: the form-level alert (bindForm) sits above the sections in a bordered box. */
+.fx-form > .error { margin: 0; border-color: var(--text); }
+/* Auth: centred compact card on the graphite band, same in both themes. */
+:root:has(.fx-auth) { background: var(--hero); }
+.layout:has(.fx-auth) { padding-top: clamp(24px, 6vh, 72px); }
+.fx-auth { max-width: 420px; margin: 0 auto; color: var(--hero-ink); }
+.fx-wordmark { margin: 0 0 1.4rem; font-family: var(--font-display); font-size: 1.6rem; font-weight: 700; letter-spacing: -.03em; line-height: 1; }
+.fx-auth h1 { font-size: clamp(1.45rem, 2.4vw, 1.85rem); color: var(--hero-ink); margin-bottom: .45rem; }
+.fx-auth .intro { color: var(--hero-muted); margin: 0; font-size: .98rem; }
+.fx-auth .fx-auth-card { margin: 1.4rem 0 0; padding: 24px; background: var(--paper); color: var(--text); border: 1px solid var(--line); border-radius: var(--radius); }
+.fx-auth .fx-auth-card > .form { gap: 16px; }
+.fx-auth .auth-switch { margin-top: 18px; }
+.fx-auth > .text-button { display: inline-block; margin-top: 12px; color: var(--hero-muted); }
+.fx-auth > .text-button:hover { color: var(--hero-ink); }
+@media (max-width: 620px) {
+  .platform-form-grid, .project-editor-fields { grid-template-columns: minmax(0, 1fr); }
+  .fx-actions > button { width: 100%; min-width: 0; }
+  .fx-auth .fx-auth-card { padding: 20px; }
 }
