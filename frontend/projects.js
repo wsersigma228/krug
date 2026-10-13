@@ -23,6 +23,22 @@ function openingCard(opening) {
 function applicationLabel(value) {
   return projectLabel(value);
 }
+// List screens share the home language: graphite band with title and search, then results on the page background.
+function listLayout(root) {
+  const layout = root.closest(".layout");
+  layout?.classList.remove("layout-discovery", "layout-feed", "layout-detail");
+  layout?.classList.add("layout-home");
+}
+function listBand(title, subtitle, { action = "", search = "" } = {}) {
+  return html`<section class="hm-band lst-band"><div class="hm-wrap"><div class="hm-top"><div class="lst-title"><h1 class="hm-hello">${title}${subtitle ? html`<span>${subtitle}</span>` : ""}</h1>${action}</div>${search}</div></div></section>`;
+}
+function listSearch(query, placeholder, className = "") {
+  return html`<form class="discovery-search ${className}" role="search"><label>${icon("explore")}<span class="sr-only">${t("Поиск по Кругу")}</span><input name="search" value="${esc(query.get("search") || "")}" maxlength="100" placeholder="${placeholder}"></label><button>${t("Найти")}</button></form>`;
+}
+function discoveryTabs(kind, hrefFor) {
+  const tabs = [["all", "Всё", ""], ["projects", "Проекты", "project"], ["teams", "Команды", "team"], ["events", "События", "event"], ["communities", "Сообщества", "community"], ["people", "Люди", "person"]];
+  return html`<div class="hm-types"><div class="hm-wrap"><nav class="discovery-tabs hm-tabs" aria-label="${t("Тип результатов")}">${tabs.map(([value, label, type]) => html`<a href="${hrefFor(value)}" class="${type ? "type-" + type : ""}${kind === value ? " active" : ""}" ${kind === value ? html`aria-current="page"` : ""}>${type ? html`<i></i>` : ""}${t(label)}</a>`)}</nav></div></div>`;
+}
 async function discoveryScreen(root, query, stamp) {
   const kinds = ["all", "projects", "teams", "events", "communities", "people"];
   const kind = kinds.includes(query.get("kind")) ? query.get("kind") : "all";
@@ -31,17 +47,16 @@ async function discoveryScreen(root, query, stamp) {
   const supportedFilters = kind === "people" ? filters.filter(key => key !== "format") : filters;
   const hrefFor = (value, reset = false) => { const params = new URLSearchParams(); if (query.has("search")) params.set("search", query.get("search")); if (!reset) for (const key of filters.slice(1)) if (key !== "format" || value !== "people") if (query.has(key)) params.set(key, query.get(key)); params.set("kind", value); return "/app#explore?" + params; };
   const mobile = matchMedia("(max-width: 850px)");
-  root.innerHTML = html`<div class="discovery-shell">
+  listLayout(root);
+  const search = query.get("search") || "";
+  root.innerHTML = listBand(t("Найдите, с кем создавать дальше"), t("Проекты, команды, встречи и сообщества для совместной работы."), { search: listSearch(query, t("Проект, навык или человек"), "hm-msearch") }) + discoveryTabs(kind, hrefFor) + html`<div class="hm-wrap discovery-shell lst">
     <aside class="discovery-sidebar"><form class="discovery-filter-form"><input type="hidden" name="search" value="${esc(query.get("search") || "")}"><input type="hidden" name="kind" value="${kind}">
       <details class="discovery-filters" ${!mobile.matches || filters.slice(1).some(key => query.has(key)) ? html`open` : ""}><summary>${icon("filter")} ${t("Фильтры")}</summary><div class="filter-fields">
         ${input("skill", t("Навык"), "text", 'maxlength="80"')}${input("language", t("Язык"), "text", 'maxlength="80" placeholder="Русский, English"')}
         ${kind === "people" ? "" : html`<label class="field">${t("Формат")}<select name="format"><option value="">${t("Любой")}</option><option value="online">${t("Онлайн")}</option><option value="local">${t("На месте")}</option><option value="hybrid">${t("Гибридный")}</option></select></label>`}
         <button type="submit" class="secondary">${t("Применить фильтры")}</button><a class="text-button" href="${hrefFor(kind, true)}">${t("Сбросить фильтры")}</a>
       </div></details></form></aside>
-    <main class="discovery-center"><section class="discovery-intro"><h1>${t("Найдите, с кем создавать дальше")}</h1><p class="intro">${t("Проекты, команды, встречи и сообщества для совместной работы.")}</p></section>
-      <form class="discovery-search" role="search"><label class="field"><span>${t("Поиск по Кругу")}</span><input name="search" maxlength="100" placeholder="${t("Проект, навык или человек")}" value="${esc(query.get("search") || "")}"></label><button>${icon("explore")} ${t("Найти")}</button></form>
-      <nav class="discovery-tabs" aria-label="${t("Тип результатов")}">${[["all", "Всё"], ["projects", "Проекты"], ["teams", "Команды"], ["events", "События"], ["communities", "Сообщества"], ["people", "Люди"]].map(([value, label]) => html`<a href="${hrefFor(value)}" class="${kind === value ? "active" : ""}" ${kind === value ? html`aria-current="page"` : ""}>${t(label)}</a>`)}</nav>
-      <div class="discovery-results-heading"><h2>${t({ all:"Все результаты", projects:"Проекты", teams:"Команды", events:"События", communities:"Сообщества", people:"Люди" }[kind])}</h2><div class="toolbar">${kind === "projects" || kind === "all" ? html`<a class="text-button" href="/app#roles">${t("Открытые роли")}</a>` : ""}${session && ["all", "projects"].includes(kind) ? html`<a class="text-button" href="/app#project-new">${icon("plus")} ${t("Новый проект")}</a>` : ""}</div></div><div id="discovery-results"></div>
+    <main class="discovery-center"><div class="discovery-results-heading"><h2>${search ? html`${t("Результаты по запросу")} «<mark class="lst-q">${search}</mark>»` : t({ all:"Все результаты", projects:"Проекты", teams:"Команды", events:"События", communities:"Сообщества", people:"Люди" }[kind])}</h2><div class="toolbar">${kind === "projects" || kind === "all" ? html`<a class="text-button" href="/app#roles">${t("Открытые роли")}</a>` : ""}${session && ["all", "projects"].includes(kind) ? html`<a class="text-button" href="/app#project-new">${icon("plus")} ${t("Новый проект")}</a>` : ""}</div></div><div id="discovery-results"></div>
     </main><aside class="upcoming-rail"><div class="upcoming-heading"><h2>${t("Скоро")}</h2><a href="${hrefFor("events")}">${t("Все события")}</a></div><div id="upcoming-events"><p class="hint">${t("Загружаем события…")}</p></div></aside>
   </div>`;
   const form = root.querySelector(".discovery-filter-form");
@@ -104,6 +119,7 @@ async function discoveryScreen(root, query, stamp) {
   const hints = pages.filter(page => page.hint).map(page => `<p class="hint">${page.hint}</p>`).join("");
   const results = root.querySelector("#discovery-results");
   results.innerHTML = `${cards.length ? `<div class="project-grid">${cards.join("")}</div>` : errors ? "" : empty(t("Пока нет результатов"), t("Измените запрос или попробуйте позже. Здесь показывается только актуальное содержимое участников."))}${errors}${hints}`;
+  await hydratePlatformCovers(results, stamp);
   bindPlatformSaves(results, stamp);
   try {
     const upcoming = await api("/events?upcoming=true&limit=3");
@@ -111,39 +127,31 @@ async function discoveryScreen(root, query, stamp) {
   } catch (error) { if (stamp === generation) root.querySelector("#upcoming-events").innerHTML = `<p class="hint">${esc(errorText(error))}</p>`; }
 }
 
-function projectOpeningCard(opening) {
-  const project = opening.project;
-  const href = project?.slug ? projectPath(project) : "/app#projects";
-  return html`<article class="platform-card platform-card-opening">
-    ${platformCover(project, "project")}<div class="platform-card-copy"><div class="platform-card-meta"><span>${t("Открытая роль")}</span>${opening.commitment ? html`<span>${esc(opening.commitment)}</span>` : ""}</div>
-      <h3><a href="${href}">${esc(opening.title || opening.role)}</a></h3>${project ? html`<p class="hint">${t("Проект")}: ${esc(project.title)}</p><p class="platform-card-summary">${esc(project.summary)}</p>` : ""}<p class="platform-card-summary">${esc(opening.description || "")}</p>${platformTags(opening)}
-    </div><a class="project-open" href="${href}">${t("О проекте")}${icon("arrow")}</a>
-  </article>`;
-}
-
 async function openRolesScreen(root, query, stamp) {
   const params = new URLSearchParams();
   for (const key of ["search", "skill"]) if (query.has(key)) params.set(key, query.get(key));
-  root.innerHTML = heading(t("Открытые роли"), t("Роли в проектах"), t("Просматривайте актуальные роли и откликайтесь на странице проекта.")) + html`<form class="discovery-search" role="search"><label class="field"><span>${t("Поиск")}</span><input name="search" value="${esc(query.get("search") || "")}" maxlength="100" placeholder="${t("Название роли или навык")}"></label><button>${icon("explore")} ${t("Найти")}</button></form><div id="open-roles-results"></div>`;
+  listLayout(root);
+  root.innerHTML = listBand(t("Роли в проектах"), t("Просматривайте актуальные роли и откликайтесь на странице проекта."), { search: listSearch(query, t("Название роли или навык")) }) + html`<div class="hm-wrap lst"><div id="open-roles-results"></div></div>`;
   bindForm(root.querySelector(".discovery-search"), async data => { const next = new URLSearchParams(query); const search = data.get("search").trim(); if (search) next.set("search", search); else next.delete("search"); go("roles?" + next); });
   if (stamp !== generation) return;
-  await paged(root.querySelector("#open-roles-results"), "/openings?" + params, projectOpeningCard, stamp, empty(t("Пока нет открытых ролей"), t("Открытые роли появятся здесь, когда проекты начнут набор."), html`<a class="button" href="/app#explore?kind=projects">${t("Найти проекты")}</a>`));
+  await paged(root.querySelector("#open-roles-results"), "/openings?" + params, openingCard, stamp, empty(t("Пока нет открытых ролей"), t("Открытые роли появятся здесь, когда проекты начнут набор."), html`<a class="button" href="/app#explore?kind=projects">${t("Найти проекты")}</a>`));
 }
 
 async function projectListScreen(root, saved, stamp, query = new URLSearchParams()) {
   const following = saved && query.get("following") === "true";
+  listLayout(root);
   if (saved && !following) {
     const savedKinds = { projects: ["/me/saved-projects", "project"], teams: ["/teams?saved=true", "team"], communities: ["/communities?saved=true", "community"], events: ["/events?saved=true", "event"] };
     const selectedKind = savedKinds[query.get("kind")];
     if (selectedKind) {
       const kind = query.get("kind");
-      root.innerHTML = heading("", t("Сохранённое"), t("Вы просматриваете сохранённые материалы этого типа.")) + html`<div class="tabs"><a href="/app#saved">${t("Всё сохранённое")}</a><a href="/app#saved?following=true">${t("Подписки на проекты")}</a></div><a class="back" href="/app#saved">${t("Назад ко всему сохранённому")}</a><div id="saved-kind-results"></div>`;
+      root.innerHTML = listBand(t("Сохранённое"), t("Вы просматриваете сохранённые материалы этого типа.")) + html`<div class="hm-wrap lst"><div class="tabs"><a href="/app#saved">${t("Всё сохранённое")}</a><a href="/app#saved?following=true">${t("Подписки на проекты")}</a></div><a class="back" href="/app#saved">${t("Назад ко всему сохранённому")}</a><div id="saved-kind-results"></div></div>`;
       await paged(root.querySelector("#saved-kind-results"), selectedKind[0], item => platformCard(item, selectedKind[1]), stamp, empty(t("Пока ничего не сохранено"), t("Откройте интересующую страницу и сохраните её.")));
       bindPlatformSaves(root.querySelector("#saved-kind-results"), stamp);
       return;
     }
-    root.innerHTML = heading("", t("Сохранённое"), t("Сохраняйте команды, сообщества, события и проекты, чтобы вернуться к ним позже.")) +
-      html`<div class="tabs"><a href="/app#saved" class="active">${t("Всё сохранённое")}</a><a href="/app#saved?following=true">${t("Подписки на проекты")}</a></div><div id="saved-results"></div>`;
+    root.innerHTML = listBand(t("Сохранённое"), t("Сохраняйте команды, сообщества, события и проекты, чтобы вернуться к ним позже.")) +
+      html`<div class="hm-wrap lst"><div class="tabs"><a href="/app#saved" class="active">${t("Всё сохранённое")}</a><a href="/app#saved?following=true">${t("Подписки на проекты")}</a></div><div id="saved-results"></div></div>`;
     const endpoints = [
       ["/me/saved-projects?limit=8", "project", "projects"], ["/teams?saved=true&limit=8", "team", "teams"],
       ["/communities?saved=true&limit=8", "community", "communities"], ["/events?saved=true&limit=8", "event", "events"],
@@ -160,12 +168,13 @@ async function projectListScreen(root, saved, stamp, query = new URLSearchParams
     const errors = pages.filter(page => page.error).map(page => `<p class="error" role="alert">${t(page.kind)}: ${esc(page.error)}</p>`).join("");
     const more = pages.filter(page => page.has_more).map(page => html`<a class="text-button" href="/app#saved?kind=${page.route}">${t("Показать больше")}: ${t(page.kind)} ${icon("arrow")}</a>`).join("");
     root.querySelector("#saved-results").innerHTML = items.length ? `<div class="project-grid">${items.join("")}</div>${more}${errors}` : errors || empty(t("Пока ничего не сохранено"), t("Откройте интересующую страницу и сохраните её."), html`<a class="button" href="/app#explore">${t("Исследовать")}</a>`);
+    await hydratePlatformCovers(root.querySelector("#saved-results"), stamp);
     bindPlatformSaves(root.querySelector("#saved-results"), stamp);
     return;
   }
-  root.innerHTML = heading("", saved ? (following ? t("Подписки на проекты") : t("Сохранённые проекты")) : t("Мои проекты"), saved ? t("Вернитесь к тому, что вас заинтересовало.") : t("Ваши проекты и черновики. Публичные страницы можно отправить кому угодно.")) +
-    (saved ? html`<div class="tabs"><a href="/app#saved" class="${following ? "" : "active"}">Сохранённое</a><a href="/app#saved?following=true" class="${following ? "active" : ""}">Подписки на проекты</a></div>` : html`<a class="button" href="/app#project-new">${icon("plus")} Создать проект</a><hr class="divider">`);
-  await paged(root, saved ? (following ? "/me/followed-projects" : "/me/saved-projects") : "/me/projects", projectCard, stamp,
+  root.innerHTML = listBand(saved ? (following ? t("Подписки на проекты") : t("Сохранённые проекты")) : t("Мои проекты"), saved ? t("Вернитесь к тому, что вас заинтересовало.") : t("Ваши проекты и черновики. Публичные страницы можно отправить кому угодно."), { action: saved ? "" : html`<a class="button" href="/app#project-new">${icon("plus")} Создать проект</a>` }) +
+    html`<div class="hm-wrap lst">${saved ? html`<div class="tabs"><a href="/app#saved" class="${following ? "" : "active"}">Сохранённое</a><a href="/app#saved?following=true" class="${following ? "active" : ""}">Подписки на проекты</a></div>` : ""}</div>`;
+  await paged(root.querySelector(".lst"), saved ? (following ? "/me/followed-projects" : "/me/saved-projects") : "/me/projects", projectCard, stamp,
     empty(saved ? (following ? t("Пока нет подписок на проекты") : t("Пока ничего не сохранено")) : t("Ваш первый проект начинается здесь"), saved ? (following ? t("Подпишитесь на проект, чтобы держать его в своём списке.") : t("Откройте проект и сохраните его, чтобы вернуться позже.")) : t("Расскажите, что вы строите. Начать можно с черновика."), html`<a class="button" href="/app#${saved ? "explore" : "project-new"}">${saved ? t("Исследовать проекты") : t("Создать проект")}</a>`));
 }
 async function projectScreen(root, slug, stamp) {

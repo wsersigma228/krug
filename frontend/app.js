@@ -688,18 +688,18 @@ async function profileScreen(root, id, stamp) {
 }
 async function peopleScreen(root, query, stamp) {
   const followers = query.get("tab") === "subscribers";
+  listLayout(root);
   root.innerHTML =
-    heading(
-      t("Быть на связи"),
+    listBand(
       t("Свои люди"),
       t("Подписывайтесь на тех, чьи истории хотите читать."),
     ) +
-    html`<div class="tabs">
+    html`<div class="hm-wrap lst"><div class="tabs">
       <a href="/app#people" class="${!followers ? "active" : ""}">Подписки</a>
       <a href="/app#people?tab=subscribers" class="${followers ? "active" : ""}">Подписчики</a>
       </div>
       <div class="card" id="people-list">
-      </div>`;
+      </div></div>`;
   await paged(
     root.querySelector("#people-list"),
     followers ? "/subscribers" : "/subscriptions",
