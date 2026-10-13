@@ -281,7 +281,7 @@ async function main() {
       await page.setViewportSize({ width, height: 1440 });
       await noOverflow(page);
       await noCardOverlap(page);
-      assert(await page.locator('.search').evaluate(search => Math.abs(search.getBoundingClientRect().width - search.closest('.main').getBoundingClientRect().width) < 2), 'Search spans the feed width');
+      assert(await page.locator('.search').evaluate(search => Math.abs(search.getBoundingClientRect().width - search.closest('.hm-wrap').getBoundingClientRect().width) < 2), 'Search spans the content column (capped at 2400px)');
       assert(await page.locator('.topbar-inner').evaluate(header => {
         const brand = header.querySelector('.brand').getBoundingClientRect();
         const nav = header.querySelector('.nav').getBoundingClientRect();
@@ -321,7 +321,7 @@ async function main() {
     // Signed-in account preference beats a conflicting browser preference on login.
     await request('/me/language', 'PATCH', { language: 'ru' });
     await phone.reload();
-    await phone.getByRole('heading', { name: 'Обзор', exact: true }).waitFor();
+    await phone.getByRole('heading', { level: 1, name: /^Привет,/ }).waitFor();
     assert.equal(await phone.locator('html').getAttribute('lang'), 'ru');
     await noOverflow(phone);
     // Email link locale overrides a different browser language; toggling keeps token and password.
