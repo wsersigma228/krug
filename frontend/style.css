@@ -1071,3 +1071,7 @@ input, textarea, select { border-color: var(--field-line); }
   .review-item { grid-template-columns: minmax(0, 1fr); }
   .review-item .toolbar { justify-content: flex-start; flex-wrap: wrap; }
 }
+/* Interested people: one panel in the project colour, rows separated by rules. */
+.interested-list { margin: 0; padding: 0 1.2rem; }
+.interested-list .interested-person { padding: 1.1rem 0; }
+.interested-list .interested-person:last-child { border-bottom: 0; }

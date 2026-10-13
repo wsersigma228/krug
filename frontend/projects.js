@@ -270,8 +270,8 @@ async function projectCollaboration(root, project, own, stamp) {
 async function projectInterestedScreen(root, slug, stamp) {
   const project = await api("/projects/" + encodeURIComponent(slug));
   if (stamp !== generation) return;
-  root.innerHTML = html`<a class="back" href="${projectPath(project)}">${esc(project.title)}</a>` + heading("", t("Кому интересен проект"), t("Здесь только люди, которые сами разрешили показать профиль для этого проекта."));
-  await paged(root, "/projects/" + encodeURIComponent(slug) + "/interested", user => html`<article class="interested-person"><a class="avatar" href="/app#profile/${user.id}">${esc((user.display_name || user.username)[0].toUpperCase())}</a><div><a class="author" href="/app#profile/${user.id}">${esc(user.display_name || user.username)}</a><p class="hint">@${esc(user.username)}</p><p>${esc(user.bio)}</p></div></article>`, stamp,
+  root.innerHTML = html`<a class="back" href="${projectPath(project)}">${esc(project.title)}</a>` + heading("", t("Кому интересен проект"), t("Здесь только люди, которые сами разрешили показать профиль для этого проекта.")) + `<section class="dt-box interested-list" data-type="project"></section>`;
+  await paged(root.querySelector(".interested-list"), "/projects/" + encodeURIComponent(slug) + "/interested", user => html`<article class="interested-person"><a class="avatar" href="/app#profile/${user.id}">${esc((user.display_name || user.username)[0].toUpperCase())}</a><div><a class="author" href="/app#profile/${user.id}">${esc(user.display_name || user.username)}</a><p class="hint">@${esc(user.username)}</p><p>${esc(user.bio)}</p></div></article>`, stamp,
     empty(t("Пока нет открытых профилей"), t("Интерес может оставаться приватным. Это не означает, что проект никому не интересен.")));
 }
 async function projectEditorScreen(root, slug, stamp, query = new URLSearchParams()) {
