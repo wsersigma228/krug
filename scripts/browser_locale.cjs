@@ -307,11 +307,9 @@ async function main() {
     await page.setViewportSize({ width: 1440, height: 500 });
     const destinations = await page.locator('.topbar .nav a').count();
     await page.evaluate(() => window.scrollTo(0, 700));
-    await page.waitForFunction(() => document.body.classList.contains('header-compact'));
-    assert.equal(await page.locator('.topbar .nav a:visible').count(), destinations, 'Compact header keeps every destination');
-    assert(await page.locator('#ui-language').isVisible() && await page.locator('#ui-theme').isVisible(), 'Compact preferences remain reachable');
+    assert.equal(await page.locator('.topbar .nav a:visible').count(), destinations, 'Header keeps every destination after scrolling');
+    assert(await page.locator('#ui-language').isVisible() && await page.locator('#ui-theme').isVisible(), 'Header preferences remain reachable after scrolling');
     await page.evaluate(() => window.scrollTo(0, 400));
-    await page.waitForFunction(() => !document.body.classList.contains('header-compact'));
     await page.setViewportSize({ width: 1199, height: 900 });
     await noOverflow(page);
     await phone.setViewportSize({ width: 320, height: 700 });

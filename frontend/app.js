@@ -1125,14 +1125,5 @@ async function render(options = {}) {
     if (stamp === generation && !options.preserve) root.focus({ preventScroll: true });
   }
 }
-// Keep the header DOM stable so preferences and focused controls survive scrolling.
-let lastHeaderScroll = window.scrollY;
-window.addEventListener("scroll", () => {
-  const y = Math.max(0, window.scrollY);
-  if (y < 80) document.body.classList.remove("header-compact");
-  else if (Math.abs(y - lastHeaderScroll) >= 12)
-    document.body.classList.toggle("header-compact", y > lastHeaderScroll);
-  if (Math.abs(y - lastHeaderScroll) >= 12 || y < 80) lastHeaderScroll = y;
-}, { passive: true });
 window.addEventListener("hashchange", render);
 render();
