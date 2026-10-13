@@ -250,7 +250,9 @@ async function platformEditorScreen(kind, slug, query, root, stamp) {
   if (kind === "team") try { events = (await api("/events?upcoming=true&limit=50")).items; } catch { /* Linking remains optional when the event list is unavailable. */ }
   if (stamp !== generation) return;
   const back = kind === "team" ? "teams" : kind === "community" ? "communities" : "explore?kind=events";
-  root.innerHTML = html`<div class="fx-page" data-type="${kind}">${formHead(html`${entity ? t("Редактировать") : t("Создать")} ${platformTitle(kind).toLocaleLowerCase(language === "ru" ? "ru-RU" : "en-US")}`, t("Публикуйте только сведения, подтверждённые вами. Можно начать без обложки."), html`<a href="/app#${back}">${icon("arrow")} ${t("Назад")}</a>`)}<div class="fx-wrap">${platformFormMarkup(kind, entity, events)}</div></div>`;
+  // Each kind has its own full phrases: grammatical case differs between languages, so nouns are never concatenated.
+  const editorTitles = { team: [t("Создать команду"), t("Редактировать команду")], community: [t("Создать сообщество"), t("Редактировать сообщество")], event: [t("Создать событие"), t("Редактировать событие")] };
+  root.innerHTML = html`<div class="fx-page" data-type="${kind}">${formHead(editorTitles[kind][entity ? 1 : 0], t("Публикуйте только сведения, подтверждённые вами. Можно начать без обложки."), html`<a href="/app#${back}">${icon("arrow")} ${t("Назад")}</a>`)}<div class="fx-wrap">${platformFormMarkup(kind, entity, events)}</div></div>`;
   const form = root.querySelector("form");
   if (entity) fillPlatformForm(form, entity);
   else {
