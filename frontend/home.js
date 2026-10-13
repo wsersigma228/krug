@@ -108,7 +108,7 @@ function homeBand(data, tiles, now) {
   const parts = [];
   if (accepted) parts.push(html`<b>${pluralForm(accepted, ["заявка принята", "заявки приняты", "заявок принято"])}</b>`);
   if (week) parts.push(pluralForm(week, ["событие на неделе", "события на неделе", "событий на неделе"]));
-  return html`<section class="hm-band"><div class="hm-wrap"><div class="hm-top"><h1 class="hm-hello">${t("Привет,")} ${name}<span>${parts.length ? parts.map((part, index) => html`${index ? " · " : ""}${part}`) : t("Проекты, команды, встречи и сообщества для совместной работы.")}</span></h1>${homeSearchForm("hm-msearch")}</div>
+  return html`<section class="hm-band"><div class="hm-wrap"><div class="hm-top"><div class="hm-head"><h1 class="hm-hello">${t("Привет,")} ${name}</h1><p class="hm-sub">${parts.length ? parts.map((part, index) => html`${index ? " · " : ""}${part}`) : t("Проекты, команды, встречи и сообщества для совместной работы.")}</p></div>${homeSearchForm("hm-msearch")}</div>
     ${tiles.length ? html`<div class="hm-strip" aria-label="${t("Сейчас и скоро")}">${tiles.map((event, index) => homeTile(event, now, index === 0))}</div>` : ""}</div></section>`;
 }
 // Guest hero: headline, search, static skill shortcuts and the next live or upcoming event.

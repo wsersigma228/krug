@@ -30,7 +30,7 @@ function listLayout(root) {
   layout?.classList.add("layout-home");
 }
 function listBand(title, subtitle, { action = "", search = "" } = {}) {
-  return html`<section class="hm-band lst-band"><div class="hm-wrap"><div class="hm-top"><div class="lst-title"><h1 class="hm-hello">${title}${subtitle ? html`<span>${subtitle}</span>` : ""}</h1>${action}</div>${search}</div></div></section>`;
+  return html`<section class="hm-band lst-band"><div class="hm-wrap"><div class="hm-top"><div class="lst-title"><div class="hm-head"><h1 class="hm-hello">${title}</h1>${subtitle ? html`<p class="hm-sub">${subtitle}</p>` : ""}</div>${action}</div>${search}</div></div></section>`;
 }
 function listSearch(query, placeholder, className = "") {
   return html`<form class="discovery-search ${className}" role="search"><label>${icon("explore")}<span class="sr-only">${t("Поиск по Кругу")}</span><input name="search" value="${esc(query.get("search") || "")}" maxlength="100" placeholder="${placeholder}"></label><button>${t("Найти")}</button></form>`;
