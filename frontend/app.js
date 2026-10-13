@@ -569,20 +569,17 @@ async function listing(root, route, query, stamp) {
     search = query.get("search") || "",
     language = query.get("language") || "simple",
     filter = query.get("filter") || "";
+  listLayout(root);
   root.innerHTML =
-    heading(
-      feed ? t("Ваши люди") : own ? t("Личный блокнот") : t("Открытый Круг"),
-      feed
-        ? t("Лента")
-        : own
-          ? t("Мои посты")
-          : t("Обновления"),
+    listBand(
+      feed ? t("Лента") : own ? t("Мои посты") : t("Обновления"),
       feed
         ? t("Новые публикации авторов, на которых вы подписаны.")
         : own
           ? t("Черновики видны только вам. Публикуйте, когда будете готовы.")
           : t("Мысли, открытия и маленькие моменты. Найдите то, что откликается."),
     ) +
+    html`<div class="hm-wrap lst">` +
     (!own ? html`<div class="tabs"><a href="/app#stories" class="${feed ? "" : "active"}">Истории</a>${session ? html`<a href="/app#feed" class="${feed ? "active" : ""}">Лента</a><a href="/app#posts">Мои записи</a><a href="/app#people">Связи</a><a href="/app#new">${icon("plus")} Создать пост</a>` : ""}</div>` : "") +
     (!feed
       ? html`<form class="search" role="search">
@@ -608,7 +605,7 @@ async function listing(root, route, query, stamp) {
       <a href="/app#posts?filter=false" class="${filter === "false" ? "active" : ""}">Черновики</a>
       <a href="/app#new">${icon("plus")} Новый пост</a>
       </div>`
-      : "");
+      : "") + '<div id="listing-results"></div></div>';
   if (!feed)
     bindForm(root.querySelector("form"), async (data) =>
       go(
@@ -626,7 +623,7 @@ async function listing(root, route, query, stamp) {
   if (!feed) params.set("search_language", language);
   if (own && filter) params.set("is_published", filter);
   await paged(
-    root,
+    root.querySelector("#listing-results"),
     (feed ? "/feed" : own ? "/posts" : "/explore") + "?" + params,
     (p) => postCard(p),
     stamp,
@@ -923,13 +920,13 @@ async function postScreen(root, id, stamp, projectSlug = null, query = new URLSe
 async function settingsScreen(root, stamp) {
   const settings = await api("/me/notifications");
   if (stamp !== generation) return;
+  listLayout(root);
   root.innerHTML =
-    heading(
-      t("Ваше пространство"),
+    listBand(
       t("Настройки"),
       t("Немного о себе и о том, как оставаться на связи."),
     ) +
-    html`<div class="settings-layout"><aside class="settings-side">
+    html`<div class="hm-wrap lst"><div class="settings-layout"><aside class="settings-side">
       <nav class="settings-nav" aria-label="${t("Разделы настроек")}"><a href="#settings-profile">${t("Профиль")}</a><a href="#settings-notify">${t("Email и уведомления")}</a><a href="#settings-account">${t("Доступ к аккаунту")}</a></nav>
       <nav class="account-links" aria-label="${t("Мои разделы")}"><a href="/app#projects">${t("Мои проекты")}</a><a href="/app#saved">${t("Сохранённое")}</a><a href="/app#applications">${t("Мои заявки")}</a><a href="/app#collaboration-profile">${t("Профиль для сотрудничества")}</a>${me.role === "admin" ? html`<a href="/app#admin-review">Проверка внешних проектов</a>` : ""}<a href="/app#external-submit">${t("Предложить внешний проект")}</a></nav>
       </aside><div class="settings-main">
@@ -962,7 +959,7 @@ async function settingsScreen(root, stamp) {
       <p class="hint">Все ваши истории, фото, подписки и комментарии будут удалены навсегда.</p>
       <button class="danger" id="delete-account">Удалить мой аккаунт</button>
       </div></section>
-      </div></div>`;
+      </div></div></div>`;
   root.querySelectorAll(".settings-nav a").forEach(link => link.addEventListener("click", event => {
     // Section links scroll in place; a hash change would re-route the app to an unknown screen.
     event.preventDefault();

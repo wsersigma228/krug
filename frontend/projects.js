@@ -270,7 +270,8 @@ async function projectCollaboration(root, project, own, stamp) {
 async function projectInterestedScreen(root, slug, stamp) {
   const project = await api("/projects/" + encodeURIComponent(slug));
   if (stamp !== generation) return;
-  root.innerHTML = html`<a class="back" href="${projectPath(project)}">${esc(project.title)}</a>` + heading("", t("Кому интересен проект"), t("Здесь только люди, которые сами разрешили показать профиль для этого проекта.")) + `<section class="dt-box interested-list" data-type="project"></section>`;
+  listLayout(root);
+  root.innerHTML = listBand(t("Кому интересен проект"), t("Здесь только люди, которые сами разрешили показать профиль для этого проекта.")) + html`<div class="hm-wrap lst"><a class="back" href="${projectPath(project)}">${esc(project.title)}</a><section class="dt-box interested-list" data-type="project"></section></div>`;
   await paged(root.querySelector(".interested-list"), "/projects/" + encodeURIComponent(slug) + "/interested", user => html`<article class="interested-person"><a class="avatar" href="/app#profile/${user.id}">${esc((user.display_name || user.username)[0].toUpperCase())}</a><div><a class="author" href="/app#profile/${user.id}">${esc(user.display_name || user.username)}</a><p class="hint">@${esc(user.username)}</p><p>${esc(user.bio)}</p></div></article>`, stamp,
     empty(t("Пока нет открытых профилей"), t("Интерес может оставаться приватным. Это не означает, что проект никому не интересен.")));
 }
@@ -395,7 +396,8 @@ async function adminReviewScreen(root, stamp) {
   const submissions = submissionPage.items;
   const claims = claimPage.items;
   if (stamp !== generation) return;
-  root.innerHTML = heading("", t("Очередь проверки"), t("Проверяйте источник и доказательства связи до одобрения.")) + html`<section class="dt-box review-queue" data-type="project"><div class="dt-box-h"><h2>${t("Внешние проекты")}</h2></div><div class="review-list" id="external-queue"></div></section><section class="dt-box review-queue" data-type="project"><div class="dt-box-h"><h2>${t("Запросы на владение")}</h2></div><div class="review-list" id="claim-queue"></div></section>`;
+  listLayout(root);
+  root.innerHTML = listBand(t("Очередь проверки"), t("Проверяйте источник и доказательства связи до одобрения.")) + html`<div class="hm-wrap lst"><section class="dt-box review-queue" data-type="project"><div class="dt-box-h"><h2>${t("Внешние проекты")}</h2></div><div class="review-list" id="external-queue"></div></section><section class="dt-box review-queue" data-type="project"><div class="dt-box-h"><h2>${t("Запросы на владение")}</h2></div><div class="review-list" id="claim-queue"></div></section></div>`;
   const submissionList = root.querySelector("#external-queue");
   submissionList.innerHTML = submissions.length ? submissions.map(item => html`<article class="review-item"><div class="review-main"><h3>${esc(item.title)}</h3><p>${esc(item.summary)}</p><p class="hint">${t("Автор предложения")}: ${esc(item.submitted_by)} · ${date(item.created_at)}</p><a class="text-button" href="${/^https?:\/\//i.test(item.source_url) ? esc(item.source_url) : "#"}" target="_blank" rel="noopener noreferrer">${esc(item.source_url)}</a><p>${esc(item.description || "")}</p></div><div class="toolbar"><button data-review="approved" data-type="external" data-id="${item.id}">${t("Одобрить")}</button><button class="secondary" data-review="rejected" data-type="external" data-id="${item.id}">${t("Отклонить")}</button></div></article>`).join("") : `<p class="hint">${t("Нет ожидающих проектов.")}</p>`;
   const claimList = root.querySelector("#claim-queue");
@@ -421,10 +423,11 @@ async function applicationsScreen(root, stamp) {
   // Pending and accepted come first; any other status keeps its place after them.
   const statuses = [...new Set(["pending", "accepted", ...rows.map(({ application }) => application.status)])];
   const groups = statuses.map(status => [status, rows.filter(({ application }) => application.status === status)]).filter(([, items]) => items.length);
-  root.innerHTML = heading("", t("Мои заявки"), t("Контактные ссылки открываются только после принятия заявки.")) + errors +
+  listLayout(root);
+  root.innerHTML = listBand(t("Мои заявки"), t("Контактные ссылки открываются только после принятия заявки.")) + '<div class="hm-wrap lst">' + errors +
     groups.map(([status, items]) => `<section class="dt-box app-group"><div class="dt-box-h"><h2>${esc(applicationLabel(status))}</h2><span class="hint">${items.length}</span></div><div class="app-list">${items.map(applicationRow).join("")}</div></section>`).join("") +
     (groups.length || errors ? "" : `<p class="hint">${t("Заявок пока нет")}</p>`) +
-    `<a class="button secondary" href="/app#explore?kind=teams">${t("Найти команды")}</a>`;
+    `<a class="button secondary" href="/app#explore?kind=teams">${t("Найти команды")}</a></div>`;
   root.querySelectorAll("[data-withdraw-project]").forEach(button => actionButton(button, async () => { await api("/me/applications/" + button.dataset.withdrawProject + "/withdraw", {method:"POST"}); await render(); }));
   root.querySelectorAll("[data-withdraw-team]").forEach(button => actionButton(button, async () => { await api("/team-applications/" + button.dataset.withdrawTeam, {method:"PATCH", body:{status:"withdrawn"}}); await render(); }));
 }
