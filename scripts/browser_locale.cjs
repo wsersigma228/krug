@@ -292,7 +292,9 @@ async function main() {
           nav.left >= brand.right - 1 && nav.right <= controls.left + 1;
       }), `Desktop header row fits inside the capped container at ${width}px`);
       const columns = await page.locator('.post-grid').evaluate(grid => getComputedStyle(grid).gridTemplateColumns.split(' ').length);
-      assert(columns >= (width === 2560 ? 6 : 8), `The ${width}px feed needs more visible columns`);
+      // Content is capped at 2400px (approved), so six 350px+ columns is the maximum at both wide widths.
+      assert(await page.locator('.post-grid').evaluate(grid => grid.getBoundingClientRect().width <= 2401), `The ${width}px feed stays inside the 2400px cap`);
+      assert(columns >= 6, `The ${width}px feed needs at least six visible columns`);
       const photoLayout = await page.locator('.post-photo').first().evaluate(image => {
         const rect = image.getBoundingClientRect();
         const card = image.closest('.post-card').getBoundingClientRect();
@@ -321,7 +323,7 @@ async function main() {
     // Signed-in account preference beats a conflicting browser preference on login.
     await request('/me/language', 'PATCH', { language: 'ru' });
     await phone.reload();
-    await phone.getByRole('heading', { level: 1, name: /^Привет,/ }).waitFor();
+    await phone.getByRole('heading', { level: 1, name: 'Обновления', exact: true }).waitFor(); // the phone is on the stories screen here
     assert.equal(await phone.locator('html').getAttribute('lang'), 'ru');
     await noOverflow(phone);
     // Email link locale overrides a different browser language; toggling keeps token and password.
