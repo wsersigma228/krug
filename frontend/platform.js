@@ -99,7 +99,7 @@ function platformCard(entity, kind) {
     const relatedKind = entity.project ? "project" : "team";
     const href = related?.slug ? platformUrl(relatedKind, related.slug) : "/app#explore?kind=projects";
     const context = related ? html`<p class="hint">${entity.project ? t("Проект") : t("Команда")}: ${esc(related.title)}</p>` : "";
-    return html`<article class="hm-fcard platform-card type-${relatedKind}">${listCover(related || entity, relatedKind)}<div class="hm-in"><div class="hm-row"><span class="hm-kind">${t("Открытая роль")}${entity.commitment ? html` · ${esc(entity.commitment)}` : ""}</span></div>
+    return html`<article class="hm-fcard platform-card platform-card-opening type-${relatedKind}">${listCover(related || entity, relatedKind)}<div class="hm-in"><div class="hm-row"><span class="hm-kind">${t("Открытая роль")}${entity.commitment ? html` · ${esc(entity.commitment)}` : ""}</span></div>
       <h3><a href="${href}">${esc(entity.title || entity.role)}</a></h3>${context}<p>${esc(entity.description || related?.summary || "")}</p>${platformTags(entity)}
       <div class="hm-foot"><a class="hm-btn" href="${href}">${t("Посмотреть и откликнуться")}</a></div></div></article>`;
   }
