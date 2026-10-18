@@ -57,9 +57,9 @@ progress updates. Russian/English, light/dark, desktop and mobile.
 <td width="33%" valign="top">
 
 ### 🧭 Discovery
-Native and external projects, people, teams, events and open roles in one search,
-with filters and full-text matching. GitHub metadata refreshes in the background;
-GitLab is an optional allowlist.
+A home with what's on now and soon, an event calendar and open roles.
+Projects, people, teams and events in one full-text search with filters;
+GitHub refreshes in the background, GitLab by allowlist.
 
 </td>
 <td width="33%" valign="top">
@@ -89,14 +89,14 @@ and a feed of followed authors.
 
 ### 🔒 Privacy first
 Profiles are discoverable only by consent. Saves and follows stay private.
-Email notifications are strictly opt-in.
+Email is opt-in; refresh tokens live only in an HttpOnly cookie.
 
 </td>
 <td valign="top">
 
 ### 🌗 Thoughtful UI
-Graphite, blue and orange themes, RU/EN, keyboard access, reduced motion
-and layouts from 320 px phones to 4K.
+Light, dark and system themes in graphite, blue and orange, RU/EN,
+keyboard access, reduced motion and layouts from 320 px to 4K.
 
 </td>
 </tr>
@@ -170,13 +170,16 @@ Tests use a separate `test_db`. Browser and smoke checks are described in
 | 🛠️ | [Development and deployment](docs/development.md) |
 | 🧭 | [Discovery and import policy](docs/discovery.md) |
 | 🔎 | [Search design and query plans](docs/search.md) |
+| 🗺️ | [Next: event and recruitment import plan](docs/import-plan.md) (RU) |
 | 🎨 | [Design system](DESIGN.md) · [Product scope](PRODUCT.md) · [Security](SECURITY.md) |
 
 ## 📌 Status and license
 
 > [!NOTE]
 > Krug is a working project in development with no production uptime or scale claim.
-> Tokens live in per-tab sessionStorage, which does not protect against XSS: use HTTPS
-> and review your deployment before exposing it. See [scope and limits](docs/reference.md#scope-and-license).
+> The October 2026 redesign is complete; importing events and recruiting projects is next.
+> The access token lives in per-tab sessionStorage, which does not protect against XSS:
+> use HTTPS and review your deployment before exposing it. See [security](SECURITY.md)
+> and [scope and limits](docs/reference.md#scope-and-license).
 
 [MIT](LICENSE) — the license covers this repository's code, not user-uploaded content.

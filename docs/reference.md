@@ -27,7 +27,7 @@ The sticky header compacts while scrolling
 down and expands while scrolling up, keeping navigation and preferences reachable;
 reduced-motion settings disable transitions. System follows the operating system's
 color preference. Theme selection is stored per browser and does not sync through
-the account. Preferences use localStorage; authentication uses per-tab sessionStorage.
+the account. Preferences use localStorage; the access token uses per-tab sessionStorage and the refresh token an HttpOnly cookie.
 Like and unlike directly in the feed; the labelled Comments action opens the
 discussion inside the full post. RU/EN switches language; the theme icon opens
 Light, Dark and System choices. The frontend has no build step or third-party runtime.
@@ -371,7 +371,7 @@ share contact URLs only with the owner and accepted applicants. Administrators
 review external project suggestions and ownership claims. Chat, task management,
 video, recommendation engines, WebSockets and typo search are deferred. The UI is
 native JavaScript/CSS, with no package manager or frontend build step.
-It stores tokens in per-tab sessionStorage, which does not protect against XSS;
+It stores the access token in per-tab sessionStorage, which does not protect against XSS;
 use HTTPS, keep dependencies updated and review your deployment before exposing it.
 There is no individual-session management, broad moderation dashboard, automated backup,
 or orphan-file collector. Search uses PostgreSQL full-text rules, not fuzzy matching.
