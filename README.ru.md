@@ -12,7 +12,7 @@
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
 ![PostgreSQL 15](https://img.shields.io/badge/PostgreSQL-15-4169E1?logo=postgresql&logoColor=white)
 ![Celery + Redis](https://img.shields.io/badge/Celery_+_Redis-37814A?logo=celery&logoColor=white)
-![Native UI](https://img.shields.io/badge/UI-HTML%20%2F%20CSS%20%2F%20JS-c83f38)
+![Native UI](https://img.shields.io/badge/UI-HTML%20%2F%20CSS%20%2F%20JS-1f6bff)
 [![Лицензия MIT](https://img.shields.io/badge/License-MIT-181818)](LICENSE)
 
 [English](README.md) · **Русский** · 🚧 В разработке
