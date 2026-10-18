@@ -25,30 +25,30 @@
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/images/discovery-desktop-dark-v2.webp">
-    <img src="docs/images/discovery-desktop-light-v2.webp" alt="Круг: проекты, команды, события и сообщества в одной выдаче" width="100%">
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/discovery-desktop-dark-v3.webp">
+    <img src="docs/images/discovery-desktop-light-v3.webp" alt="Главная Круга: идущие и ближайшие события, открытые роли и календарь" width="100%">
   </picture>
 </p>
 
 <table>
 <tr>
-<td width="50%"><img src="docs/images/project-desktop-light-v2.webp" alt="Страница проекта с обложкой, тегами и панелью участия"></td>
-<td width="50%"><img src="docs/images/stories-desktop-dark-v2.webp" alt="Лента историй, тёмная тема"></td>
+<td width="50%"><img src="docs/images/project-desktop-light-v3.webp" alt="Страница проекта с открытыми ролями и панелью участия"></td>
+<td width="50%"><img src="docs/images/stories-desktop-dark-v3.webp" alt="Лента историй, тёмная тема"></td>
 </tr>
 <tr>
-<td><img src="docs/images/event-desktop-dark-v2.webp" alt="Страница события, тёмная тема"></td>
-<td><img src="docs/images/community-desktop-light-v2.webp" alt="Страница сообщества"></td>
+<td><img src="docs/images/event-desktop-dark-v3.webp" alt="Страница события, тёмная тема"></td>
+<td><img src="docs/images/community-desktop-light-v3.webp" alt="Страница сообщества"></td>
 </tr>
 </table>
 
 <p align="center">
-  <img src="docs/images/mobile-light-v2.webp" alt="Телефон: поиск, светлая тема" width="23%">&nbsp;
-  <img src="docs/images/mobile-dark-v2.webp" alt="Телефон: поиск, тёмная тема" width="23%">&nbsp;
-  <img src="docs/images/mobile-stories-light-v2.webp" alt="Телефон: истории, светлая тема" width="23%">&nbsp;
-  <img src="docs/images/mobile-stories-dark-v2.webp" alt="Телефон: истории, тёмная тема" width="23%">
+  <img src="docs/images/mobile-light-v3.webp" alt="Телефон: поиск, светлая тема" width="23%">&nbsp;
+  <img src="docs/images/mobile-dark-v3.webp" alt="Телефон: поиск, тёмная тема" width="23%">&nbsp;
+  <img src="docs/images/mobile-stories-light-v3.webp" alt="Телефон: истории, светлая тема" width="23%">&nbsp;
+  <img src="docs/images/mobile-stories-dark-v3.webp" alt="Телефон: истории, тёмная тема" width="23%">
 </p>
 
-<p align="center"><sub>Экраны изолированного стенда с вымышленными аккаунтами и сгенерированными абстрактными обложками, снято 11.10.2026.</sub></p>
+<p align="center"><sub>Экраны изолированного стенда с вымышленными аккаунтами и сгенерированными абстрактными обложками, снято 18.10.2026.</sub></p>
 
 ## ✨ Возможности
 

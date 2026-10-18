@@ -25,30 +25,30 @@ progress updates. Russian/English, light/dark, desktop and mobile.
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/images/discovery-desktop-dark-v2.webp">
-    <img src="docs/images/discovery-desktop-light-v2.webp" alt="Krug discovery: projects, teams, events and communities in one feed" width="100%">
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/discovery-desktop-dark-v3.webp">
+    <img src="docs/images/discovery-desktop-light-v3.webp" alt="Krug home: live and upcoming events, open roles and the event calendar" width="100%">
   </picture>
 </p>
 
 <table>
 <tr>
-<td width="50%"><img src="docs/images/project-desktop-light-v2.webp" alt="Project page with cover, tags and join panel"></td>
-<td width="50%"><img src="docs/images/stories-desktop-dark-v2.webp" alt="Stories feed in dark mode"></td>
+<td width="50%"><img src="docs/images/project-desktop-light-v3.webp" alt="Project page with open roles and join panel"></td>
+<td width="50%"><img src="docs/images/stories-desktop-dark-v3.webp" alt="Stories feed in dark mode"></td>
 </tr>
 <tr>
-<td><img src="docs/images/event-desktop-dark-v2.webp" alt="Event page in dark mode"></td>
-<td><img src="docs/images/community-desktop-light-v2.webp" alt="Community page"></td>
+<td><img src="docs/images/event-desktop-dark-v3.webp" alt="Event page in dark mode"></td>
+<td><img src="docs/images/community-desktop-light-v3.webp" alt="Community page"></td>
 </tr>
 </table>
 
 <p align="center">
-  <img src="docs/images/mobile-light-v2.webp" alt="Mobile discovery, light" width="23%">&nbsp;
-  <img src="docs/images/mobile-dark-v2.webp" alt="Mobile discovery, dark" width="23%">&nbsp;
-  <img src="docs/images/mobile-stories-light-v2.webp" alt="Mobile stories, light" width="23%">&nbsp;
-  <img src="docs/images/mobile-stories-dark-v2.webp" alt="Mobile stories, dark" width="23%">
+  <img src="docs/images/mobile-light-v3.webp" alt="Mobile discovery, light" width="23%">&nbsp;
+  <img src="docs/images/mobile-dark-v3.webp" alt="Mobile discovery, dark" width="23%">&nbsp;
+  <img src="docs/images/mobile-stories-light-v3.webp" alt="Mobile stories, light" width="23%">&nbsp;
+  <img src="docs/images/mobile-stories-dark-v3.webp" alt="Mobile stories, dark" width="23%">
 </p>
 
-<p align="center"><sub>Screens from an isolated preview with invented accounts and generated abstract covers, captured 2026-10-11.</sub></p>
+<p align="center"><sub>Screens from an isolated preview with invented accounts and generated abstract covers, captured 2026-10-18.</sub></p>
 
 ## ✨ What's inside
 

@@ -870,6 +870,8 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent); outline
 .dt-box .project-applications, .dt-box .project-contact-form { margin-top: 0; border-top: 1px solid var(--line); padding: 1rem 1.2rem; }
 .dt-box .project-role-editor, .dt-box .platform-inline-form { margin: 0; padding: 1rem 1.2rem; border: 0; border-top: 1px solid var(--line); border-radius: 0; background: transparent; }
 .dt-box .post-grid { padding: 1.1rem 1.2rem; }
+/* Community posts render without the masonry observer that sets row spans, so rows size to content. */
+#community-posts.post-grid { grid-auto-rows: auto; }
 .dt-body .discovery-results-heading { margin-bottom: 0; }
 /* Slots: open roles and composition marks. */
 .dt-slot { display: inline-flex; align-items: center; gap: .45rem; min-height: 2.2rem; padding: .2rem .7rem .2rem .45rem; border: 1px solid var(--c-btn); border-radius: .4rem; color: var(--c-ink); font-size: .92rem; }

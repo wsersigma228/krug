@@ -309,7 +309,7 @@ Mailpit messages are not backed up. Verify a backup by restoring it into a separ
 
 `frontend/og-default.svg` — редактируемый источник общего OpenGraph изображения; `frontend/og-default.png` — экспорт 1200×630. PNG проверяется визуально после экспорта, SVG не заменяет PNG в OpenGraph.
 
-README assets: `docs/readme/hero-{light,dark}-{en,ru}.svg` are hand-editable banners in the DESIGN.md palette, switched by `prefers-color-scheme`. Screenshots in `docs/images/*.webp` come from the isolated preview on port 18103 with invented accounts and procedurally generated abstract covers (no people or third-party art); never capture the main instance or real user content for the README.
+README assets: `docs/readme/hero-{light,dark}-{en,ru}.svg` are hand-editable banners in the DESIGN.md palette, switched by `prefers-color-scheme`. Screenshots in `docs/images/*.webp` come from the isolated preview on port 18103 with invented accounts and procedurally generated abstract covers (no people or third-party art); never capture the main instance or real user content for the README. To refresh them, start an empty isolated preview on port 18103, seed it with `scripts/seed_readme_preview.py BASE_URL` (run inside the preview web container; it requires `PUBLIC_APP_URL=http://127.0.0.1:18103` and refuses when public listings already have content), then run `scripts/browser_readme_screenshots.cjs` with `APP_URL=http://127.0.0.1:18103`, `PREVIEW_PASSWORD` from the seed script and the usual `NODE_PATH`/`BROWSER_EXECUTABLE`; it writes `docs/images/*-v3.webp`.
 ### Platform preview
 
 The additive platform migration is `db71e945ac30` after `c4e8d1a9b210`.
@@ -328,4 +328,4 @@ mixed saved content. Use the existing locale, collaboration and viewport scripts
 for regression checks; compare screenshots with the approved mockups in `docs/design/redesign-2026-10/`
 separately. Functional success alone is not visual acceptance.
 
-App CSS/JS and font CSS URLs in index.html carry the coordinated release query 20261013-redesign5. Bump that value when shipping changed app assets: the HTML is no-store, while persistent browser caches can otherwise retain an earlier script after a deployment. This is a native cache key, not a frontend build step. Draft covers use authenticated blob requests in the app and join existing object-URL cleanup; never make draft media public to fix an image request.
+App CSS/JS and font CSS URLs in index.html carry the coordinated release query 20261018-community-grid. Bump that value when shipping changed app assets: the HTML is no-store, while persistent browser caches can otherwise retain an earlier script after a deployment. This is a native cache key, not a frontend build step. Draft covers use authenticated blob requests in the app and join existing object-URL cleanup; never make draft media public to fix an image request.
